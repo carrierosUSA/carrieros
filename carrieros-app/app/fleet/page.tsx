@@ -1,8 +1,10 @@
 export default function FleetPage() {
   return (
-    <main className="p-8">
-      <h1 className="text-3xl font-bold">Fleet</h1>
-      <p className="mt-2 text-gray-500">Manage trucks, trailers, maintenance, and equipment.</p>
-    </main>
+    <>
+      <h1 className="text-3xl font-bold text-zinc-100">Fleet</h1>
+      <p className="mt-2 text-zinc-400">
+        Manage trucks, trailers, maintenance, and equipment.
+      </p>
+    </>
   );
 }

@@ -1,13 +1,21 @@
-type InputProps = {
-  placeholder: string;
+type BadgeProps = {
+  text: string;
+  type?: "success" | "warning" | "danger" | "default";
 };
 
-export default function Input({ placeholder }: InputProps) {
+const typeStyles: Record<NonNullable<BadgeProps["type"]>, string> = {
+  success: "border-green-800 bg-green-950 text-green-400",
+  warning: "border-amber-800 bg-amber-950 text-amber-400",
+  danger: "border-red-800 bg-red-950 text-red-400",
+  default: "border-zinc-700 bg-zinc-900 text-zinc-300",
+};
+
+export default function Badge({ text, type = "default" }: BadgeProps) {
   return (
-    <input
-      type="text"
-      placeholder={placeholder}
-      className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-900"
-    />
+    <span
+      className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${typeStyles[type]}`}
+    >
+      {text}
+    </span>
   );
 }

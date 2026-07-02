@@ -1,4 +1,9 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import Brand from "@/components/Brand";
+
 const navItems = [
   { name: "Command Center", href: "/" },
   { name: "Drivers", href: "/drivers" },
@@ -8,28 +13,47 @@ const navItems = [
   { name: "Analytics", href: "/analytics" },
   { name: "Settings", href: "/settings" },
 ];
+
+function isActiveRoute(pathname: string, href: string) {
+  if (href === "/") {
+    return pathname === "/";
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export default function Sidebar() {
+  const pathname = usePathname();
+
   return (
-    <aside className="fixed left-0 top-0 h-screen w-72 border-r border-gray-200 bg-white px-5 py-6">
+    <aside className="fixed left-0 top-0 flex h-screen w-72 flex-col border-r border-zinc-800 bg-zinc-950 px-5 py-6">
       <div className="mb-10">
         <Brand />
       </div>
 
-      <nav className="space-y-2">
-        {navItems.map((item) => (
-          <a
-            key={item.name}
-            href={item.href}
-            className="block rounded-xl px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
-          >
-            {item.name}
-          </a>
-        ))}
+      <nav className="space-y-1">
+        {navItems.map((item) => {
+          const isActive = isActiveRoute(pathname, item.href);
+
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`block rounded-xl px-4 py-3 text-sm font-medium transition ${
+                isActive
+                  ? "bg-blue-600 text-white"
+                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
+              }`}
+            >
+              {item.name}
+            </Link>
+          );
+        })}
       </nav>
 
-      <div className="absolute bottom-6 left-5 right-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-        <p className="text-sm font-semibold text-blue-900">AI Partner</p>
-        <p className="mt-1 text-sm text-blue-700">Ready to help.</p>
+      <div className="mt-auto rounded-2xl border border-blue-900/50 bg-blue-950/40 p-4">
+        <p className="text-sm font-semibold text-blue-300">AI Partner</p>
+        <p className="mt-1 text-sm text-blue-400/80">Ready to help.</p>
       </div>
     </aside>
   );

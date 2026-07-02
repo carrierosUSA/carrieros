@@ -7,7 +7,7 @@ export default function Input({ placeholder }: InputProps) {
     <input
       type="text"
       placeholder={placeholder}
-      className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-900"
+      className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-blue-500"
     />
   );
 }
