@@ -1,9 +1,9 @@
+import PageHeader from "@/components/PageHeader";
+
 export default function DriverProfile() {
   return (
     <>
-      <h1 className="text-3xl font-bold text-zinc-100">Onkar Singh</h1>
-
-      <p className="mt-2 text-zinc-400">Driver Profile</p>
+      <PageHeader title="Onkar Singh" subtitle="Driver Profile" />
 
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">

@@ -2,17 +2,19 @@ import Button from "@/components/Button";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
 import AIPartner from "@/components/AIPartner";
+import PageHeader from "@/components/PageHeader";
+import MetricCard from "@/components/MetricCard";
 
 export default function Home() {
   return (
     <>
-      <div className="mb-10">
-        <p className="text-sm font-medium text-blue-400">Welcome back</p>
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-zinc-100">
-          Guru Kirpa Transport Inc.
-        </h1>
-        <p className="mt-3 text-zinc-400">Everything looks good today.</p>
-      </div>
+      <PageHeader
+        eyebrow="Welcome back"
+        title="Guru Kirpa Transport Inc."
+        subtitle="Everything looks good today."
+        variant="hero"
+        className="mb-10"
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
@@ -28,10 +30,10 @@ export default function Home() {
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Metric title="Active Loads" value="14" />
-              <Metric title="Drivers" value="2" />
-              <Metric title="Trucks" value="8" />
-              <Metric title="Invoices" value="6" />
+              <MetricCard title="Active Loads" value="14" />
+              <MetricCard title="Drivers" value="2" />
+              <MetricCard title="Trucks" value="8" />
+              <MetricCard title="Invoices" value="6" />
             </div>
           </Card>
 
@@ -79,14 +81,5 @@ export default function Home() {
         </div>
       </div>
     </>
-  );
-}
-
-function Metric({ title, value }: { title: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-      <p className="text-sm text-zinc-500">{title}</p>
-      <p className="mt-2 text-3xl font-bold text-zinc-100">{value}</p>
-    </div>
   );
 }
