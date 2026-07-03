@@ -12,13 +12,21 @@ export default function AppShell({ children }: AppShellProps) {
   const isPublicTracking = pathname.startsWith("/track/");
 
   if (isPublicTracking) {
-    return <div className="min-h-screen bg-background text-foreground">{children}</div>;
+    return <div className="min-h-screen bg-slate-50 text-slate-950">{children}</div>;
   }
 
+  const isDashboard = pathname === "/";
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className={isDashboard ? "min-h-screen bg-slate-50 text-slate-950" : "min-h-screen bg-background text-foreground"}>
       <Sidebar />
-      <main className="min-h-screen px-4 py-6 sm:px-6 lg:ml-72 lg:px-10 lg:py-10">
+      <main
+        className={
+          isDashboard
+            ? "min-h-screen lg:ml-72"
+            : "min-h-screen px-4 py-6 sm:px-6 lg:ml-72 lg:px-10 lg:py-10"
+        }
+      >
         {children}
       </main>
     </div>

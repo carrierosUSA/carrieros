@@ -1,4 +1,9 @@
 import Link from "next/link";
+import DashboardPanel from "@/components/premium/DashboardPanel";
+import PremiumMetricCard from "@/components/premium/MetricCard";
+import NovaInsightCard from "@/components/premium/NovaInsightCard";
+import PremiumStatusBadge from "@/components/premium/StatusBadge";
+import PremiumTable from "@/components/premium/PremiumTable";
 import { getBrokerById } from "@/lib/data/brokers";
 import { getActiveCompany } from "@/lib/data/tenant";
 import { getDocumentService } from "@/lib/services/documents";
@@ -14,60 +19,6 @@ type DashboardAction = {
   href: string;
   severity: "success" | "warning" | "danger" | "default";
 };
-
-type KpiCardProps = {
-  label: string;
-  value: string;
-  detail: string;
-  tone?: "blue" | "green" | "amber" | "red" | "slate";
-};
-
-const toneStyles: Record<NonNullable<KpiCardProps["tone"]>, string> = {
-  blue: "bg-blue-50 text-blue-700 ring-blue-100",
-  green: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-  amber: "bg-amber-50 text-amber-700 ring-amber-100",
-  red: "bg-red-50 text-red-700 ring-red-100",
-  slate: "bg-slate-100 text-slate-700 ring-slate-200",
-};
-
-function KpiCard({ label, value, detail, tone = "slate" }: KpiCardProps) {
-  return (
-    <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="flex items-start justify-between gap-4">
-        <p className="text-sm font-medium text-slate-500">{label}</p>
-        <span className={`h-9 w-9 rounded-2xl ring-1 ${toneStyles[tone]}`} />
-      </div>
-      <p className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-        {value}
-      </p>
-      <p className="mt-1 text-sm text-slate-500">{detail}</p>
-    </div>
-  );
-}
-
-function SectionCard({
-  title,
-  action,
-  children,
-  className = "",
-}: {
-  title: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <section
-      className={`rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm ${className}`}
-    >
-      <div className="mb-5 flex items-center justify-between gap-4">
-        <h2 className="text-base font-semibold text-slate-950">{title}</h2>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
 
 export default async function Home() {
   const company = getActiveCompany();
@@ -240,7 +191,7 @@ export default async function Home() {
   ];
 
   return (
-    <div className="min-h-screen rounded-[2rem] bg-slate-50 p-4 text-slate-950 shadow-2xl shadow-black/20 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-[#f6f8fb] p-4 text-slate-950 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl space-y-8">
         <header className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -270,46 +221,46 @@ export default async function Home() {
         </header>
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-          <KpiCard
+          <PremiumMetricCard
             label="Active Loads"
             value={activeLoads.length.toString()}
             detail={`${loadCounts.in_transit} in transit`}
-            tone="blue"
+            accent="blue"
           />
-          <KpiCard
+          <PremiumMetricCard
             label="Revenue MTD"
             value={formatCurrency(revenueMtd)}
             detail="Booked freight"
-            tone="green"
+            accent="emerald"
           />
-          <KpiCard
+          <PremiumMetricCard
             label="Pending Payments"
             value={formatCurrency(pendingPayments)}
             detail="AR watch"
-            tone="amber"
+            accent="amber"
           />
-          <KpiCard
+          <PremiumMetricCard
             label="Active Trucks"
             value={(fleetMetrics.assignedTrucks + fleetMetrics.availableTrucks).toString()}
             detail={`${fleetMetrics.maintenanceTrucks} in shop`}
-            tone="blue"
+            accent="blue"
           />
-          <KpiCard
+          <PremiumMetricCard
             label="Drivers"
             value={driverMetrics.totalDrivers.toString()}
             detail={`${driverMetrics.activeDrivers} active`}
-            tone="slate"
+            accent="slate"
           />
-          <KpiCard
+          <PremiumMetricCard
             label="Compliance Alerts"
             value={complianceAlerts.toString()}
             detail="Needs review"
-            tone={complianceAlerts > 0 ? "red" : "green"}
+            accent={complianceAlerts > 0 ? "rose" : "emerald"}
           />
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
-          <SectionCard title="Revenue Overview" className="min-h-[320px]">
+          <DashboardPanel title="Revenue Overview" className="min-h-[320px]">
             <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <p className="text-5xl font-semibold tracking-tight text-slate-950">
@@ -335,41 +286,31 @@ export default async function Home() {
                 </div>
               ))}
             </div>
-          </SectionCard>
+          </DashboardPanel>
 
-          <SectionCard title="Nova Priorities">
+          <DashboardPanel title="Nova AI Priorities" eyebrow="Command Assistant">
             <div className="space-y-3">
               {visibleActions.map((action) => (
-                <Link
+                <NovaInsightCard
                   key={action.title}
+                  title={action.title}
+                  actionLabel={action.label}
                   href={action.href}
-                  className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm"
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`h-2.5 w-2.5 rounded-full ${
-                        action.severity === "danger"
-                          ? "bg-red-500"
-                          : action.severity === "warning"
-                            ? "bg-amber-500"
-                            : "bg-emerald-500"
-                      }`}
-                    />
-                    <span className="text-sm font-medium text-slate-800">
-                      {action.title}
-                    </span>
-                  </div>
-                  <span className="text-sm font-semibold text-slate-950">
-                    {action.label}
-                  </span>
-                </Link>
+                  tone={
+                    action.severity === "danger"
+                      ? "red"
+                      : action.severity === "warning"
+                        ? "amber"
+                        : "green"
+                  }
+                />
               ))}
             </div>
-          </SectionCard>
+          </DashboardPanel>
         </section>
 
         <section className="grid gap-6 xl:grid-cols-3">
-          <SectionCard
+          <DashboardPanel
             title="Recent Loads"
             className="xl:col-span-2"
             action={
@@ -378,29 +319,55 @@ export default async function Home() {
               </Link>
             }
           >
-            <div className="divide-y divide-slate-100">
-              {recentLoads.map((load) => (
-                <Link
-                  key={load.id}
-                  href={`/loads/${load.id}`}
-                  className="grid gap-3 py-4 transition hover:bg-slate-50 sm:grid-cols-[1fr_auto_auto] sm:items-center"
-                >
-                  <div>
-                    <p className="font-medium text-slate-950">{load.reference}</p>
-                    <p className="mt-1 text-sm text-slate-500">{formatLoadLane(load)}</p>
-                  </div>
-                  <span className="text-sm capitalize text-slate-500">
-                    {load.status.replace("_", " ")}
-                  </span>
-                  <span className="text-sm font-semibold text-slate-950">
-                    {formatCurrency(load.rate)}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </SectionCard>
+            <PremiumTable
+              rows={recentLoads}
+              getRowKey={(load) => load.id}
+              columns={[
+                {
+                  key: "load",
+                  label: "Load",
+                  render: (load) => (
+                    <Link href={`/loads/${load.id}`} className="block">
+                      <span className="block font-semibold text-slate-950">
+                        {load.reference}
+                      </span>
+                      <span className="mt-1 block text-xs text-slate-500">
+                        {formatLoadLane(load)}
+                      </span>
+                    </Link>
+                  ),
+                },
+                {
+                  key: "status",
+                  label: "Status",
+                  render: (load) => (
+                    <PremiumStatusBadge
+                      label={load.status.replace("_", " ")}
+                      tone={
+                        load.status === "delivered" || load.status === "invoiced"
+                          ? "green"
+                          : load.status === "pending"
+                            ? "amber"
+                            : "blue"
+                      }
+                    />
+                  ),
+                },
+                {
+                  key: "rate",
+                  label: "Rate",
+                  align: "right",
+                  render: (load) => (
+                    <span className="font-semibold text-slate-950">
+                      {formatCurrency(load.rate)}
+                    </span>
+                  ),
+                },
+              ]}
+            />
+          </DashboardPanel>
 
-          <SectionCard title="Alerts">
+          <DashboardPanel title="Alerts">
             <div className="space-y-3">
               {alerts.map((alert) => (
                 <div
@@ -411,11 +378,11 @@ export default async function Home() {
                 </div>
               ))}
             </div>
-          </SectionCard>
+          </DashboardPanel>
         </section>
 
         <section className="grid gap-6 xl:grid-cols-2">
-          <SectionCard title="Top Brokers">
+          <DashboardPanel title="Top Brokers">
             <div className="space-y-4">
               {topBrokers.map((broker, index) => (
                 <div key={broker.name} className="flex items-center justify-between">
@@ -431,9 +398,9 @@ export default async function Home() {
                 </div>
               ))}
             </div>
-          </SectionCard>
+          </DashboardPanel>
 
-          <SectionCard title="Profit Overview">
+          <DashboardPanel title="Profit Overview">
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="rounded-3xl bg-slate-50 p-4">
                 <p className="text-sm text-slate-500">Revenue</p>
@@ -454,7 +421,7 @@ export default async function Home() {
                 </p>
               </div>
             </div>
-          </SectionCard>
+          </DashboardPanel>
         </section>
       </div>
     </div>
