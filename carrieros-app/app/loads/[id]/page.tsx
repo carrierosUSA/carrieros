@@ -9,6 +9,8 @@ import LoadTimeline from "@/components/loads/LoadTimeline";
 import { getBrokerById } from "@/lib/data/brokers";
 import { getCustomerById } from "@/lib/data/customers";
 import { getActiveTenantId } from "@/lib/data/tenant";
+import DocumentStatusBadge from "@/components/documents/DocumentStatusBadge";
+import { getDocumentService } from "@/lib/services/documents";
 import { getFleetService } from "@/lib/services/fleet";
 import { formatLoadLane } from "@/lib/services/loads/load-helpers";
 import { getLoadService } from "@/lib/services/loads";
@@ -24,6 +26,7 @@ export default async function LoadDetailPage({ params }: LoadDetailPageProps) {
   const tenantId = getActiveTenantId();
   const loadService = getLoadService();
   const fleetService = getFleetService();
+  const documentService = getDocumentService();
 
   const [load, drivers, trucks] = await Promise.all([
     loadService.getLoad(tenantId, id),
@@ -34,6 +37,8 @@ export default async function LoadDetailPage({ params }: LoadDetailPageProps) {
   if (!load) {
     notFound();
   }
+
+  const documentSummary = await documentService.getPacketSummary(tenantId, load.id);
 
   const customerName = getCustomerById(load.customerId)?.name ?? "Unknown customer";
   const brokerName = load.brokerId ? getBrokerById(load.brokerId)?.name : undefined;
@@ -100,14 +105,20 @@ export default async function LoadDetailPage({ params }: LoadDetailPageProps) {
                 Show Me Assignment
               </a>
             ) : null}
-            {load.documentIds.length === 0 ? (
+            {documentSummary.nextMissing ? (
               <Link
-                href="/documents"
+                href={`/loads/${load.id}/documents`}
                 className="rounded-xl border border-blue-800 px-4 py-2 text-center text-sm font-semibold text-blue-300 transition hover:bg-blue-950"
               >
-                Show Me Documents
+                Missing {documentSummary.nextMissing.label}. Show Me
               </Link>
             ) : null}
+            <Link
+              href={`/documents/packets/${load.id}`}
+              className="rounded-xl border border-zinc-700 px-4 py-2 text-center text-sm font-semibold text-zinc-100 transition hover:bg-zinc-800"
+            >
+              Open Invoice Packet
+            </Link>
             {load.driverId ? (
               <Link
                 href={`/drivers/${load.driverId}`}
@@ -145,6 +156,40 @@ export default async function LoadDetailPage({ params }: LoadDetailPageProps) {
             currentTruckId={load.truckId}
           />
         </div>
+
+        <section className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="font-semibold text-zinc-100">Invoice Packet</h2>
+              <p className="mt-1 text-sm text-zinc-400">
+                Rate confirmation, BOL, final POD, lumper, invoice, and void
+                check sequence.
+              </p>
+            </div>
+            <DocumentStatusBadge
+              status={
+                documentSummary.readyToSend
+                  ? "ready_to_send"
+                  : "missing_documents"
+              }
+            />
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <Link
+              href={`/loads/${load.id}/documents`}
+              className="rounded-xl border border-zinc-700 px-4 py-3 text-center text-sm font-semibold text-zinc-100 transition hover:bg-zinc-800"
+            >
+              Capture Documents
+            </Link>
+            <Link
+              href={`/documents/packets/${load.id}`}
+              className="rounded-xl border border-zinc-700 px-4 py-3 text-center text-sm font-semibold text-zinc-100 transition hover:bg-zinc-800"
+            >
+              View Packet
+            </Link>
+          </div>
+        </section>
 
         <section className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
           <h2 className="font-semibold text-zinc-100">Status Timeline</h2>

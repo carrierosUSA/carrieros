@@ -24,7 +24,15 @@ export type {
   MaintenanceStatus,
   FuelRecord,
 } from "@/lib/types/fleet";
-export type { Invoice, Document } from "@/lib/types/finance";
+export type {
+  Invoice,
+  Document,
+  LoadDocumentRecord,
+  LoadDocumentStatus,
+  LoadDocumentType,
+  InvoiceDraft,
+  InvoicePacket,
+} from "@/lib/types/finance";
 export type {
   Load,
   LoadStatus,
@@ -43,4 +51,8 @@ export {
   TRAILER_STATUS_LABELS,
   MAINTENANCE_STATUS_LABELS,
 } from "@/lib/types/fleet";
+export {
+  LOAD_DOCUMENT_LABELS,
+  LOAD_DOCUMENT_SEQUENCE,
+} from "@/lib/types/finance";
 export { LOAD_STATUSES, LOAD_STATUS_LABELS } from "@/lib/types/load";

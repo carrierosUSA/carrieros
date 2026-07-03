@@ -5,6 +5,7 @@ import PageHeader from "@/components/PageHeader";
 import MetricCard from "@/components/MetricCard";
 import NovaAlphaSummary from "@/components/alpha/NovaAlphaSummary";
 import { getActiveCompany } from "@/lib/data/tenant";
+import { getDocumentService } from "@/lib/services/documents";
 import { getDriverService } from "@/lib/services/drivers";
 import { getFleetService } from "@/lib/services/fleet";
 import { getLoadService } from "@/lib/services/loads";
@@ -13,6 +14,7 @@ export default async function Home() {
   const company = getActiveCompany();
   const tenantId = company.tenantId;
   const loadService = getLoadService();
+  const documentService = getDocumentService();
   const driverService = getDriverService();
   const fleetService = getFleetService();
 
@@ -26,6 +28,15 @@ export default async function Home() {
   const attentionLoads = loads.filter(
     (load) => load.complianceStatus === "attention",
   );
+  const packetSummaries = await Promise.all(
+    loads.map(async (load) => ({
+      load,
+      summary: await documentService.getPacketSummary(tenantId, load.id),
+    })),
+  );
+  const firstMissingPacketDoc = packetSummaries.find(
+    (entry) => entry.summary.nextMissing,
+  );
   const pendingAssignmentLoad = loads.find((load) => !load.driverId || !load.truckId);
   const deliveredNotInvoiced = loads.find(
     (load) => load.status === "delivered" && !load.invoiceId,
@@ -38,6 +49,17 @@ export default async function Home() {
             description:
               "A load is missing a driver or truck. Assign both to move the workflow forward.",
             href: `/loads/${pendingAssignmentLoad.id}`,
+            severity: "warning" as const,
+          },
+        ]
+      : []),
+    ...(firstMissingPacketDoc?.summary.nextMissing
+      ? [
+          {
+            title: `Missing ${firstMissingPacketDoc.summary.nextMissing.label}`,
+            description:
+              "A load packet is not ready for billing handoff. Capture the missing document to complete the packet.",
+            href: `/loads/${firstMissingPacketDoc.load.id}/documents`,
             severity: "warning" as const,
           },
         ]
