@@ -10,10 +10,12 @@ import { getBrokerById } from "@/lib/data/brokers";
 import { getCustomerById } from "@/lib/data/customers";
 import { getActiveTenantId } from "@/lib/data/tenant";
 import DocumentStatusBadge from "@/components/documents/DocumentStatusBadge";
+import TrackingShareDialog from "@/components/tracking/TrackingShareDialog";
 import { getDocumentService } from "@/lib/services/documents";
 import { getFleetService } from "@/lib/services/fleet";
 import { formatLoadLane } from "@/lib/services/loads/load-helpers";
 import { getLoadService } from "@/lib/services/loads";
+import { getTrackingService } from "@/lib/services/tracking";
 
 type LoadDetailPageProps = {
   params: Promise<{
@@ -27,6 +29,7 @@ export default async function LoadDetailPage({ params }: LoadDetailPageProps) {
   const loadService = getLoadService();
   const fleetService = getFleetService();
   const documentService = getDocumentService();
+  const trackingService = getTrackingService();
 
   const [load, drivers, trucks] = await Promise.all([
     loadService.getLoad(tenantId, id),
@@ -38,7 +41,10 @@ export default async function LoadDetailPage({ params }: LoadDetailPageProps) {
     notFound();
   }
 
-  const documentSummary = await documentService.getPacketSummary(tenantId, load.id);
+  const [documentSummary, tracking] = await Promise.all([
+    documentService.getPacketSummary(tenantId, load.id),
+    trackingService.getTrackingForLoad(tenantId, load.id),
+  ]);
 
   const customerName = getCustomerById(load.customerId)?.name ?? "Unknown customer";
   const brokerName = load.brokerId ? getBrokerById(load.brokerId)?.name : undefined;
@@ -119,6 +125,12 @@ export default async function LoadDetailPage({ params }: LoadDetailPageProps) {
             >
               Open Invoice Packet
             </Link>
+            <Link
+              href={`/loads/${load.id}/tracking`}
+              className="rounded-xl border border-zinc-700 px-4 py-2 text-center text-sm font-semibold text-zinc-100 transition hover:bg-zinc-800"
+            >
+              Share Tracking Link
+            </Link>
             {load.driverId ? (
               <Link
                 href={`/drivers/${load.driverId}`}
@@ -156,6 +168,10 @@ export default async function LoadDetailPage({ params }: LoadDetailPageProps) {
             currentTruckId={load.truckId}
           />
         </div>
+
+        {tracking ? (
+          <TrackingShareDialog token={tracking.token} loadId={load.id} />
+        ) : null}
 
         <section className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

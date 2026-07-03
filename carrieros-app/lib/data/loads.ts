@@ -16,6 +16,8 @@ export const loads: Load[] = [
     rate: 2850,
     miles: 887,
     documentIds: ["doc-ratecon-24001"],
+    trackingToken: "trk_XlK8bQw9Z2mN4pR7tV6yH3sA1dF0gJ",
+    trackingEnabled: true,
     complianceStatus: "attention",
     novaSummary: "Rate confirmation uploaded. Driver and truck assignment required.",
     timeline: [
@@ -47,6 +49,8 @@ export const loads: Load[] = [
     rate: 950,
     miles: 197,
     documentIds: ["doc-ratecon-24002", "doc-bol-24002"],
+    trackingToken: "trk_Qp4M8nY2vB7cX0zL5rT9hW3kE6aS1d",
+    trackingEnabled: true,
     complianceStatus: "clear",
     novaSummary: "Driver and truck assigned. All required documents present.",
     timeline: [
@@ -93,6 +97,8 @@ export const loads: Load[] = [
     rate: 1200,
     miles: 388,
     documentIds: ["doc-ratecon-24003", "doc-bol-24003"],
+    trackingToken: "trk_H7sD2fG9jK4lP0qR8wE5tY1uI6oA3b",
+    trackingEnabled: true,
     complianceStatus: "clear",
     novaSummary: "Load in transit. ETA on schedule.",
     timeline: [
@@ -148,6 +154,8 @@ export const loads: Load[] = [
     rate: 780,
     miles: 268,
     documentIds: ["doc-ratecon-24004", "doc-bol-24004", "doc-pod-24004"],
+    trackingToken: "trk_Delivered8fG9jK4lP0qR8wE5tY1",
+    trackingEnabled: true,
     complianceStatus: "attention",
     novaSummary: "Delivered. POD received. Invoice not yet generated.",
     timeline: [
@@ -188,6 +196,8 @@ export const loads: Load[] = [
     miles: 143,
     documentIds: ["doc-ratecon-24005", "doc-pod-24005"],
     invoiceId: "invoice-24005",
+    trackingToken: "trk_Invoiced2fG9jK4lP0qR8wE5tY1",
+    trackingEnabled: true,
     complianceStatus: "clear",
     novaSummary: "Invoiced and ready for payment tracking.",
     timeline: [

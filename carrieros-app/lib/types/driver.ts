@@ -26,6 +26,16 @@ export interface Driver extends TenantEntity {
   updatedAt: string;
 }
 
+export interface DriverLocation extends TenantEntity {
+  driverId: string;
+  latitude: number;
+  longitude: number;
+  heading: number;
+  speedMph: number;
+  recordedAt: string;
+  provider: "mock" | "samsara" | "motive" | "geotab" | "eld" | "mobile";
+}
+
 export interface DriverLicenseRecord extends TenantEntity {
   id: string;
   driverId: string;

@@ -39,6 +39,9 @@ export interface Load extends TenantEntity {
   miles: number;
   documentIds: string[];
   invoiceId?: string;
+  trackingToken?: string;
+  trackingEnabled?: boolean;
+  trackingDisabledAt?: string;
   complianceStatus: ComplianceStatus;
   novaSummary?: string;
   timeline: LoadTimelineEvent[];

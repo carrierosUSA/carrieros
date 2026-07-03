@@ -2,6 +2,7 @@ import type {
   Driver,
   DriverDocument,
   DriverLicenseRecord,
+  DriverLocation,
   DriverMedicalRecord,
   DriverPayrollRecord,
   DriverPerformanceMetric,
@@ -270,6 +271,39 @@ export const seedDriverTimeOff: DriverTimeOff[] = [
   },
 ];
 
+export const seedDriverLocations: DriverLocation[] = [
+  {
+    tenantId: DEMO_TENANT_ID,
+    driverId: "onkar-singh",
+    latitude: 30.2672,
+    longitude: -97.7431,
+    heading: 32,
+    speedMph: 58,
+    recordedAt: "2026-07-02T18:00:00Z",
+    provider: "mock",
+  },
+  {
+    tenantId: DEMO_TENANT_ID,
+    driverId: "lovepreet-kaur",
+    latitude: 29.4241,
+    longitude: -98.4936,
+    heading: 0,
+    speedMph: 0,
+    recordedAt: "2026-07-02T18:00:00Z",
+    provider: "mock",
+  },
+  {
+    tenantId: DEMO_TENANT_ID,
+    driverId: "marcus-reed",
+    latitude: 30.2672,
+    longitude: -97.7431,
+    heading: 0,
+    speedMph: 0,
+    recordedAt: "2026-07-02T18:00:00Z",
+    provider: "mock",
+  },
+];
+
 export const driverStore: Driver[] = structuredClone(seedDrivers);
 export const driverLicenseStore: DriverLicenseRecord[] = structuredClone(seedDriverLicenses);
 export const driverMedicalStore: DriverMedicalRecord[] = structuredClone(seedDriverMedical);
@@ -280,6 +314,8 @@ export const driverSafetyStore: DriverSafetyEvent[] = structuredClone(seedDriver
 export const driverTimelineStore: DriverTimelineEvent[] = structuredClone(seedDriverTimeline);
 export const driverDocumentStore: DriverDocument[] = structuredClone(seedDriverDocuments);
 export const driverTimeOffStore: DriverTimeOff[] = structuredClone(seedDriverTimeOff);
+export const driverLocationStore: DriverLocation[] =
+  structuredClone(seedDriverLocations);
 
 export function getDriverById(id: string): Driver | undefined {
   return driverStore.find((driver) => driver.id === id);

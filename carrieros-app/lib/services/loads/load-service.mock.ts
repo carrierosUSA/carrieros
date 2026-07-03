@@ -15,6 +15,7 @@ import {
   nextLoadReference,
   resolveDispatchStatus,
 } from "@/lib/services/loads/load-helpers";
+import { createSecureTrackingToken } from "@/lib/services/tracking/tracking-helpers";
 import type { LoadListFilters, LoadService } from "@/lib/services/loads/load-service";
 
 const loadStore: Load[] = structuredClone(seedLoads);
@@ -139,6 +140,8 @@ export const mockLoadService: LoadService = {
       rate: input.rate,
       miles: input.miles,
       documentIds: [],
+      trackingToken: createSecureTrackingToken(),
+      trackingEnabled: true,
       complianceStatus: "attention",
       timeline: [
         {

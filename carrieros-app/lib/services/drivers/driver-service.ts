@@ -2,6 +2,7 @@ import type {
   Driver,
   DriverDocument,
   DriverLicenseRecord,
+  DriverLocation,
   DriverMedicalRecord,
   DriverPayrollRecord,
   DriverPerformanceMetric,
@@ -54,6 +55,15 @@ export interface DriverService {
   ): Promise<DriverTimeOff>;
   getNovaInsights(tenantId: string, driverId: string): Promise<string[]>;
   countByStatus(tenantId: string): Promise<Record<DriverStatus | "all", number>>;
+  getDriverLocation(
+    tenantId: string,
+    driverId: string,
+  ): Promise<DriverLocation | null>;
+  updateDriverLocation(
+    tenantId: string,
+    driverId: string,
+    location: Omit<DriverLocation, "tenantId" | "driverId">,
+  ): Promise<DriverLocation>;
 }
 
 export type {

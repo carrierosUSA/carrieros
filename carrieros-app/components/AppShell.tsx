@@ -1,3 +1,6 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 
 type AppShellProps = {
@@ -5,6 +8,13 @@ type AppShellProps = {
 };
 
 export default function AppShell({ children }: AppShellProps) {
+  const pathname = usePathname();
+  const isPublicTracking = pathname.startsWith("/track/");
+
+  if (isPublicTracking) {
+    return <div className="min-h-screen bg-background text-foreground">{children}</div>;
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Sidebar />

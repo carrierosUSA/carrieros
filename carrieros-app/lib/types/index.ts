@@ -14,6 +14,7 @@ export type {
   DriverDocument,
   DriverTimeOff,
   DriverTimeOffStatus,
+  DriverLocation,
 } from "@/lib/types/driver";
 export type {
   Truck,
@@ -39,6 +40,13 @@ export type {
   LoadStop,
   LoadTimelineEvent,
 } from "@/lib/types/load";
+export type {
+  PublicTrackingView,
+  TrackingNovaEvent,
+  TrackingNovaEventType,
+  TrackingRecord,
+  TrackingStatus,
+} from "@/lib/types/tracking";
 export {
   DRIVER_STATUSES,
   DRIVER_STATUS_LABELS,

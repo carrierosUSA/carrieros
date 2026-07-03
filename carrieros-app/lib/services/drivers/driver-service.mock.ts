@@ -1,6 +1,7 @@
 import {
   driverDocumentStore,
   driverLicenseStore,
+  driverLocationStore,
   driverMedicalStore,
   driverPayrollStore,
   driverPerformanceStore,
@@ -341,5 +342,33 @@ export const mockDriverService: DriverService = {
     }
 
     return counts;
+  },
+
+  async getDriverLocation(tenantId, driverId) {
+    return (
+      driverLocationStore.find(
+        (location) =>
+          location.tenantId === tenantId && location.driverId === driverId,
+      ) ?? null
+    );
+  },
+
+  async updateDriverLocation(tenantId, driverId, location) {
+    const existing = driverLocationStore.find(
+      (entry) => entry.tenantId === tenantId && entry.driverId === driverId,
+    );
+
+    if (existing) {
+      Object.assign(existing, location);
+      return existing;
+    }
+
+    const created = {
+      tenantId,
+      driverId,
+      ...location,
+    };
+    driverLocationStore.unshift(created);
+    return created;
   },
 };

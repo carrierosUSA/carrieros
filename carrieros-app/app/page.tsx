@@ -9,6 +9,7 @@ import { getDocumentService } from "@/lib/services/documents";
 import { getDriverService } from "@/lib/services/drivers";
 import { getFleetService } from "@/lib/services/fleet";
 import { getLoadService } from "@/lib/services/loads";
+import { getTrackingService } from "@/lib/services/tracking";
 
 export default async function Home() {
   const company = getActiveCompany();
@@ -17,6 +18,7 @@ export default async function Home() {
   const documentService = getDocumentService();
   const driverService = getDriverService();
   const fleetService = getFleetService();
+  const trackingService = getTrackingService();
 
   const [loads, loadCounts, driverMetrics, fleetMetrics] = await Promise.all([
     loadService.listLoads(tenantId),
@@ -38,6 +40,8 @@ export default async function Home() {
     (entry) => entry.summary.nextMissing,
   );
   const pendingAssignmentLoad = loads.find((load) => !load.driverId || !load.truckId);
+  const trackingEvents = await trackingService.listNovaEvents(tenantId);
+  const latestTrackingEvent = trackingEvents[0];
   const deliveredNotInvoiced = loads.find(
     (load) => load.status === "delivered" && !load.invoiceId,
   );
@@ -71,6 +75,17 @@ export default async function Home() {
             description:
               "A delivered load has documents but no invoice yet. Finance needs this surfaced.",
             href: `/loads/${deliveredNotInvoiced.id}`,
+            severity: "warning" as const,
+          },
+        ]
+      : []),
+    ...(latestTrackingEvent
+      ? [
+          {
+            title: latestTrackingEvent.message,
+            description:
+              "Nova is monitoring broker visibility, tracking expiration, stops, and ETA changes.",
+            href: `/loads/${latestTrackingEvent.loadId}/tracking`,
             severity: "warning" as const,
           },
         ]
