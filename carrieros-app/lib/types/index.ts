@@ -1,51 +1,11 @@
-export interface Company {
-  id: string;
-  name: string;
-}
-
-export interface Driver {
-  id: string;
-  name: string;
-  role: string;
-  status: string;
-  truck: string;
-  phone: string;
-  license: string;
-  medical: string;
-  location: string;
-  href: string;
-}
-
-export interface Truck {
-  id: string;
-  unitNumber: string;
-  status: string;
-  driverId?: string;
-  location?: string;
-}
-
-export interface Load {
-  id: string;
-  reference: string;
-  status: string;
-  driverId?: string;
-  truckId?: string;
-  origin: string;
-  destination: string;
-}
-
-export interface Invoice {
-  id: string;
-  reference: string;
-  status: string;
-  amount: number;
-  dueDate: string;
-}
-
-export interface Document {
-  id: string;
-  type: string;
-  status: string;
-  expiresAt?: string;
-  entityId: string;
-}
+export type { TenantEntity, ComplianceStatus, Company } from "@/lib/types/base";
+export type { Customer, Broker } from "@/lib/types/parties";
+export type { Driver, Truck } from "@/lib/types/fleet";
+export type { Invoice, Document } from "@/lib/types/finance";
+export type {
+  Load,
+  LoadStatus,
+  LoadStop,
+  LoadTimelineEvent,
+} from "@/lib/types/load";
+export { LOAD_STATUSES, LOAD_STATUS_LABELS } from "@/lib/types/load";

@@ -1,7 +1,9 @@
 import type { Driver } from "@/lib/types";
+import { DEMO_TENANT_ID } from "@/lib/data/tenant";
 
 export const drivers: Driver[] = [
   {
+    tenantId: DEMO_TENANT_ID,
     id: "onkar-singh",
     name: "Onkar Singh",
     role: "Owner / Driver",
@@ -14,6 +16,7 @@ export const drivers: Driver[] = [
     href: "/drivers/onkar-singh",
   },
   {
+    tenantId: DEMO_TENANT_ID,
     id: "lovepreet-kaur",
     name: "Lovepreet Kaur",
     role: "Operations Manager",
@@ -26,3 +29,7 @@ export const drivers: Driver[] = [
     href: "/drivers/onkar-singh",
   },
 ];
+
+export function getDriverById(id: string): Driver | undefined {
+  return drivers.find((driver) => driver.id === id);
+}

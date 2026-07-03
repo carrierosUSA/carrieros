@@ -4,13 +4,16 @@ import Badge from "@/components/Badge";
 import AIPartner from "@/components/AIPartner";
 import PageHeader from "@/components/PageHeader";
 import MetricCard from "@/components/MetricCard";
+import { getActiveCompany } from "@/lib/data/tenant";
 
 export default function Home() {
+  const company = getActiveCompany();
+
   return (
     <>
       <PageHeader
         eyebrow="Welcome back"
-        title="Guru Kirpa Transport Inc."
+        title={company.name}
         subtitle="Everything looks good today."
         variant="hero"
         className="mb-10"

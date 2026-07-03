@@ -6,6 +6,7 @@ import Brand from "@/components/Brand";
 
 const navItems = [
   { name: "Command Center", href: "/" },
+  { name: "Loads", href: "/loads" },
   { name: "Drivers", href: "/drivers" },
   { name: "Fleet", href: "/fleet" },
   { name: "Finance", href: "/finance" },
