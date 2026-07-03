@@ -189,34 +189,55 @@ export default async function Home() {
     `${missingDocs} packet docs missing`,
     `${fleetMetrics.openMaintenance} fleet items open`,
   ];
+  const recentActivity = [
+    ...loads.flatMap((load) =>
+      load.timeline.slice(-1).map((event) => ({
+        id: event.id,
+        title: event.label,
+        meta: `${load.reference} · ${event.location ?? formatLoadLane(load)}`,
+        href: `/loads/${load.id}`,
+      })),
+    ),
+    ...trackingEvents.slice(0, 2).map((event) => ({
+      id: event.id,
+      title: event.message,
+      meta: "Nova tracking",
+      href: `/loads/${event.loadId}/tracking`,
+    })),
+  ].slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-[#f6f8fb] p-4 text-slate-950 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-7xl space-y-8">
-        <header className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500 shadow-sm">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              CarrierOS Command Center
+    <div className="min-h-screen bg-[#f4f7fb] text-slate-950">
+      <div className="mx-auto max-w-[1500px] space-y-6 px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
+        <header className="relative overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white px-6 py-6 shadow-[0_20px_70px_rgba(15,23,42,0.08)] sm:px-8">
+          <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-blue-100/70 blur-3xl" />
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.12)]" />
+                Live carrier command
+              </div>
+              <h1 className="mt-4 text-4xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-5xl">
+                CarrierOS Dashboard
+              </h1>
+              <p className="mt-2 text-sm font-medium text-slate-500">
+                {company.name} · Owner view
+              </p>
             </div>
-            <h1 className="mt-5 max-w-3xl text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-              Good afternoon, Owner.
-            </h1>
-            <p className="mt-3 text-base text-slate-500">{company.name}</p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/loads/new"
-              className="rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-300 transition hover:-translate-y-0.5 hover:bg-slate-800"
-            >
-              New Load
-            </Link>
-            <Link
-              href="/finance"
-              className="rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
-            >
-              Finance
-            </Link>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Link
+                href="/loads/new"
+                className="rounded-2xl bg-slate-950 px-5 py-3 text-center text-sm font-semibold text-white shadow-xl shadow-slate-300 transition hover:-translate-y-0.5 hover:bg-slate-800"
+              >
+                Create load
+              </Link>
+              <Link
+                href="/finance"
+                className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-center text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
+              >
+                Open finance
+              </Link>
+            </div>
           </div>
         </header>
 
@@ -259,32 +280,61 @@ export default async function Home() {
           />
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
-          <DashboardPanel title="Revenue Overview" className="min-h-[320px]">
-            <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <p className="text-5xl font-semibold tracking-tight text-slate-950">
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(360px,0.7fr)]">
+          <DashboardPanel
+            title="Revenue Overview"
+            eyebrow="Month to date"
+            className="min-h-[390px]"
+          >
+            <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+              <div className="rounded-[1.5rem] bg-slate-950 p-6 text-white">
+                <p className="text-sm text-slate-400">Booked revenue</p>
+                <p className="mt-3 text-5xl font-semibold tracking-[-0.05em]">
                   {formatCurrency(revenueMtd)}
                 </p>
-                <p className="mt-2 text-sm text-slate-500">Month-to-date revenue</p>
-              </div>
-              <div className="rounded-3xl bg-slate-950 p-5 text-white">
-                <p className="text-sm text-slate-400">Estimated margin</p>
-                <p className="mt-2 text-3xl font-semibold">{profitMargin}%</p>
-              </div>
-            </div>
-            <div className="mt-8 space-y-5">
-              {revenueBars.map((item) => (
-                <div key={item.label}>
-                  <div className="mb-2 flex items-center justify-between text-sm">
-                    <span className="font-medium text-slate-600">{item.label}</span>
-                    <span className="text-slate-500">{formatCurrency(item.value)}</span>
+                <div className="mt-8 grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl bg-white/10 p-4">
+                    <p className="text-xs text-slate-400">Pending</p>
+                    <p className="mt-2 text-lg font-semibold">
+                      {formatCurrency(pendingPayments)}
+                    </p>
                   </div>
-                  <div className="h-3 rounded-full bg-slate-100">
-                    <div className={`h-3 rounded-full bg-slate-950 ${item.width}`} />
+                  <div className="rounded-2xl bg-white/10 p-4">
+                    <p className="text-xs text-slate-400">Margin</p>
+                    <p className="mt-2 text-lg font-semibold">{profitMargin}%</p>
                   </div>
                 </div>
-              ))}
+              </div>
+
+              <div className="flex min-h-[260px] flex-col justify-end rounded-[1.5rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-5">
+                <div className="grid h-56 grid-cols-7 items-end gap-3 border-b border-l border-slate-200 px-3 pb-3">
+                  {[44, 62, 51, 74, 58, 86, 69].map((height, index) => (
+                    <div key={height} className="flex h-full items-end">
+                      <div
+                        className={`w-full rounded-t-xl ${
+                          index === 5 ? "bg-slate-950" : "bg-blue-200"
+                        }`}
+                        style={{ height: `${height}%` }}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 grid gap-3">
+                  {revenueBars.map((item) => (
+                    <div key={item.label} className="flex items-center gap-3">
+                      <span className="w-24 text-xs font-medium text-slate-500">
+                        {item.label}
+                      </span>
+                      <div className="h-2 flex-1 rounded-full bg-slate-100">
+                        <div className={`h-2 rounded-full bg-slate-950 ${item.width}`} />
+                      </div>
+                      <span className="w-20 text-right text-xs font-semibold text-slate-700">
+                        {formatCurrency(item.value)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </DashboardPanel>
 
@@ -309,10 +359,10 @@ export default async function Home() {
           </DashboardPanel>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-3">
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(330px,0.65fr)]">
           <DashboardPanel
             title="Recent Loads"
-            className="xl:col-span-2"
+            eyebrow="Dispatch"
             action={
               <Link href="/loads" className="text-sm font-semibold text-slate-500">
                 View all
@@ -367,13 +417,14 @@ export default async function Home() {
             />
           </DashboardPanel>
 
-          <DashboardPanel title="Alerts">
+          <DashboardPanel title="Alerts" eyebrow="Needs attention">
             <div className="space-y-3">
               {alerts.map((alert) => (
                 <div
                   key={alert}
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700"
+                  className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700"
                 >
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />
                   {alert}
                 </div>
               ))}
@@ -381,8 +432,31 @@ export default async function Home() {
           </DashboardPanel>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-2">
-          <DashboardPanel title="Top Brokers">
+        <section className="grid gap-6 xl:grid-cols-[0.8fr_0.8fr_1fr]">
+          <DashboardPanel title="Profit Overview" eyebrow="Operating view">
+            <div className="grid gap-4">
+              <div className="rounded-[1.5rem] bg-slate-950 p-5 text-white">
+                <p className="text-sm text-slate-400">Estimated profit</p>
+                <p className="mt-3 text-4xl font-semibold tracking-[-0.04em]">
+                  {formatCurrency(estimatedProfit)}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs text-slate-500">Fuel</p>
+                  <p className="mt-2 font-semibold text-slate-950">
+                    {formatCurrency(fleetMetrics.monthlyFuelCost)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs text-slate-500">Margin</p>
+                  <p className="mt-2 font-semibold text-slate-950">{profitMargin}%</p>
+                </div>
+              </div>
+            </div>
+          </DashboardPanel>
+
+          <DashboardPanel title="Top Brokers" eyebrow="Revenue">
             <div className="space-y-4">
               {topBrokers.map((broker, index) => (
                 <div key={broker.name} className="flex items-center justify-between">
@@ -400,26 +474,25 @@ export default async function Home() {
             </div>
           </DashboardPanel>
 
-          <DashboardPanel title="Profit Overview">
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-3xl bg-slate-50 p-4">
-                <p className="text-sm text-slate-500">Revenue</p>
-                <p className="mt-2 text-xl font-semibold text-slate-950">
-                  {formatCurrency(revenueMtd)}
-                </p>
-              </div>
-              <div className="rounded-3xl bg-slate-50 p-4">
-                <p className="text-sm text-slate-500">Fuel</p>
-                <p className="mt-2 text-xl font-semibold text-slate-950">
-                  {formatCurrency(fleetMetrics.monthlyFuelCost)}
-                </p>
-              </div>
-              <div className="rounded-3xl bg-slate-950 p-4 text-white">
-                <p className="text-sm text-slate-400">Profit</p>
-                <p className="mt-2 text-xl font-semibold">
-                  {formatCurrency(estimatedProfit)}
-                </p>
-              </div>
+          <DashboardPanel title="Recent Activity" eyebrow="Live feed">
+            <div className="space-y-4">
+              {recentActivity.map((activity) => (
+                <Link
+                  key={activity.id}
+                  href={activity.href}
+                  className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 transition hover:bg-white hover:shadow-sm"
+                >
+                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-blue-500" />
+                  <span>
+                    <span className="block text-sm font-semibold text-slate-900">
+                      {activity.title}
+                    </span>
+                    <span className="mt-1 block text-xs text-slate-500">
+                      {activity.meta}
+                    </span>
+                  </span>
+                </Link>
+              ))}
             </div>
           </DashboardPanel>
         </section>

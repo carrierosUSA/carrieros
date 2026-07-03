@@ -15,7 +15,7 @@ export default function DashboardPanel({
 }: DashboardPanelProps) {
   return (
     <section
-      className={`rounded-[1.75rem] border border-slate-200/75 bg-white p-6 shadow-[0_10px_35px_rgba(15,23,42,0.055)] ${className}`}
+      className={`rounded-[1.75rem] border border-slate-200/80 bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,0.075)] ring-1 ring-white/70 ${className}`}
     >
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>

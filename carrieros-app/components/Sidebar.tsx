@@ -5,14 +5,14 @@ import { usePathname } from "next/navigation";
 import Brand from "@/components/Brand";
 
 const navItems = [
-  { name: "Command", href: "/", icon: "C" },
-  { name: "Dispatch", href: "/loads", icon: "D" },
-  { name: "Drivers", href: "/drivers", icon: "R" },
-  { name: "Fleet", href: "/fleet", icon: "F" },
-  { name: "Finance", href: "/finance", icon: "$" },
-  { name: "Documents", href: "/documents", icon: "P" },
-  { name: "Analytics", href: "/analytics", icon: "A" },
-  { name: "Settings", href: "/settings", icon: "S" },
+  { name: "Command", href: "/", icon: "command" },
+  { name: "Dispatch", href: "/loads", icon: "route" },
+  { name: "Drivers", href: "/drivers", icon: "users" },
+  { name: "Fleet", href: "/fleet", icon: "truck" },
+  { name: "Finance", href: "/finance", icon: "wallet" },
+  { name: "Documents", href: "/documents", icon: "file" },
+  { name: "Analytics", href: "/analytics", icon: "chart" },
+  { name: "Settings", href: "/settings", icon: "gear" },
 ];
 
 function isActiveRoute(pathname: string, href: string) {
@@ -21,6 +21,97 @@ function isActiveRoute(pathname: string, href: string) {
   }
 
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function NavIcon({ icon }: { icon: string }) {
+  const common = {
+    className: "h-4 w-4",
+    fill: "none",
+    viewBox: "0 0 24 24",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
+
+  if (icon === "route") {
+    return (
+      <svg {...common}>
+        <path d="M6 18c4-8 8 0 12-8" />
+        <path d="M6 18h.01" />
+        <path d="M18 10h.01" />
+      </svg>
+    );
+  }
+
+  if (icon === "users") {
+    return (
+      <svg {...common}>
+        <path d="M16 19c0-2.2-1.8-4-4-4s-4 1.8-4 4" />
+        <path d="M12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+        <path d="M19 18c0-1.7-1-3.1-2.4-3.7" />
+      </svg>
+    );
+  }
+
+  if (icon === "truck") {
+    return (
+      <svg {...common}>
+        <path d="M3 7h11v8H3z" />
+        <path d="M14 10h4l3 3v2h-7z" />
+        <path d="M7 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
+        <path d="M17 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
+      </svg>
+    );
+  }
+
+  if (icon === "wallet") {
+    return (
+      <svg {...common}>
+        <path d="M4 7h16v12H4z" />
+        <path d="M16 12h4v4h-4z" />
+        <path d="M4 7l3-3h10l3 3" />
+      </svg>
+    );
+  }
+
+  if (icon === "file") {
+    return (
+      <svg {...common}>
+        <path d="M7 3h7l4 4v14H7z" />
+        <path d="M14 3v5h5" />
+        <path d="M10 13h5" />
+        <path d="M10 17h4" />
+      </svg>
+    );
+  }
+
+  if (icon === "chart") {
+    return (
+      <svg {...common}>
+        <path d="M4 19V5" />
+        <path d="M4 19h16" />
+        <path d="M8 15l3-4 3 2 5-7" />
+      </svg>
+    );
+  }
+
+  if (icon === "gear") {
+    return (
+      <svg {...common}>
+        <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+        <path d="M19 12a7 7 0 0 0-.1-1.1l2-1.5-2-3.4-2.4 1a7.8 7.8 0 0 0-1.9-1.1L14.3 3h-4.6l-.3 2.9A7.8 7.8 0 0 0 7.5 7l-2.4-1-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.1l-2 1.5 2 3.4 2.4-1c.6.5 1.2.9 1.9 1.1l.3 2.9h4.6l.3-2.9c.7-.3 1.4-.7 1.9-1.1l2.4 1 2-3.4-2-1.5c.1-.3.1-.7.1-1.1Z" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...common}>
+      <path d="M5 12a7 7 0 1 0 14 0 7 7 0 0 0-14 0Z" />
+      <path d="M9 12h6" />
+      <path d="M12 9v6" />
+    </svg>
+  );
 }
 
 export default function Sidebar() {
@@ -47,13 +138,13 @@ export default function Sidebar() {
               }`}
             >
               <span
-                className={`grid h-8 w-8 place-items-center rounded-xl text-xs font-semibold transition ${
+                className={`grid h-8 w-8 place-items-center rounded-xl transition ${
                   isActive
                     ? "bg-slate-950 text-white"
                     : "bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white"
                 }`}
               >
-                {item.icon}
+                <NavIcon icon={item.icon} />
               </span>
               {item.name}
             </Link>
