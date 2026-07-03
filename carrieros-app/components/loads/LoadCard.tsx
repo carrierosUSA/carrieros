@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Load } from "@/lib/types";
 import LoadStatusBadge from "@/components/loads/LoadStatusBadge";
+import { formatCurrency, formatLoadLane } from "@/lib/services/loads/load-helpers";
 
 type LoadCardProps = {
   load: Load;
@@ -8,18 +9,6 @@ type LoadCardProps = {
   brokerName?: string;
   driverName?: string;
 };
-
-function formatLane(load: Load): string {
-  return `${load.origin.city}, ${load.origin.state} → ${load.destination.city}, ${load.destination.state}`;
-}
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 export default function LoadCard({
   load,
@@ -32,7 +21,9 @@ export default function LoadCard({
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-blue-400">{load.reference}</p>
-          <h2 className="mt-1 text-lg font-semibold text-zinc-100">{formatLane(load)}</h2>
+          <h2 className="mt-1 text-lg font-semibold text-zinc-100">
+            {formatLoadLane(load)}
+          </h2>
         </div>
         <LoadStatusBadge status={load.status} />
       </div>
@@ -62,12 +53,20 @@ export default function LoadCard({
         <p className="mt-4 text-sm text-blue-400/80">{load.novaSummary}</p>
       ) : null}
 
-      <Link
-        href={`/loads/${load.id}`}
-        className="mt-6 block w-full rounded-xl border border-zinc-700 px-4 py-3 text-center text-sm font-semibold text-zinc-100 transition hover:border-zinc-600 hover:bg-zinc-800"
-      >
-        View Load
-      </Link>
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <Link
+          href={`/loads/${load.id}`}
+          className="block rounded-xl border border-zinc-700 px-4 py-3 text-center text-sm font-semibold text-zinc-100 transition hover:border-zinc-600 hover:bg-zinc-800"
+        >
+          View Load
+        </Link>
+        <Link
+          href={`/loads/${load.id}/edit`}
+          className="block rounded-xl border border-zinc-700 px-4 py-3 text-center text-sm font-semibold text-zinc-100 transition hover:border-zinc-600 hover:bg-zinc-800"
+        >
+          Edit Load
+        </Link>
+      </div>
     </div>
   );
 }

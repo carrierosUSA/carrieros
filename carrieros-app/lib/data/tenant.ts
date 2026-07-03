@@ -5,7 +5,11 @@ export const DEMO_TENANT_ID = "tenant-demo-001";
 export const activeCompany: Company = {
   tenantId: DEMO_TENANT_ID,
   id: "company-demo-001",
-  name: "Demo Carrier LLC",
+  name: "Lone Star Alpha Carrier",
+  dotNumber: "USDOT-3482910",
+  mcNumber: "MC-927451",
+  homeBase: "San Antonio, TX",
+  timezone: "America/Chicago",
 };
 
 export function getActiveTenantId(): string {

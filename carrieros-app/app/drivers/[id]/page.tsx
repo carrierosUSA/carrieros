@@ -5,12 +5,15 @@ import PageHeader from "@/components/PageHeader";
 import DriverProfileSubNav from "@/components/drivers/DriverProfileSubNav";
 import DriverStatusBadge from "@/components/drivers/DriverStatusBadge";
 import NovaDriverInsights from "@/components/drivers/NovaDriverInsights";
+import LoadStatusBadge from "@/components/loads/LoadStatusBadge";
 import { requireDriver } from "@/lib/drivers/require-driver";
 import {
   formatPayRate,
   getTruckLabel,
 } from "@/lib/services/drivers/driver-helpers";
+import { formatLoadLane } from "@/lib/services/loads/load-helpers";
 import { getDriverService } from "@/lib/services/drivers";
+import { getLoadService } from "@/lib/services/loads";
 import { getActiveTenantId } from "@/lib/data/tenant";
 
 type DriverProfilePageProps = {
@@ -22,13 +25,16 @@ export default async function DriverProfilePage({ params }: DriverProfilePagePro
   const tenantId = getActiveTenantId();
   const driver = await requireDriver(id);
   const driverService = getDriverService();
+  const loadService = getLoadService();
 
-  const [insights, performance, safetyEvents, timeOff] = await Promise.all([
+  const [insights, performance, safetyEvents, timeOff, loads] = await Promise.all([
     driverService.getNovaInsights(tenantId, id),
     driverService.listPerformance(tenantId, id),
     driverService.listSafetyEvents(tenantId, id),
     driverService.listTimeOff(tenantId, id),
+    loadService.listLoads(tenantId),
   ]);
+  const assignedLoads = loads.filter((load) => load.driverId === driver.id);
 
   return (
     <>
@@ -104,6 +110,56 @@ export default async function DriverProfilePage({ params }: DriverProfilePagePro
             ))}
           </div>
         </Card>
+      </div>
+
+      <div className="mt-8 rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-semibold text-zinc-100">Current Load Assignments</h2>
+            <p className="mt-1 text-sm text-zinc-400">
+              Dispatch assignments connected to this driver.
+            </p>
+          </div>
+          <Link
+            href="/loads"
+            className="text-sm font-medium text-blue-400 hover:text-blue-300"
+          >
+            Open Dispatch →
+          </Link>
+        </div>
+
+        <div className="mt-5 grid gap-3">
+          {assignedLoads.length > 0 ? (
+            assignedLoads.slice(0, 3).map((load) => (
+              <Link
+                key={load.id}
+                href={`/loads/${load.id}`}
+                className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition hover:border-zinc-700"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-blue-400">
+                      {load.reference}
+                    </p>
+                    <p className="mt-1 text-sm text-zinc-300">
+                      {formatLoadLane(load)}
+                    </p>
+                  </div>
+                  <LoadStatusBadge status={load.status} />
+                </div>
+              </Link>
+            ))
+          ) : (
+            <div className="rounded-xl border border-dashed border-zinc-700 p-5">
+              <p className="text-sm font-medium text-zinc-100">
+                No active load assignment
+              </p>
+              <p className="mt-1 text-sm text-zinc-400">
+                Assign this driver from a load detail page to test the alpha flow.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

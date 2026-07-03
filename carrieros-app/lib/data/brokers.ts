@@ -16,6 +16,10 @@ export const brokers: Broker[] = [
   },
 ];
 
+export function listBrokersByTenant(tenantId: string): Broker[] {
+  return brokers.filter((broker) => broker.tenantId === tenantId);
+}
+
 export function getBrokerById(id: string): Broker | undefined {
   return brokers.find((broker) => broker.id === id);
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import PageHeader from "@/components/PageHeader";
 import NovaAlert from "@/components/NovaAlert";
@@ -51,12 +52,15 @@ export default async function LoadsPage({ searchParams }: LoadsPageProps) {
   return (
     <>
       <PageHeader
-        title="Loads"
-        subtitle="Dispatch, track, and manage freight across your network."
+        title="Dispatch"
+        subtitle="Create, assign, and track work across the carrier business."
         action={
-          <button className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-500">
+          <Link
+            href="/loads/new"
+            className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
+          >
             + Create Load
-          </button>
+          </Link>
         }
       />
 
@@ -85,6 +89,12 @@ export default async function LoadsPage({ searchParams }: LoadsPageProps) {
             <p className="mt-2 text-sm text-zinc-400">
               Adjust filters or create a new load to get started.
             </p>
+            <Link
+              href="/loads/new"
+              className="mt-4 inline-block text-sm font-medium text-blue-400 hover:text-blue-300"
+            >
+              Start Demo Workflow →
+            </Link>
           </div>
         )}
       </div>
