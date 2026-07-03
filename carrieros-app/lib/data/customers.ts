@@ -22,6 +22,10 @@ export const customers: Customer[] = [
   },
 ];
 
+export function listCustomersByTenant(tenantId: string): Customer[] {
+  return customers.filter((customer) => customer.tenantId === tenantId);
+}
+
 export function getCustomerById(id: string): Customer | undefined {
   return customers.find((customer) => customer.id === id);
 }
