@@ -2,7 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getActiveTenantId } from "@/lib/data/tenant";
+import { requireRole } from "@/lib/auth/session";
+import {
+  type LoadStatus,
+} from "@/lib/types";
 import {
   parseCreateLoadInput,
   parseUpdateLoadInput,
@@ -10,7 +13,7 @@ import {
 import { getLoadService } from "@/lib/services/loads";
 
 export async function createLoadAction(formData: FormData) {
-  const tenantId = getActiveTenantId();
+  const { tenantId } = requireRole(["owner", "dispatcher"]);
   const input = parseCreateLoadInput(formData);
   const load = await getLoadService().createLoad(tenantId, input);
 
@@ -19,7 +22,7 @@ export async function createLoadAction(formData: FormData) {
 }
 
 export async function updateLoadAction(loadId: string, formData: FormData) {
-  const tenantId = getActiveTenantId();
+  const { tenantId } = requireRole(["owner", "dispatcher"]);
   const input = parseUpdateLoadInput(formData);
 
   await getLoadService().updateLoad(tenantId, loadId, input);
@@ -31,7 +34,7 @@ export async function updateLoadAction(loadId: string, formData: FormData) {
 }
 
 export async function assignDriverAction(loadId: string, formData: FormData) {
-  const tenantId = getActiveTenantId();
+  const { tenantId } = requireRole(["owner", "dispatcher"]);
   const driverId = String(formData.get("driverId") ?? "").trim();
 
   if (!driverId) {
@@ -45,7 +48,7 @@ export async function assignDriverAction(loadId: string, formData: FormData) {
 }
 
 export async function assignTruckAction(loadId: string, formData: FormData) {
-  const tenantId = getActiveTenantId();
+  const { tenantId } = requireRole(["owner", "dispatcher"]);
   const truckId = String(formData.get("truckId") ?? "").trim();
 
   if (!truckId) {
@@ -56,4 +59,30 @@ export async function assignTruckAction(loadId: string, formData: FormData) {
 
   revalidatePath("/loads");
   revalidatePath(`/loads/${loadId}`);
+}
+
+export async function updateLoadStatusAction(loadId: string, status: LoadStatus) {
+  const { tenantId } = requireRole(["owner", "dispatcher"]);
+  const validStatuses: LoadStatus[] = [
+    "dispatched",
+    "picked_up",
+    "in_transit",
+    "delivered",
+  ];
+
+  if (!validStatuses.includes(status)) {
+    throw new Error("Unsupported status action.");
+  }
+
+  await getLoadService().updateLoad(tenantId, loadId, { status });
+
+  revalidatePath("/");
+  revalidatePath("/loads");
+  revalidatePath(`/loads/${loadId}`);
+  revalidatePath(`/loads/${loadId}/tracking`);
+
+  if (status === "delivered") {
+    revalidatePath("/finance");
+  }
+
 }

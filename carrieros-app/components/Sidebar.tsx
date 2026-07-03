@@ -9,10 +9,10 @@ const navItems = [
   { name: "Dispatch", href: "/loads" },
   { name: "Drivers", href: "/drivers" },
   { name: "Fleet", href: "/fleet" },
-  { name: "Finance", href: "/finance" },
+  { name: "Finance Alpha", href: "/finance" },
   { name: "Documents", href: "/documents" },
-  { name: "Analytics", href: "/analytics" },
-  { name: "Settings", href: "/settings" },
+  { name: "Analytics Soon", href: "/analytics" },
+  { name: "Settings Soon", href: "/settings" },
 ];
 
 function isActiveRoute(pathname: string, href: string) {

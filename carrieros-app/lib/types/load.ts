@@ -3,6 +3,7 @@ import type { ComplianceStatus, TenantEntity } from "@/lib/types/base";
 export type LoadStatus =
   | "pending"
   | "dispatched"
+  | "picked_up"
   | "in_transit"
   | "delivered"
   | "invoiced"
@@ -52,6 +53,7 @@ export interface Load extends TenantEntity {
 export const LOAD_STATUSES: LoadStatus[] = [
   "pending",
   "dispatched",
+  "picked_up",
   "in_transit",
   "delivered",
   "invoiced",
@@ -61,6 +63,7 @@ export const LOAD_STATUSES: LoadStatus[] = [
 export const LOAD_STATUS_LABELS: Record<LoadStatus, string> = {
   pending: "Pending",
   dispatched: "Dispatched",
+  picked_up: "Picked Up",
   in_transit: "In Transit",
   delivered: "Delivered",
   invoiced: "Invoiced",

@@ -42,6 +42,7 @@ export type {
 } from "@/lib/types/load";
 export type {
   PublicTrackingView,
+  PublicLoadSummary,
   TrackingNovaEvent,
   TrackingNovaEventType,
   TrackingRecord,

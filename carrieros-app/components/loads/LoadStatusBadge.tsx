@@ -8,6 +8,7 @@ type LoadStatusBadgeProps = {
 const statusStyles: Record<LoadStatus, string> = {
   pending: "border-amber-800 bg-amber-950 text-amber-400",
   dispatched: "border-blue-800 bg-blue-950 text-blue-400",
+  picked_up: "border-cyan-800 bg-cyan-950 text-cyan-400",
   in_transit: "border-indigo-800 bg-indigo-950 text-indigo-400",
   delivered: "border-green-800 bg-green-950 text-green-400",
   invoiced: "border-emerald-800 bg-emerald-950 text-emerald-400",

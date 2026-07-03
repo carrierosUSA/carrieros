@@ -59,7 +59,12 @@ export default async function LoadTrackingPage({ params }: LoadTrackingPageProps
         </div>
 
         <div className="space-y-5">
-          <TrackingShareDialog token={tracking.token} loadId={tracking.load.id} />
+          <TrackingShareDialog
+            token={tracking.token}
+            loadId={tracking.load.id}
+            canShare={tracking.status !== "not_ready"}
+            warning="Assign a driver and truck before sharing public tracking."
+          />
           <TrackingETA tracking={tracking} />
           <TrackingTemperatureCard temperature={tracking.temperature} />
           <TrackingTimeline tracking={tracking} />

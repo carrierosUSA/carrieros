@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getActiveTenantId } from "@/lib/data/tenant";
+import { requireRole } from "@/lib/auth/session";
 import {
   parseCaptureLoadDocumentInput,
   parsePreparePacketInput,
@@ -11,6 +11,7 @@ import { getDocumentService } from "@/lib/services/documents";
 
 function revalidatePacketPaths(loadId: string) {
   revalidatePath("/");
+  revalidatePath("/finance");
   revalidatePath("/documents");
   revalidatePath("/loads");
   revalidatePath(`/loads/${loadId}`);
@@ -23,7 +24,7 @@ export async function captureLoadDocumentAction(
   loadId: string,
   formData: FormData,
 ) {
-  const tenantId = getActiveTenantId();
+  const { tenantId } = requireRole(["owner", "dispatcher", "accountant"]);
   const input = parseCaptureLoadDocumentInput(loadId, formData);
 
   await getDocumentService().captureLoadDocument(tenantId, input);
@@ -32,7 +33,7 @@ export async function captureLoadDocumentAction(
 }
 
 export async function generateInvoiceDraftAction(loadId: string) {
-  const tenantId = getActiveTenantId();
+  const { tenantId } = requireRole(["owner", "dispatcher", "accountant"]);
 
   await getDocumentService().generateInvoiceDraft(tenantId, loadId);
   revalidatePacketPaths(loadId);
@@ -40,7 +41,7 @@ export async function generateInvoiceDraftAction(loadId: string) {
 }
 
 export async function preparePacketAction(loadId: string, formData: FormData) {
-  const tenantId = getActiveTenantId();
+  const { tenantId } = requireRole(["owner", "dispatcher", "accountant"]);
   const input = parsePreparePacketInput(loadId, formData);
 
   await getDocumentService().preparePacket(tenantId, input);

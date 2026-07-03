@@ -33,7 +33,9 @@ export default async function DocumentsPage() {
 
       {firstMissing?.summary.nextMissing ? (
         <NovaAlert
-          message={`Missing ${firstMissing.summary.nextMissing.label}. Show Me`}
+          message={`Missing ${firstMissing.summary.nextMissing.label}.`}
+          actionHref={`/loads/${firstMissing.load.id}/documents`}
+          actionLabel="Show Me"
         />
       ) : (
         <NovaAlert message="All visible required packet documents are ready." />

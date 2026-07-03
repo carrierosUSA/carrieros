@@ -55,7 +55,9 @@ export default async function PacketPage({ params }: PacketPageProps) {
 
       {summary.nextMissing ? (
         <NovaAlert
-          message={`Missing ${summary.nextMissing.label}. Show Me`}
+          message={`Missing ${summary.nextMissing.label}.`}
+          actionHref={`/loads/${load.id}/documents`}
+          actionLabel="Show Me"
         />
       ) : (
         <NovaAlert message="Packet sequence is complete. Ready to prepare send/upload." />

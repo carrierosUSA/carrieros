@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import LoadAssignmentPanel from "@/components/loads/LoadAssignmentPanel";
 import LoadOverviewPanel from "@/components/loads/LoadOverviewPanel";
+import LoadStatusActions from "@/components/loads/LoadStatusActions";
 import LoadStatusBadge from "@/components/loads/LoadStatusBadge";
 import LoadStopsPanel from "@/components/loads/LoadStopsPanel";
 import LoadTimeline from "@/components/loads/LoadTimeline";
@@ -169,8 +170,15 @@ export default async function LoadDetailPage({ params }: LoadDetailPageProps) {
           />
         </div>
 
+        <LoadStatusActions load={load} />
+
         {tracking ? (
-          <TrackingShareDialog token={tracking.token} loadId={load.id} />
+          <TrackingShareDialog
+            token={tracking.token}
+            loadId={load.id}
+            canShare={Boolean(load.driverId && load.truckId)}
+            warning="Assign both a driver and truck before sharing this broker/customer tracking link."
+          />
         ) : null}
 
         <section className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">

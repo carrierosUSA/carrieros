@@ -27,6 +27,7 @@ export type UpdateLoadInput = {
   rate?: number;
   miles?: number;
   status?: LoadStatus;
+  invoiceId?: string;
 };
 
 export type AssignDriverInput = {

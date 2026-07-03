@@ -12,6 +12,7 @@ const filterOptions: Array<{ value: LoadStatus | "all"; label: string }> = [
   { value: "all", label: "All" },
   { value: "pending", label: LOAD_STATUS_LABELS.pending },
   { value: "dispatched", label: LOAD_STATUS_LABELS.dispatched },
+  { value: "picked_up", label: LOAD_STATUS_LABELS.picked_up },
   { value: "in_transit", label: LOAD_STATUS_LABELS.in_transit },
   { value: "delivered", label: LOAD_STATUS_LABELS.delivered },
   { value: "invoiced", label: LOAD_STATUS_LABELS.invoiced },

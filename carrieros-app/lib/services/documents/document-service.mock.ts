@@ -142,19 +142,23 @@ export const mockDocumentService: DocumentService = {
   },
 
   async generateInvoiceDraft(tenantId, loadId) {
+    const load = await getLoadService().getLoad(tenantId, loadId);
+
+    if (!load) {
+      throw new Error("Load not found.");
+    }
+
     const existing = invoiceDraftStore.find(
       (invoice) => invoice.tenantId === tenantId && invoice.loadId === loadId,
     );
 
     if (existing) {
       existing.status = "ready";
+      await getLoadService().updateLoad(tenantId, loadId, {
+        invoiceId: existing.id,
+        status: load.status === "delivered" ? "invoiced" : load.status,
+      });
       return existing;
-    }
-
-    const load = await getLoadService().getLoad(tenantId, loadId);
-
-    if (!load) {
-      throw new Error("Load not found.");
     }
 
     const broker = load.brokerId ? getBrokerById(load.brokerId) : undefined;
@@ -171,6 +175,10 @@ export const mockDocumentService: DocumentService = {
     };
 
     invoiceDraftStore.unshift(invoiceDraft);
+    await getLoadService().updateLoad(tenantId, loadId, {
+      invoiceId: invoiceDraft.id,
+      status: load.status === "delivered" ? "invoiced" : load.status,
+    });
     return invoiceDraft;
   },
 

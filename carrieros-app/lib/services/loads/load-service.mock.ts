@@ -108,6 +108,7 @@ export const mockLoadService: LoadService = {
       all: tenantLoads.length,
       pending: 0,
       dispatched: 0,
+      picked_up: 0,
       in_transit: 0,
       delivered: 0,
       invoiced: 0,
@@ -179,6 +180,7 @@ export const mockLoadService: LoadService = {
     if (input.deliveryDate) load.deliveryDate = input.deliveryDate;
     if (input.rate !== undefined) load.rate = input.rate;
     if (input.miles !== undefined) load.miles = input.miles;
+    if (input.invoiceId !== undefined) load.invoiceId = input.invoiceId;
 
     if (input.status && input.status !== load.status) {
       load.status = input.status;

@@ -1,5 +1,5 @@
 import { getDriverById } from "@/lib/data/drivers";
-import { getTrailerById, trailerStore } from "@/lib/data/fleet-store";
+import { trailerStore } from "@/lib/data/fleet-store";
 import { getActiveCompany } from "@/lib/data/tenant";
 import {
   trackingNovaEventStore,
@@ -62,7 +62,7 @@ function isDelivered(load: Load) {
   return load.status === "delivered" || load.status === "invoiced";
 }
 
-async function simulateDriverLocation(
+async function getLatestDriverLocation(
   tenantId: string,
   load: Load,
 ): Promise<DriverLocation | undefined> {
@@ -70,47 +70,7 @@ async function simulateDriverLocation(
     return undefined;
   }
 
-  const driverService = getDriverService();
-  const existing = await driverService.getDriverLocation(tenantId, load.driverId);
-  const tick = Math.floor(Date.now() / 60_000);
-  const progress = (tick % 30) / 30;
-  const origin = load.origin.city === "Austin" ? { lat: 30.2672, lng: -97.7431 } : { lat: 29.4241, lng: -98.4936 };
-  const destination =
-    load.destination.city === "Oklahoma City"
-      ? { lat: 35.4676, lng: -97.5164 }
-      : load.destination.city === "Houston"
-        ? { lat: 29.7604, lng: -95.3698 }
-        : { lat: 33.4484, lng: -112.074 };
-  const stopped = load.id === "load-24003" && tick % 11 === 0;
-  const location = {
-    latitude: origin.lat + (destination.lat - origin.lat) * progress,
-    longitude: origin.lng + (destination.lng - origin.lng) * progress,
-    heading: Math.round(45 + progress * 25),
-    speedMph: stopped ? 0 : 58,
-    recordedAt: new Date().toISOString(),
-    provider: "mock" as const,
-  };
-
-  const updated = await driverService.updateDriverLocation(
-    tenantId,
-    load.driverId,
-    location,
-  );
-
-  if (stopped) {
-    appendNovaEvent(
-      tenantId,
-      load.id,
-      "truck_stopped",
-      "Truck stopped longer than expected.",
-    );
-  }
-
-  if (existing && Math.abs(existing.latitude - updated.latitude) > 0.15) {
-    appendNovaEvent(tenantId, load.id, "eta_changed", "ETA changed.");
-  }
-
-  return updated;
+  return (await getDriverService().getDriverLocation(tenantId, load.driverId)) ?? undefined;
 }
 
 function estimateEtaMinutes(load: Load, location?: DriverLocation) {
@@ -127,10 +87,7 @@ function estimateEtaMinutes(load: Load, location?: DriverLocation) {
   return base + variation;
 }
 
-async function buildView(
-  record: TrackingRecord,
-  markOpened: boolean,
-): Promise<PublicTrackingView | null> {
+async function buildView(record: TrackingRecord): Promise<PublicTrackingView | null> {
   const load = await getLoadService().getLoad(record.tenantId, record.loadId);
 
   if (!load) {
@@ -144,7 +101,7 @@ async function buildView(
     : undefined;
   const location = isDelivered(load)
     ? undefined
-    : await simulateDriverLocation(record.tenantId, load);
+    : await getLatestDriverLocation(record.tenantId, load);
   const etaMinutes = estimateEtaMinutes(load, location);
   const documentSummary = await getDocumentService().getPacketSummary(
     record.tenantId,
@@ -161,39 +118,19 @@ async function buildView(
         ? "live"
         : "not_ready";
 
-  if (markOpened) {
-    record.lastOpenedAt = new Date().toISOString();
-    appendNovaEvent(
-      record.tenantId,
-      load.id,
-      "broker_opened",
-      "Broker opened tracking.",
-    );
-  }
-
-  if (status === "expired_delivered" || status === "disabled") {
-    appendNovaEvent(record.tenantId, load.id, "tracking_expired", "Tracking expired.");
-  }
-
-  if (
-    etaMinutes !== undefined &&
-    record.lastEtaMinutes !== undefined &&
-    Math.abs(record.lastEtaMinutes - etaMinutes) >= 10
-  ) {
-    appendNovaEvent(record.tenantId, load.id, "eta_changed", "ETA changed.");
-  }
-
-  if (etaMinutes !== undefined) {
-    record.lastEtaMinutes = etaMinutes;
-  }
-
   const novaEvents = trackingNovaEventStore.filter(
     (event) => event.tenantId === record.tenantId && event.loadId === load.id,
   );
 
   return {
     companyName: company.name,
-    load,
+    load: {
+      id: load.id,
+      reference: load.reference,
+      status: load.status,
+      origin: load.origin,
+      destination: load.destination,
+    },
     token: record.token,
     status,
     location,
@@ -207,7 +144,7 @@ async function buildView(
         : `Pickup at ${formatStop(load.origin)}`,
     deliveryCountdown: calculateDeliveryCountdown(load),
     driverFirstName: driverFirstName(driver?.name),
-    trailerNumber: trailer ? `Unit ${trailer.unitNumber}` : getTrailerById("trailer-2201")?.unitNumber,
+    trailerNumber: trailer ? `Unit ${trailer.unitNumber}` : undefined,
     temperature: "Service ready",
     lastUpdatedAt: location?.recordedAt ?? new Date().toISOString(),
     novaEvents,
@@ -231,12 +168,16 @@ export const mockTrackingService: TrackingService = {
 
     const load = await getLoadService().getLoad(tenantId, loadId);
 
+    if (!load) {
+      throw new Error("Load not found.");
+    }
+
     const record: TrackingRecord = {
       tenantId,
       id: `tracking-${loadId}-${Date.now()}`,
       loadId,
-      token: load?.trackingToken ?? createSecureTrackingToken(),
-      enabled: load?.trackingEnabled ?? true,
+      token: load.trackingToken ?? createSecureTrackingToken(),
+      enabled: load.trackingEnabled ?? true,
       createdAt: new Date().toISOString(),
     };
 
@@ -245,8 +186,14 @@ export const mockTrackingService: TrackingService = {
   },
 
   async getTrackingForLoad(tenantId, loadId) {
+    const load = await getLoadService().getLoad(tenantId, loadId);
+
+    if (!load) {
+      return null;
+    }
+
     const record = await this.ensureTrackingForLoad(tenantId, loadId);
-    return buildView(record, false);
+    return buildView(record);
   },
 
   async getPublicTrackingByToken(token) {
@@ -256,7 +203,7 @@ export const mockTrackingService: TrackingService = {
       return null;
     }
 
-    return buildView(record, true);
+    return buildView(record);
   },
 
   async disableTracking(tenantId, loadId) {

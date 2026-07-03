@@ -55,6 +55,10 @@ export function buildNovaSummary(load: Load): string {
     return "Invoiced and ready for payment tracking.";
   }
 
+  if (load.status === "picked_up") {
+    return "Pickup complete. Ready to mark in transit.";
+  }
+
   if (load.status === "in_transit") {
     return "Load in transit. ETA on schedule.";
   }
