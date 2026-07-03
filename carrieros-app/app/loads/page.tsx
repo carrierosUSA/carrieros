@@ -1,13 +1,16 @@
 import Link from "next/link";
-import { Suspense } from "react";
-import PageHeader from "@/components/PageHeader";
 import NovaAlert from "@/components/NovaAlert";
-import LoadCard from "@/components/loads/LoadCard";
-import LoadFilters from "@/components/loads/LoadFilters";
+import OperationalPageShell from "@/components/premium/OperationalPageShell";
+import OperationalTable from "@/components/premium/OperationalTable";
+import PremiumStatusBadge from "@/components/premium/StatusBadge";
+import TablePagination from "@/components/premium/TablePagination";
+import TableToolbar from "@/components/premium/TableToolbar";
 import { getBrokerById } from "@/lib/data/brokers";
 import { getCustomerById } from "@/lib/data/customers";
 import { getDriverById } from "@/lib/data/drivers";
+import { getTruckById } from "@/lib/data/trucks";
 import { getActiveTenantId } from "@/lib/data/tenant";
+import { formatCurrency } from "@/lib/services/loads/load-helpers";
 import { getLoadService } from "@/lib/services/loads";
 import type { Load, LoadStatus } from "@/lib/types";
 import { LOAD_STATUSES } from "@/lib/types";
@@ -28,6 +31,7 @@ function resolveLoadLabels(load: Load) {
     customerName: getCustomerById(load.customerId)?.name ?? "Unknown customer",
     brokerName: load.brokerId ? getBrokerById(load.brokerId)?.name : undefined,
     driverName: load.driverId ? getDriverById(load.driverId)?.name : undefined,
+    truckLabel: load.truckId ? `Unit ${getTruckById(load.truckId)?.unitNumber ?? load.truckId}` : undefined,
   };
 }
 
@@ -37,32 +41,29 @@ export default async function LoadsPage({ searchParams }: LoadsPageProps) {
   const loadService = getLoadService();
   const statusFilter = isLoadStatus(params.status) ? params.status : "all";
 
-  const [loads, counts] = await Promise.all([
-    loadService.listLoads(tenantId, {
-      status: statusFilter,
-      search: params.q,
-    }),
-    loadService.countByStatus(tenantId),
-  ]);
+  const loads = await loadService.listLoads(tenantId, {
+    status: statusFilter,
+    search: params.q,
+  });
 
   const attentionCount = loads.filter(
     (load) => load.complianceStatus === "attention",
   ).length;
 
   return (
-    <>
-      <PageHeader
+    <OperationalPageShell
         title="Dispatch"
         subtitle="Create, assign, and track work across the carrier business."
+        eyebrow="Load Board"
         action={
           <Link
             href="/loads/new"
-            className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
+            className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-300 transition hover:-translate-y-0.5 hover:bg-slate-800"
           >
-            + Create Load
+            Create Load
           </Link>
         }
-      />
+      >
 
       {attentionCount > 0 ? (
         <NovaAlert
@@ -72,32 +73,120 @@ export default async function LoadsPage({ searchParams }: LoadsPageProps) {
         <NovaAlert message="All visible loads are compliant and on track." />
       )}
 
-      <div className="mt-8">
-        <Suspense fallback={<div className="h-24 rounded-xl bg-zinc-900" />}>
-          <LoadFilters counts={counts} />
-        </Suspense>
+      <div className="mt-6 overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.07)]">
+        <TableToolbar
+          title="Loads"
+          resultCount={loads.length}
+          searchPlaceholder="Search loads, drivers, brokers..."
+          filters={["All", "Dispatched", "In Transit", "Delivered", "Attention"]}
+          activeFilter={statusFilter === "all" ? "All" : statusFilter.replace("_", " ")}
+        />
+        <OperationalTable
+          rows={loads}
+          getRowKey={(load) => load.id}
+          getRowHref={(load) => `/loads/${load.id}`}
+          emptyTitle="No loads found"
+          emptyDescription="Adjust filters or create a new load."
+          columns={[
+            {
+              key: "load",
+              label: "Load #",
+              render: (load) => (
+                <span className="font-semibold text-slate-950">{load.reference}</span>
+              ),
+            },
+            {
+              key: "broker",
+              label: "Broker",
+              render: (load) => resolveLoadLabels(load).brokerName ?? "Direct",
+            },
+            {
+              key: "customer",
+              label: "Customer",
+              render: (load) => resolveLoadLabels(load).customerName,
+            },
+            {
+              key: "pickup",
+              label: "Pickup",
+              render: (load) => `${load.origin.city}, ${load.origin.state}`,
+            },
+            {
+              key: "delivery",
+              label: "Delivery",
+              render: (load) => `${load.destination.city}, ${load.destination.state}`,
+            },
+            { key: "equipment", label: "Equipment", render: () => "Dry Van" },
+            {
+              key: "driver",
+              label: "Driver",
+              render: (load) => resolveLoadLabels(load).driverName ?? "Unassigned",
+            },
+            {
+              key: "truck",
+              label: "Truck",
+              render: (load) => resolveLoadLabels(load).truckLabel ?? "Unassigned",
+            },
+            { key: "trailer", label: "Trailer", render: () => "Pending" },
+            {
+              key: "rate",
+              label: "Rate",
+              align: "right",
+              render: (load) => (
+                <span className="font-semibold text-slate-950">
+                  {formatCurrency(load.rate)}
+                </span>
+              ),
+            },
+            {
+              key: "status",
+              label: "Status",
+              render: (load) => (
+                <PremiumStatusBadge
+                  label={load.status.replace("_", " ")}
+                  tone={
+                    load.status === "delivered" || load.status === "invoiced"
+                      ? "green"
+                      : load.status === "pending"
+                        ? "amber"
+                        : "blue"
+                  }
+                />
+              ),
+            },
+            {
+              key: "documents",
+              label: "Documents",
+              render: (load) => (
+                <PremiumStatusBadge
+                  label={load.documentIds.length ? "Uploaded" : "Missing"}
+                  tone={load.documentIds.length ? "green" : "amber"}
+                />
+              ),
+            },
+            {
+              key: "tracking",
+              label: "Tracking",
+              render: (load) => (
+                <PremiumStatusBadge
+                  label={load.trackingEnabled ? "Live" : "Off"}
+                  tone={load.trackingEnabled ? "blue" : "slate"}
+                />
+              ),
+            },
+            {
+              key: "actions",
+              label: "Actions",
+              align: "center",
+              render: (load) => (
+                <Link href={`/loads/${load.id}`} className="font-semibold text-slate-500">
+                  ⋯
+                </Link>
+              ),
+            },
+          ]}
+        />
+        <TablePagination total={loads.length} />
       </div>
-
-      <div className="mt-8 grid gap-5 lg:grid-cols-2">
-        {loads.length > 0 ? (
-          loads.map((load) => (
-            <LoadCard key={load.id} load={load} {...resolveLoadLabels(load)} />
-          ))
-        ) : (
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 lg:col-span-2">
-            <p className="text-lg font-semibold text-zinc-100">No loads found</p>
-            <p className="mt-2 text-sm text-zinc-400">
-              Adjust filters or create a new load to get started.
-            </p>
-            <Link
-              href="/loads/new"
-              className="mt-4 inline-block text-sm font-medium text-blue-400 hover:text-blue-300"
-            >
-              Start Demo Workflow →
-            </Link>
-          </div>
-        )}
-      </div>
-    </>
+    </OperationalPageShell>
   );
 }

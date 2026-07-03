@@ -1,10 +1,15 @@
 import Link from "next/link";
-import Card from "@/components/Card";
-import MetricCard from "@/components/MetricCard";
-import PageHeader from "@/components/PageHeader";
+import OperationalPageShell from "@/components/premium/OperationalPageShell";
+import OperationalTable from "@/components/premium/OperationalTable";
+import PremiumMetricCard from "@/components/premium/MetricCard";
+import PremiumStatusBadge from "@/components/premium/StatusBadge";
+import TablePagination from "@/components/premium/TablePagination";
+import TableToolbar from "@/components/premium/TableToolbar";
+import { getBrokerById } from "@/lib/data/brokers";
+import { getCustomerById } from "@/lib/data/customers";
 import { getActiveTenantId } from "@/lib/data/tenant";
 import { getDocumentService } from "@/lib/services/documents";
-import { formatCurrency, formatLoadLane } from "@/lib/services/loads/load-helpers";
+import { formatCurrency } from "@/lib/services/loads/load-helpers";
 import { getLoadService } from "@/lib/services/loads";
 
 export default async function FinancePage() {
@@ -25,96 +30,89 @@ export default async function FinancePage() {
   );
 
   return (
-    <>
-      <PageHeader
+    <OperationalPageShell
         title="Finance Alpha"
         subtitle="Minimal alpha view for invoice drafts, ready packets, and payment follow-up."
-      />
+        eyebrow="Accounting Operations"
+      >
 
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
-        <MetricCard title="Ready Invoices" value={readyInvoices.length.toString()} />
-        <MetricCard title="Ready Packets" value={readyPackets.length.toString()} />
-        <MetricCard title="Payment Watch" value={paymentRows.length.toString()} />
+        <PremiumMetricCard label="Ready Invoices" value={readyInvoices.length.toString()} detail="Drafted invoices" accent="emerald" />
+        <PremiumMetricCard label="Ready Packets" value={readyPackets.length.toString()} detail="Accounting handoff" accent="blue" />
+        <PremiumMetricCard label="Payment Watch" value={paymentRows.length.toString()} detail="AR follow-up" accent="amber" />
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-3">
-        <Card>
-          <h2 className="font-semibold text-zinc-100">Ready Invoices</h2>
-          <div className="mt-4 space-y-3">
-            {readyInvoices.length ? (
-              readyInvoices.map(({ load, summary }) => (
-                <Link
-                  key={load.id}
-                  href={`/documents/packets/${load.id}`}
-                  className="block rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition hover:border-zinc-700"
-                >
-                  <p className="font-semibold text-zinc-100">
-                    {summary.invoiceDraft?.invoiceNumber}
-                  </p>
-                  <p className="mt-1 text-sm text-zinc-400">
-                    {load.reference} · {formatCurrency(summary.invoiceDraft?.amount ?? load.rate)}
-                  </p>
+      <div className="mt-6 overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.07)]">
+        <TableToolbar
+          title="Invoices & Payments"
+          resultCount={financeRows.length}
+          searchPlaceholder="Search invoice, load, broker..."
+          filters={["All", "Ready", "Pending Payment", "Needs Invoice"]}
+          activeFilter="All"
+          bulkActionLabel="Export"
+        />
+        <OperationalTable
+          rows={financeRows}
+          getRowKey={(row) => row.load.id}
+          getRowHref={(row) => `/documents/packets/${row.load.id}`}
+          emptyTitle="No finance rows yet"
+          emptyDescription="Generate invoice drafts from load packets."
+          columns={[
+            {
+              key: "invoice",
+              label: "Invoice #",
+              render: ({ load, summary }) => (
+                <span className="font-semibold text-slate-950">
+                  {summary.invoiceDraft?.invoiceNumber ?? `INV-${load.reference}`}
+                </span>
+              ),
+            },
+            { key: "load", label: "Load #", render: ({ load }) => load.reference },
+            {
+              key: "party",
+              label: "Broker / Customer",
+              render: ({ load }) =>
+                load.brokerId
+                  ? getBrokerById(load.brokerId)?.name ?? "Unknown broker"
+                  : getCustomerById(load.customerId)?.name ?? "Direct customer",
+            },
+            { key: "rate", label: "Rate", align: "right", render: ({ load }) => formatCurrency(load.rate) },
+            { key: "lumper", label: "Lumper", align: "right", render: () => "$0" },
+            { key: "detention", label: "Detention", align: "right", render: () => "$0" },
+            {
+              key: "total",
+              label: "Total",
+              align: "right",
+              render: ({ load }) => (
+                <span className="font-semibold text-slate-950">{formatCurrency(load.rate)}</span>
+              ),
+            },
+            {
+              key: "payment",
+              label: "Payment Status",
+              render: ({ load }) => (
+                <PremiumStatusBadge
+                  label={load.status === "invoiced" ? "Pending payment" : "Needs invoice"}
+                  tone={load.status === "invoiced" ? "amber" : "slate"}
+                />
+              ),
+            },
+            { key: "due", label: "Due Date", render: ({ load }) => load.deliveryDate },
+            { key: "factoring", label: "Factoring", render: () => "Not submitted" },
+            {
+              key: "actions",
+              label: "Actions",
+              align: "center",
+              render: ({ load }) => (
+                <Link href={`/documents/packets/${load.id}`} className="font-semibold text-slate-500">
+                  ⋯
                 </Link>
-              ))
-            ) : (
-              <p className="text-sm text-zinc-400">
-                No invoice drafts yet. Generate one from a load packet.
-              </p>
-            )}
-          </div>
-        </Card>
-
-        <Card>
-          <h2 className="font-semibold text-zinc-100">Ready Packets</h2>
-          <div className="mt-4 space-y-3">
-            {readyPackets.length ? (
-              readyPackets.map(({ load, summary }) => (
-                <Link
-                  key={load.id}
-                  href={`/documents/packets/${load.id}/send`}
-                  className="block rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition hover:border-zinc-700"
-                >
-                  <p className="font-semibold text-zinc-100">{load.reference}</p>
-                  <p className="mt-1 text-sm text-zinc-400">
-                    {summary.packet?.generatedPdfName ?? "Packet ready for prep"}
-                  </p>
-                </Link>
-              ))
-            ) : (
-              <p className="text-sm text-zinc-400">
-                No packets are ready to send yet.
-              </p>
-            )}
-          </div>
-        </Card>
-
-        <Card>
-          <h2 className="font-semibold text-zinc-100">Payment Status</h2>
-          <div className="mt-4 space-y-3">
-            {paymentRows.length ? (
-              paymentRows.map(({ load }) => (
-                <Link
-                  key={load.id}
-                  href={`/loads/${load.id}`}
-                  className="block rounded-xl border border-zinc-800 bg-zinc-950 p-4 transition hover:border-zinc-700"
-                >
-                  <p className="font-semibold text-zinc-100">{load.reference}</p>
-                  <p className="mt-1 text-sm text-zinc-400">
-                    {formatLoadLane(load)}
-                  </p>
-                  <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-blue-400">
-                    {load.status === "invoiced" ? "Pending payment" : "Needs invoice"}
-                  </p>
-                </Link>
-              ))
-            ) : (
-              <p className="text-sm text-zinc-400">
-                No delivered or invoiced loads are ready for payment follow-up.
-              </p>
-            )}
-          </div>
-        </Card>
+              ),
+            },
+          ]}
+        />
+        <TablePagination total={financeRows.length} />
       </div>
-    </>
+    </OperationalPageShell>
   );
 }
