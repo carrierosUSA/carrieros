@@ -1,4 +1,4 @@
-import { drivers } from "@/lib/data/drivers";
+import { driverStore } from "@/lib/data/driver-store";
 import {
   fuelStore,
   maintenanceStore,
@@ -29,7 +29,7 @@ function getTenantTrailer(tenantId: string, trailerId: string) {
 
 export const mockFleetService: FleetService = {
   async listDrivers(tenantId) {
-    return drivers.filter((driver) => driver.tenantId === tenantId);
+    return driverStore.filter((driver) => driver.tenantId === tenantId);
   },
 
   async listTrucks(tenantId) {

@@ -2,6 +2,20 @@ export type { TenantEntity, ComplianceStatus, Company } from "@/lib/types/base";
 export type { Customer, Broker } from "@/lib/types/parties";
 export type {
   Driver,
+  DriverStatus,
+  DriverPayType,
+  DriverLicenseRecord,
+  DriverMedicalRecord,
+  DriverPayrollRecord,
+  DriverPerformanceMetric,
+  DriverSafetyEvent,
+  DriverSafetySeverity,
+  DriverTimelineEvent,
+  DriverDocument,
+  DriverTimeOff,
+  DriverTimeOffStatus,
+} from "@/lib/types/driver";
+export type {
   Truck,
   TruckStatus,
   Trailer,
@@ -17,6 +31,11 @@ export type {
   LoadStop,
   LoadTimelineEvent,
 } from "@/lib/types/load";
+export {
+  DRIVER_STATUSES,
+  DRIVER_STATUS_LABELS,
+  DRIVER_PAY_TYPE_LABELS,
+} from "@/lib/types/driver";
 export {
   TRUCK_STATUSES,
   TRUCK_STATUS_LABELS,
