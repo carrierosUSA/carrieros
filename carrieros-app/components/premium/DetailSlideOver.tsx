@@ -48,7 +48,7 @@ export default function DetailSlideOver({
   children,
 }: DetailSlideOverProps) {
   return (
-    <div className="fixed inset-0 z-40 lg:left-[88px]">
+    <div className="fixed inset-0 z-40 lg:left-[72px]">
       <Link
         href={closeHref}
         className="absolute inset-0 bg-slate-900/20 backdrop-blur-[1px]"

@@ -55,7 +55,7 @@ function NavIcon({ icon }: { icon: string }) {
   };
   const Icon = icons[icon as keyof typeof icons] ?? Command;
 
-  return <Icon className="h-[18px] w-[18px]" strokeWidth={1.9} />;
+  return <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.9} />;
 }
 
 export default function Sidebar() {
@@ -66,18 +66,12 @@ export default function Sidebar() {
   );
 
   return (
-    <aside className="group/sidebar relative z-30 w-full shrink-0 overflow-hidden border-b border-[#DDE2EA] bg-white px-3 py-4 shadow-[0_8px_26px_rgba(15,23,42,0.045)] lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-[88px] lg:flex-col lg:border-b-0 lg:border-r lg:px-3 lg:py-5 lg:transition-[width] lg:duration-300 lg:hover:w-[230px]">
-      <div className="mb-5 flex items-center justify-between">
+    <aside className="group/sidebar relative z-30 flex w-full shrink-0 flex-col overflow-hidden border-b border-[#DDE2EA] bg-white py-4 shadow-[0_8px_26px_rgba(15,23,42,0.045)] lg:sticky lg:top-0 lg:h-screen lg:w-[72px] lg:border-b-0 lg:border-r lg:px-2 lg:py-5 lg:transition-[width] lg:duration-300 lg:hover:w-[220px] lg:hover:px-3">
+      <div className="mb-5 px-2 lg:mb-6 lg:px-0">
         <Brand />
-        <button
-          type="button"
-          className="hidden rounded-lg border border-[#DDE2EA] px-2 py-1 text-xs font-semibold text-slate-500 opacity-0 transition group-hover/sidebar:opacity-100 hover:border-blue-200 hover:text-slate-900 lg:block"
-        >
-          ⌘
-        </button>
       </div>
 
-      <nav className="flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-1.5 lg:overflow-visible lg:pb-0">
+      <nav className="flex min-h-0 flex-1 gap-2 overflow-x-auto px-2 pb-1 lg:block lg:space-y-1 lg:overflow-y-auto lg:overflow-x-hidden lg:px-0 lg:pb-0">
         {visibleNavItems.map((item) => {
           const isActive = isActiveRoute(pathname, item.href);
 
@@ -85,22 +79,17 @@ export default function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
-              className={`group flex shrink-0 items-center gap-2.5 rounded-full px-2.5 py-2 text-[13px] font-medium transition duration-200 ${
+              title={item.name}
+              className={`flex h-10 shrink-0 items-center rounded-xl text-[13px] font-semibold transition duration-200 lg:w-full lg:justify-center lg:group-hover/sidebar:justify-start lg:px-2 lg:group-hover/sidebar:px-3 ${
                 isActive
-                  ? "border border-blue-100 bg-blue-50 text-[#2563EB] shadow-sm"
-                  : "text-slate-600 hover:bg-[#F5F7FA] hover:text-[#111827]"
+                  ? "bg-[#2563EB] text-white shadow-[0_8px_18px_rgba(37,99,235,0.28)]"
+                  : "text-[#475569] hover:bg-[#F5F7FA] hover:text-[#111827]"
               }`}
             >
-              <span
-                className={`grid h-7 w-7 place-items-center rounded-full transition ${
-                  isActive
-                    ? "bg-[#2563EB] text-white"
-                    : "bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600"
-                }`}
-              >
+              <span className="grid h-[18px] w-[18px] shrink-0 place-items-center">
                 <NavIcon icon={item.icon} />
               </span>
-              <span className="whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover/sidebar:opacity-100">
+              <span className="ml-2.5 whitespace-nowrap lg:ml-0 lg:max-w-0 lg:overflow-hidden lg:opacity-0 lg:transition-all lg:duration-200 lg:group-hover/sidebar:ml-2.5 lg:group-hover/sidebar:max-w-[160px] lg:group-hover/sidebar:opacity-100">
                 {item.name}
               </span>
             </Link>
@@ -108,14 +97,16 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-auto hidden rounded-[14px] border border-[#DDE2EA] bg-[#F5F7FA] p-3 opacity-0 transition-opacity duration-200 group-hover/sidebar:opacity-100 lg:block">
-        <p className="text-sm font-semibold text-slate-950">Nova Command</p>
-        <p className="mt-1 text-xs leading-5 text-slate-600">
-          Priorities, exceptions, compliance, payroll, and cash flow.
-        </p>
-        <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-700">
-          Role: {session.role.replace("_", " ")}
-        </p>
+      <div className="mt-4 hidden px-0 lg:mt-auto lg:block lg:max-w-0 lg:overflow-hidden lg:opacity-0 lg:transition-all lg:duration-200 lg:group-hover/sidebar:max-w-none lg:group-hover/sidebar:opacity-100">
+        <div className="rounded-[14px] border border-[#DDE2EA] bg-[#F8F9FB] p-3">
+          <p className="text-sm font-semibold text-[#111827]">Nova Command</p>
+          <p className="mt-1 text-xs leading-5 text-[#6B7280]">
+            Priorities, exceptions, compliance, payroll, and cash flow.
+          </p>
+          <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#2563EB]">
+            Role: {session.role.replace("_", " ")}
+          </p>
+        </div>
       </div>
     </aside>
   );
