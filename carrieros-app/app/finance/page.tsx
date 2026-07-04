@@ -1,4 +1,5 @@
 import Link from "next/link";
+import DetailSlideOver, { DetailGrid, DetailSection } from "@/components/premium/DetailSlideOver";
 import OperationalPageShell from "@/components/premium/OperationalPageShell";
 import OperationalTable from "@/components/premium/OperationalTable";
 import PremiumMetricCard from "@/components/premium/MetricCard";
@@ -12,7 +13,12 @@ import { getDocumentService } from "@/lib/services/documents";
 import { formatCurrency } from "@/lib/services/loads/load-helpers";
 import { getLoadService } from "@/lib/services/loads";
 
-export default async function FinancePage() {
+type FinancePageProps = {
+  searchParams: Promise<{ details?: string }>;
+};
+
+export default async function FinancePage({ searchParams }: FinancePageProps) {
+  const params = await searchParams;
   const tenantId = getActiveTenantId();
   const loadService = getLoadService();
   const documentService = getDocumentService();
@@ -28,6 +34,28 @@ export default async function FinancePage() {
   const paymentRows = financeRows.filter((row) =>
     ["delivered", "invoiced"].includes(row.load.status),
   );
+  const accountingSections = [
+    "Invoices",
+    "Payments",
+    "Factoring",
+    "Outstanding AR",
+    "Payroll",
+    "Settlements",
+    "1099",
+    "W2",
+    "Year-End Reports",
+    "Cash Flow",
+    "Profit",
+    "Expenses",
+  ];
+  const selectedInvoice = params.details
+    ? financeRows.find((row) => row.load.id === params.details)
+    : undefined;
+  const selectedParty = selectedInvoice
+    ? selectedInvoice.load.brokerId
+      ? getBrokerById(selectedInvoice.load.brokerId)?.name ?? "Unknown broker"
+      : getCustomerById(selectedInvoice.load.customerId)?.name ?? "Direct customer"
+    : undefined;
 
   return (
     <OperationalPageShell
@@ -36,13 +64,24 @@ export default async function FinancePage() {
         eyebrow="Accounting Operations"
       >
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-3">
         <PremiumMetricCard label="Ready Invoices" value={readyInvoices.length.toString()} detail="Drafted invoices" accent="emerald" />
         <PremiumMetricCard label="Ready Packets" value={readyPackets.length.toString()} detail="Accounting handoff" accent="blue" />
         <PremiumMetricCard label="Payment Watch" value={paymentRows.length.toString()} detail="AR follow-up" accent="amber" />
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.07)]">
+      <div className="grid gap-2 rounded-[14px] border border-[#E5E7EB] bg-[#F8F9FB] p-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+        {accountingSections.map((section) => (
+          <div
+            key={section}
+            className="rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-sm font-semibold text-slate-700"
+          >
+            {section}
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 overflow-hidden rounded-[14px] border border-[#E5E7EB] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
         <TableToolbar
           title="Invoices & Payments"
           resultCount={financeRows.length}
@@ -54,7 +93,7 @@ export default async function FinancePage() {
         <OperationalTable
           rows={financeRows}
           getRowKey={(row) => row.load.id}
-          getRowHref={(row) => `/documents/packets/${row.load.id}`}
+          getRowHref={(row) => `/finance?details=${row.load.id}`}
           emptyTitle="No finance rows yet"
           emptyDescription="Generate invoice drafts from load packets."
           columns={[
@@ -103,16 +142,47 @@ export default async function FinancePage() {
               key: "actions",
               label: "Actions",
               align: "center",
-              render: ({ load }) => (
-                <Link href={`/documents/packets/${load.id}`} className="font-semibold text-slate-500">
-                  ⋯
-                </Link>
-              ),
+              render: () => <span className="font-semibold text-slate-500">Open</span>,
             },
           ]}
         />
         <TablePagination total={financeRows.length} />
       </div>
+      {selectedInvoice ? (
+        <DetailSlideOver
+          title={selectedInvoice.summary.invoiceDraft?.invoiceNumber ?? `INV-${selectedInvoice.load.reference}`}
+          subtitle={`${selectedParty} · ${formatCurrency(selectedInvoice.summary.invoiceDraft?.amount ?? selectedInvoice.load.rate)}`}
+          closeHref="/finance"
+        >
+          <DetailSection title="Invoice Details">
+            <DetailGrid
+              items={[
+                { label: "Broker / Customer", value: selectedParty },
+                { label: "Amount", value: formatCurrency(selectedInvoice.summary.invoiceDraft?.amount ?? selectedInvoice.load.rate) },
+                { label: "Load", value: selectedInvoice.load.reference },
+                { label: "Status", value: selectedInvoice.load.status === "invoiced" ? "Pending payment" : "Needs invoice" },
+                { label: "Due Date", value: selectedInvoice.load.deliveryDate },
+                { label: "Factoring", value: "Not submitted" },
+              ]}
+            />
+          </DetailSection>
+          <DetailSection title="Payment History">
+            <div className="space-y-2 text-sm text-slate-700">
+              <div className="rounded-xl border border-[#E5E7EB] bg-white px-3 py-2">Invoice draft prepared</div>
+              <div className="rounded-xl border border-[#E5E7EB] bg-white px-3 py-2">Packet status: {selectedInvoice.summary.readyToSend ? "Ready to send" : "Missing documents"}</div>
+              <div className="rounded-xl border border-[#E5E7EB] bg-white px-3 py-2">Payment status: Pending</div>
+            </div>
+          </DetailSection>
+          <DetailSection title="Documents & Notes">
+            <p className="text-sm leading-6 text-slate-600">
+              Connect invoice, packet, POD, rate confirmation, factoring, and payment notes from one finance detail view.
+            </p>
+            <Link href={`/documents/packets/${selectedInvoice.load.id}`} className="mt-3 inline-block text-sm font-semibold text-blue-600">
+              Open packet
+            </Link>
+          </DetailSection>
+        </DetailSlideOver>
+      ) : null}
     </OperationalPageShell>
   );
 }

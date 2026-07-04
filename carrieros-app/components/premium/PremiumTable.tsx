@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type PremiumTableColumn<T> = {
   key: string;
   label: string;
@@ -19,9 +21,9 @@ export default function PremiumTable<T>({
   getRowKey,
 }: PremiumTableProps<T>) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200/75">
+    <div className="overflow-hidden rounded-[14px] border border-[#DDE2EA] shadow-[0_8px_22px_rgba(15,23,42,0.04)]">
       <table className="w-full border-collapse bg-white text-sm">
-        <thead className="bg-slate-50 text-xs uppercase tracking-[0.14em] text-slate-400">
+        <thead className="bg-[#F8F9FB] text-[11px] uppercase tracking-[0.14em] text-[#6B7280]">
           <tr>
             {columns.map((column) => (
               <th
@@ -35,17 +37,21 @@ export default function PremiumTable<T>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody className="divide-y divide-[#E5E7EB] text-slate-700">
           {rows.map((row) => {
             const href = getRowHref?.(row);
             const content = columns.map((column) => (
               <td
                 key={column.key}
-                className={`px-4 py-4 ${
-                  column.align === "right" ? "text-right" : "text-left"
-                }`}
+                className={`p-0 ${column.align === "right" ? "text-right" : "text-left"}`}
               >
-                {column.render(row)}
+                {href ? (
+                  <Link href={href} className="block px-4 py-3.5">
+                    {column.render(row)}
+                  </Link>
+                ) : (
+                  <div className="px-4 py-3.5">{column.render(row)}</div>
+                )}
               </td>
             ));
 
@@ -53,7 +59,7 @@ export default function PremiumTable<T>({
               return (
                 <tr
                   key={getRowKey(row)}
-                  className="cursor-pointer transition hover:bg-slate-50"
+                  className="cursor-pointer transition duration-150 hover:bg-blue-50/70"
                 >
                   {content}
                 </tr>
@@ -61,7 +67,7 @@ export default function PremiumTable<T>({
             }
 
             return (
-              <tr key={getRowKey(row)} className="transition hover:bg-slate-50">
+              <tr key={getRowKey(row)} className="transition duration-150 hover:bg-blue-50/70">
                 {content}
               </tr>
             );

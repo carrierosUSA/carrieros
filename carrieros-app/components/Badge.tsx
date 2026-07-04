@@ -4,10 +4,10 @@ type BadgeProps = {
 };
 
 const typeStyles: Record<NonNullable<BadgeProps["type"]>, string> = {
-  success: "border-green-800 bg-green-950 text-green-400",
-  warning: "border-amber-800 bg-amber-950 text-amber-400",
-  danger: "border-red-800 bg-red-950 text-red-400",
-  default: "border-zinc-700 bg-zinc-900 text-zinc-300",
+  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  warning: "border-amber-200 bg-amber-50 text-amber-700",
+  danger: "border-rose-200 bg-rose-50 text-rose-700",
+  default: "border-slate-200 bg-slate-50 text-slate-600",
 };
 
 export default function Badge({ text, type = "default" }: BadgeProps) {

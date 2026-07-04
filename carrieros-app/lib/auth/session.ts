@@ -4,6 +4,8 @@ export type CarrierOSRole =
   | "owner"
   | "dispatcher"
   | "driver"
+  | "safety"
+  | "mechanic"
   | "fleet_manager"
   | "broker"
   | "customer"

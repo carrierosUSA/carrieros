@@ -26,17 +26,17 @@ export default function OperationalTable<T>({
 }: OperationalTableProps<T>) {
   if (rows.length === 0) {
     return (
-      <div className="rounded-b-[1.5rem] bg-white p-10 text-center">
-        <p className="text-lg font-semibold text-slate-950">{emptyTitle}</p>
-        <p className="mt-2 text-sm text-slate-500">{emptyDescription}</p>
+      <div className="rounded-b-[16px] bg-white p-8 text-center">
+        <p className="text-lg font-semibold text-[#111827]">{emptyTitle}</p>
+        <p className="mt-2 text-sm text-[#6B7280]">{emptyDescription}</p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-b-[1.5rem] bg-white">
+    <div className="overflow-x-auto bg-white">
       <table className="min-w-full border-collapse text-sm">
-        <thead className="border-b border-slate-200 bg-slate-50/80 text-xs uppercase tracking-[0.14em] text-slate-400">
+        <thead className="border-b border-[#DDE2EA] bg-[#F5F7FA] text-xs uppercase tracking-[0.14em] text-[#6B7280]">
           <tr>
             {columns.map((column) => (
               <th
@@ -54,21 +54,22 @@ export default function OperationalTable<T>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody className="divide-y divide-[#DDE2EA]">
           {rows.map((row) => {
             const href = getRowHref?.(row);
 
             return (
               <tr
                 key={getRowKey(row)}
-                className="group transition hover:bg-blue-50/40"
+                className={`group transition hover:bg-blue-50/60 ${href ? "cursor-pointer" : ""}`}
               >
-                {columns.map((column, index) => {
+                {columns.map((column) => {
                   const content = column.render(row);
-                  const cell = (
+
+                  return (
                     <td
                       key={column.key}
-                      className={`whitespace-nowrap px-4 py-4 text-slate-700 ${
+                      className={`whitespace-nowrap p-0 text-slate-800 ${
                         column.align === "right"
                           ? "text-right"
                           : column.align === "center"
@@ -76,24 +77,15 @@ export default function OperationalTable<T>({
                             : "text-left"
                       }`}
                     >
-                      {content}
-                    </td>
-                  );
-
-                  if (href && index === 0) {
-                    return (
-                      <td
-                        key={column.key}
-                        className="whitespace-nowrap px-4 py-4 text-left"
-                      >
-                        <Link href={href} className="block">
+                      {href ? (
+                        <Link href={href} className="block px-4 py-3">
                           {content}
                         </Link>
-                      </td>
-                    );
-                  }
-
-                  return cell;
+                      ) : (
+                        <div className="px-4 py-3">{content}</div>
+                      )}
+                    </td>
+                  );
                 })}
               </tr>
             );

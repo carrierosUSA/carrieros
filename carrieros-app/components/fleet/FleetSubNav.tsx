@@ -9,6 +9,8 @@ const fleetLinks = [
   { name: "Trailers", href: "/fleet/trailers" },
   { name: "Maintenance", href: "/fleet/maintenance" },
   { name: "Fuel History", href: "/fleet/fuel" },
+  { name: "Roadside Assistance", href: "/marketplace" },
+  { name: "Marketplace", href: "/marketplace" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -33,8 +35,8 @@ export default function FleetSubNav() {
             href={link.href}
             className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
               active
-                ? "border-blue-500 bg-blue-600 text-white"
-                : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-800"
+                ? "border-[#2563EB] bg-[#2563EB] text-white"
+                : "border-[#E5E7EB] bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-slate-950"
             }`}
           >
             {link.name}

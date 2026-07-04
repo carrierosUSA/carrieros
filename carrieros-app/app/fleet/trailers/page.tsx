@@ -1,5 +1,6 @@
 import Link from "next/link";
 import FleetSubNav from "@/components/fleet/FleetSubNav";
+import DetailSlideOver, { DetailGrid, DetailSection } from "@/components/premium/DetailSlideOver";
 import OperationalPageShell from "@/components/premium/OperationalPageShell";
 import OperationalTable from "@/components/premium/OperationalTable";
 import PremiumMetricCard from "@/components/premium/MetricCard";
@@ -10,10 +11,21 @@ import { getTruckById } from "@/lib/data/fleet-store";
 import { getActiveTenantId } from "@/lib/data/tenant";
 import { getFleetService } from "@/lib/services/fleet";
 
-export default async function TrailersPage() {
+type TrailersPageProps = {
+  searchParams: Promise<{ details?: string }>;
+};
+
+export default async function TrailersPage({ searchParams }: TrailersPageProps) {
+  const params = await searchParams;
   const tenantId = getActiveTenantId();
   const trailers = await getFleetService().listTrailers(tenantId);
   const availableCount = trailers.filter((trailer) => trailer.status === "available").length;
+  const selectedTrailer = params.details
+    ? trailers.find((trailer) => trailer.id === params.details)
+    : undefined;
+  const selectedTruck = selectedTrailer?.truckId
+    ? getTruckById(selectedTrailer.truckId)
+    : undefined;
 
   return (
     <OperationalPageShell
@@ -23,7 +35,7 @@ export default async function TrailersPage() {
         action={
           <Link
             href="/fleet/trailers/new"
-            className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-300 transition hover:-translate-y-0.5 hover:bg-slate-800"
+            className="rounded-xl bg-[#2563EB] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-100 transition hover:-translate-y-0.5 hover:bg-blue-500"
           >
             Add Trailer
           </Link>
@@ -45,7 +57,7 @@ export default async function TrailersPage() {
         />
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.07)]">
+      <div className="mt-4 overflow-hidden rounded-[14px] border border-[#E5E7EB] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
         <TableToolbar
           title="Trailers"
           resultCount={trailers.length}
@@ -56,7 +68,7 @@ export default async function TrailersPage() {
         <OperationalTable
           rows={trailers}
           getRowKey={(trailer) => trailer.id}
-          getRowHref={() => "/fleet/trailers"}
+          getRowHref={(trailer) => `/fleet/trailers?details=${trailer.id}`}
           columns={[
             { key: "unit", label: "Unit #", render: (trailer) => <span className="font-semibold text-slate-950">{trailer.unitNumber}</span> },
             { key: "type", label: "Type", render: (trailer) => trailer.type },
@@ -91,13 +103,38 @@ export default async function TrailersPage() {
               align: "center",
               render: (trailer) => {
                 const truck = trailer.truckId ? getTruckById(trailer.truckId) : undefined;
-                return truck ? `Unit ${truck.unitNumber}` : "⋯";
+                return truck ? `Unit ${truck.unitNumber}` : "Open";
               },
             },
           ]}
         />
         <TablePagination total={trailers.length} />
       </div>
+      {selectedTrailer ? (
+        <DetailSlideOver
+          title={`Trailer ${selectedTrailer.unitNumber}`}
+          subtitle={`${selectedTrailer.type} · ${selectedTrailer.status}`}
+          closeHref="/fleet/trailers"
+        >
+          <DetailSection title="Trailer Profile">
+            <DetailGrid
+              items={[
+                { label: "Unit #", value: selectedTrailer.unitNumber },
+                { label: "Type", value: selectedTrailer.type },
+                { label: "License Plate", value: selectedTrailer.licensePlate },
+                { label: "Assigned Truck", value: selectedTruck ? `Unit ${selectedTruck.unitNumber}` : "Unassigned" },
+                { label: "Location", value: selectedTrailer.location ?? "Unknown" },
+                { label: "Status", value: selectedTrailer.status.replace("_", " ") },
+              ]}
+            />
+          </DetailSection>
+          <DetailSection title="Documents & Notes">
+            <p className="text-sm leading-6 text-slate-600">
+              Registration, insurance, inspection photos, maintenance notes, and assignment history stay attached to this trailer record.
+            </p>
+          </DetailSection>
+        </DetailSlideOver>
+      ) : null}
     </OperationalPageShell>
   );
 }

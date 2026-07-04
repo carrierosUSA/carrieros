@@ -11,20 +11,20 @@ export default function TablePagination({
   const end = Math.min(total, pageSize);
 
   return (
-    <div className="flex flex-col gap-3 rounded-b-[1.5rem] border-t border-slate-200 bg-white px-5 py-4 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-b-[14px] border-t border-[#E5E7EB] bg-[#F8F9FB] px-4 py-3 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
       <p>
         Showing {start}-{end} of {total}
       </p>
       <div className="flex gap-2">
         <button
           type="button"
-          className="rounded-xl border border-slate-200 px-3 py-2 font-medium text-slate-500"
+          className="rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 font-medium text-slate-500"
         >
           Previous
         </button>
         <button
           type="button"
-          className="rounded-xl border border-slate-200 px-3 py-2 font-medium text-slate-700"
+          className="rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 font-medium text-slate-700"
         >
           Next
         </button>

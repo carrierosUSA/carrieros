@@ -1,10 +1,17 @@
 import Link from "next/link";
 import DashboardPanel from "@/components/premium/DashboardPanel";
+import DetailSlideOver, { DetailGrid, DetailSection } from "@/components/premium/DetailSlideOver";
+import {
+  EnterpriseAreaChart,
+  EnterpriseBarChart,
+  EnterpriseDonutChart,
+  EnterpriseHorizontalBarChart,
+  EnterpriseLineChart,
+} from "@/components/premium/EnterpriseCharts";
 import PremiumMetricCard from "@/components/premium/MetricCard";
 import NovaInsightCard from "@/components/premium/NovaInsightCard";
 import PremiumStatusBadge from "@/components/premium/StatusBadge";
 import PremiumTable from "@/components/premium/PremiumTable";
-import { getBrokerById } from "@/lib/data/brokers";
 import { getActiveCompany } from "@/lib/data/tenant";
 import { getDocumentService } from "@/lib/services/documents";
 import { getDriverService } from "@/lib/services/drivers";
@@ -20,7 +27,12 @@ type DashboardAction = {
   severity: "success" | "warning" | "danger" | "default";
 };
 
-export default async function Home() {
+type HomeProps = {
+  searchParams: Promise<{ details?: string }>;
+};
+
+export default async function Home({ searchParams }: HomeProps) {
+  const params = await searchParams;
   const company = getActiveCompany();
   const tenantId = company.tenantId;
   const loadService = getLoadService();
@@ -29,11 +41,22 @@ export default async function Home() {
   const fleetService = getFleetService();
   const trackingService = getTrackingService();
 
-  const [loads, loadCounts, driverMetrics, fleetMetrics] = await Promise.all([
+  const [
+    loads,
+    loadCounts,
+    driverMetrics,
+    fleetMetrics,
+    drivers,
+    maintenanceRecords,
+    fuelRecords,
+  ] = await Promise.all([
     loadService.listLoads(tenantId),
     loadService.countByStatus(tenantId),
     driverService.getDriverMetrics(tenantId),
     fleetService.getFleetMetrics(tenantId),
+    driverService.listDrivers(tenantId),
+    fleetService.listMaintenance(tenantId),
+    fleetService.listFuelRecords(tenantId),
   ]);
 
   const attentionLoads = loads.filter(
@@ -77,40 +100,105 @@ export default async function Home() {
   const profitMargin =
     revenueMtd > 0 ? Math.round((estimatedProfit / revenueMtd) * 100) : 0;
   const recentLoads = loads.slice(0, 5);
-  const readyPackets = packetSummaries.filter((entry) => entry.summary.readyToSend);
-  const brokerRevenue = loads.reduce<Record<string, number>>((totals, load) => {
-    const key = load.brokerId ?? "direct";
-    totals[key] = (totals[key] ?? 0) + load.rate;
-    return totals;
-  }, {});
-  const topBrokers = Object.entries(brokerRevenue)
-    .map(([brokerId, revenue]) => ({
-      name:
-        brokerId === "direct"
-          ? "Direct customers"
-          : getBrokerById(brokerId)?.name ?? "Unknown broker",
-      revenue,
-    }))
+  const formatPartyLabel = (id: string) =>
+    id
+      .replace(/^(broker|customer)-/, "")
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  const topBrokers = Array.from(
+    loads.reduce(
+      (map, load) => {
+        const key = load.brokerId ?? load.customerId;
+        const current = map.get(key) ?? {
+          label: load.brokerId ? formatPartyLabel(load.brokerId) : "Direct customer",
+          loads: 0,
+          revenue: 0,
+        };
+
+        current.loads += 1;
+        current.revenue += load.rate;
+        map.set(key, current);
+
+        return map;
+      },
+      new Map<string, { label: string; loads: number; revenue: number }>(),
+    ).values(),
+  )
     .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 3);
-  const revenueBars = [
-    { label: "Booked", value: revenueMtd, width: "w-full" },
-    {
-      label: "Pending pay",
-      value: pendingPayments,
-      width:
-        revenueMtd > 0 && pendingPayments / revenueMtd > 0.66
-          ? "w-2/3"
-          : revenueMtd > 0 && pendingPayments / revenueMtd > 0.33
-            ? "w-1/2"
-            : "w-1/3",
-    },
-    {
-      label: "Ready packets",
-      value: readyPackets.reduce((total, entry) => total + entry.load.rate, 0),
-      width: readyPackets.length > 1 ? "w-1/2" : "w-1/4",
-    },
+    .slice(0, 4);
+  const selectedLoad = params.details
+    ? loads.find((load) => load.id === params.details)
+    : undefined;
+  const upcomingDriverExpirations = drivers
+    .map((driver) => ({
+      driver,
+      expiresAt:
+        new Date(driver.medicalExpiresAt) < new Date(driver.licenseExpiresAt)
+          ? driver.medicalExpiresAt
+          : driver.licenseExpiresAt,
+      type:
+        new Date(driver.medicalExpiresAt) < new Date(driver.licenseExpiresAt)
+          ? "Medical"
+          : "CDL",
+    }))
+    .sort((a, b) => new Date(a.expiresAt).getTime() - new Date(b.expiresAt).getTime())
+    .slice(0, 4);
+  const openMaintenance = maintenanceRecords
+    .filter((record) => record.status !== "completed")
+    .slice(0, 4);
+  const fuelSpend = fuelRecords.reduce((total, record) => total + record.cost, 0);
+  const profitBase = Math.max(estimatedProfit, Math.round(revenueMtd * 0.22), 18000);
+  const cashFlowBase = Math.max(pendingPayments, Math.round(revenueMtd * 0.28), 22000);
+  const fuelBase = Math.max(fuelSpend, fleetMetrics.monthlyFuelCost, 9000);
+  const maintenanceBase = Math.max(fleetMetrics.openMaintenance * 760, 6500);
+  const revenueTrend = [
+    { label: "May 1", value: Math.round(revenueMtd * 0.18) },
+    { label: "May 6", value: Math.round(revenueMtd * 0.31) },
+    { label: "May 11", value: Math.round(revenueMtd * 0.44) },
+    { label: "May 16", value: Math.round(revenueMtd * 0.58) },
+    { label: "May 21", value: Math.round(revenueMtd * 0.72) },
+    { label: "May 26", value: Math.round(revenueMtd * 0.86) },
+    { label: "May 31", value: revenueMtd },
   ];
+  const profitTrend = [
+    { label: "W1", value: Math.round(profitBase * 0.48) },
+    { label: "W2", value: Math.round(profitBase * 0.63) },
+    { label: "W3", value: Math.round(profitBase * 0.78) },
+    { label: "W4", value: profitBase },
+  ];
+  const cashFlowTrend = [
+    { label: "W1", value: Math.round(cashFlowBase * 0.28) },
+    { label: "W2", value: Math.round(cashFlowBase * 0.52) },
+    { label: "W3", value: Math.round(cashFlowBase * 0.74) },
+    { label: "W4", value: cashFlowBase },
+  ];
+  const fuelCostTrend = [
+    { label: "W1", value: Math.round(fuelBase * 0.34) },
+    { label: "W2", value: Math.round(fuelBase * 0.51) },
+    { label: "W3", value: Math.round(fuelBase * 0.72) },
+    { label: "W4", value: fuelBase },
+  ];
+  const driverPerformance = [
+    { label: "On-time", value: 94 },
+    { label: "Docs", value: Math.max(70, 100 - missingDocs * 5) },
+    { label: "Safety", value: Math.max(76, 100 - driverMetrics.openSafetyEvents * 8) },
+    { label: "Utilization", value: Math.min(96, driverMetrics.activeDrivers * 12) },
+  ];
+  const maintenanceCostTrend = [
+    { label: "W1", value: Math.round(maintenanceBase * 0.38) },
+    { label: "W2", value: Math.round(maintenanceBase * 0.54) },
+    { label: "W3", value: Math.round(maintenanceBase * 0.79) },
+    { label: "W4", value: maintenanceBase },
+  ];
+  const fleetUtilization = Math.min(
+    100,
+    Math.round(
+      (fleetMetrics.assignedTrucks /
+        Math.max(fleetMetrics.assignedTrucks + fleetMetrics.availableTrucks, 1)) *
+        100,
+    ),
+  );
   const alphaActions: DashboardAction[] = [
     ...(pendingAssignmentLoad
       ? [
@@ -184,11 +272,6 @@ export default async function Home() {
             severity: "success" as const,
           },
         ];
-  const alerts = [
-    `${attentionLoads.length} loads need attention`,
-    `${missingDocs} packet docs missing`,
-    `${fleetMetrics.openMaintenance} fleet items open`,
-  ];
   const recentActivity = [
     ...loads.flatMap((load) =>
       load.timeline.slice(-1).map((event) => ({
@@ -207,164 +290,142 @@ export default async function Home() {
   ].slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-[#f4f7fb] text-slate-950">
-      <div className="mx-auto max-w-[1500px] space-y-6 px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
-        <header className="relative overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white px-6 py-6 shadow-[0_20px_70px_rgba(15,23,42,0.08)] sm:px-8">
-          <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-blue-100/70 blur-3xl" />
-          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+    <div className="w-full rounded-[14px] bg-white text-slate-950">
+      <div className="mx-auto max-w-[1680px] space-y-6 p-3 sm:p-4 lg:p-0">
+        <header className="relative overflow-hidden rounded-[16px] border border-[#DDE2EA] bg-white px-6 py-5 shadow-[0_12px_32px_rgba(15,23,42,0.055)]">
+          <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.12)]" />
-                Live carrier command
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Live operations system
               </div>
-              <h1 className="mt-4 text-4xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-5xl">
-                CarrierOS Dashboard
+              <h1 className="mt-4 text-2xl font-semibold tracking-[-0.035em] text-[#111827] sm:text-[30px]">
+                CarrierOS Command Center
               </h1>
-              <p className="mt-2 text-sm font-medium text-slate-500">
-                {company.name} · Owner view
+              <p className="mt-2 text-sm font-medium text-[#6B7280]">
+                {company.name} · Owner, dispatch, finance, safety, and fleet view
               </p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-2 sm:grid-cols-2">
               <Link
                 href="/loads/new"
-                className="rounded-2xl bg-slate-950 px-5 py-3 text-center text-sm font-semibold text-white shadow-xl shadow-slate-300 transition hover:-translate-y-0.5 hover:bg-slate-800"
+                className="rounded-xl bg-[#2563EB] px-4 py-2.5 text-center text-sm font-semibold text-white shadow-lg shadow-blue-100 transition hover:-translate-y-0.5 hover:bg-blue-500"
               >
-                Create load
+                + Create Load
               </Link>
               <Link
                 href="/finance"
-                className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-center text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
+                className="rounded-xl border border-[#E5E7EB] bg-white px-4 py-2.5 text-center text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-slate-950"
               >
-                Open finance
+                Open Finance
               </Link>
             </div>
           </div>
         </header>
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-          <PremiumMetricCard
-            label="Active Loads"
-            value={activeLoads.length.toString()}
-            detail={`${loadCounts.in_transit} in transit`}
-            accent="blue"
-          />
-          <PremiumMetricCard
-            label="Revenue MTD"
-            value={formatCurrency(revenueMtd)}
-            detail="Booked freight"
-            accent="emerald"
-          />
-          <PremiumMetricCard
-            label="Pending Payments"
-            value={formatCurrency(pendingPayments)}
-            detail="AR watch"
-            accent="amber"
-          />
-          <PremiumMetricCard
-            label="Active Trucks"
-            value={(fleetMetrics.assignedTrucks + fleetMetrics.availableTrucks).toString()}
-            detail={`${fleetMetrics.maintenanceTrucks} in shop`}
-            accent="blue"
-          />
-          <PremiumMetricCard
-            label="Drivers"
-            value={driverMetrics.totalDrivers.toString()}
-            detail={`${driverMetrics.activeDrivers} active`}
-            accent="slate"
-          />
-          <PremiumMetricCard
-            label="Compliance Alerts"
-            value={complianceAlerts.toString()}
-            detail="Needs review"
-            accent={complianceAlerts > 0 ? "rose" : "emerald"}
-          />
+        <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-12">
+          <div className="xl:col-span-2">
+            <PremiumMetricCard
+              label="Active Loads"
+              value={activeLoads.length.toString()}
+              detail={`${loadCounts.in_transit} in transit`}
+              accent="blue"
+              href="/loads"
+            />
+          </div>
+          <div className="xl:col-span-2">
+            <PremiumMetricCard
+              label="Revenue MTD"
+              value={formatCurrency(revenueMtd)}
+              detail="Booked freight"
+              accent="emerald"
+              href="/analytics?details=revenue-overview"
+            />
+          </div>
+          <div className="xl:col-span-2">
+            <PremiumMetricCard
+              label="Pending Payments"
+              value={formatCurrency(pendingPayments)}
+              detail="AR watch"
+              accent="amber"
+              href="/finance"
+            />
+          </div>
+          <div className="xl:col-span-2">
+            <PremiumMetricCard
+              label="Active Trucks"
+              value={(fleetMetrics.assignedTrucks + fleetMetrics.availableTrucks).toString()}
+              detail={`${fleetMetrics.maintenanceTrucks} in shop`}
+              accent="blue"
+              href="/fleet/trucks"
+            />
+          </div>
+          <div className="xl:col-span-2">
+            <PremiumMetricCard
+              label="Drivers"
+              value={driverMetrics.totalDrivers.toString()}
+              detail={`${driverMetrics.activeDrivers} active`}
+              accent="slate"
+              href="/drivers/directory"
+            />
+          </div>
+          <div className="xl:col-span-2">
+            <PremiumMetricCard
+              label="Compliance Alerts"
+              value={complianceAlerts.toString()}
+              detail="Needs review"
+              accent={complianceAlerts > 0 ? "rose" : "emerald"}
+              href="/compliance"
+            />
+          </div>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(360px,0.7fr)]">
-          <DashboardPanel
+        <section className="flex flex-col gap-3 rounded-[14px] border border-[#E5E7EB] bg-white p-3 shadow-[0_8px_24px_rgba(15,23,42,0.04)] xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex flex-wrap gap-2">
+            {["Daily", "Weekly", "Monthly", "Quarterly", "Yearly"].map((filter) => (
+              <span
+                key={filter}
+                className={`rounded-xl border px-3 py-2 text-sm font-semibold ${
+                  filter === "Monthly"
+                    ? "border-[#2563EB] bg-[#2563EB] text-white"
+                    : "border-[#E5E7EB] bg-[#F8F9FB] text-slate-600"
+                }`}
+              >
+                {filter}
+              </span>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {["Truck", "Driver", "Broker", "Customer", "Export PDF", "Export Excel"].map((filter) => (
+              <span
+                key={filter}
+                className="rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-sm font-semibold text-slate-600"
+              >
+                {filter}
+              </span>
+            ))}
+          </div>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-12">
+          <div className="xl:col-span-8">
+          <EnterpriseLineChart
             title="Revenue Overview"
-            eyebrow="Month to date"
-            className="min-h-[390px]"
-          >
-            <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-              <div className="rounded-[1.5rem] bg-slate-950 p-6 text-white">
-                <p className="text-sm text-slate-400">Booked revenue</p>
-                <p className="mt-3 text-5xl font-semibold tracking-[-0.05em]">
-                  {formatCurrency(revenueMtd)}
-                </p>
-                <div className="mt-8 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-white/10 p-4">
-                    <p className="text-xs text-slate-400">Pending</p>
-                    <p className="mt-2 text-lg font-semibold">
-                      {formatCurrency(pendingPayments)}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-white/10 p-4">
-                    <p className="text-xs text-slate-400">Margin</p>
-                    <p className="mt-2 text-lg font-semibold">{profitMargin}%</p>
-                  </div>
-                </div>
-              </div>
+            subtitle="Month to date booked revenue"
+            data={revenueTrend}
+            valuePrefix="$"
+            showMonthSelector
+            height={310}
+            href="/analytics?details=revenue-overview"
+          />
+          </div>
 
-              <div className="flex min-h-[260px] flex-col justify-end rounded-[1.5rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-5">
-                <div className="grid h-56 grid-cols-7 items-end gap-3 border-b border-l border-slate-200 px-3 pb-3">
-                  {[44, 62, 51, 74, 58, 86, 69].map((height, index) => (
-                    <div key={height} className="flex h-full items-end">
-                      <div
-                        className={`w-full rounded-t-xl ${
-                          index === 5 ? "bg-slate-950" : "bg-blue-200"
-                        }`}
-                        style={{ height: `${height}%` }}
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 grid gap-3">
-                  {revenueBars.map((item) => (
-                    <div key={item.label} className="flex items-center gap-3">
-                      <span className="w-24 text-xs font-medium text-slate-500">
-                        {item.label}
-                      </span>
-                      <div className="h-2 flex-1 rounded-full bg-slate-100">
-                        <div className={`h-2 rounded-full bg-slate-950 ${item.width}`} />
-                      </div>
-                      <span className="w-20 text-right text-xs font-semibold text-slate-700">
-                        {formatCurrency(item.value)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </DashboardPanel>
-
-          <DashboardPanel title="Nova AI Priorities" eyebrow="Command Assistant">
-            <div className="space-y-3">
-              {visibleActions.map((action) => (
-                <NovaInsightCard
-                  key={action.title}
-                  title={action.title}
-                  actionLabel={action.label}
-                  href={action.href}
-                  tone={
-                    action.severity === "danger"
-                      ? "red"
-                      : action.severity === "warning"
-                        ? "amber"
-                        : "green"
-                  }
-                />
-              ))}
-            </div>
-          </DashboardPanel>
-        </section>
-
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(330px,0.65fr)]">
+          <div className="xl:col-span-4">
           <DashboardPanel
             title="Recent Loads"
-            eyebrow="Dispatch"
+            eyebrow="Dispatch board"
             action={
-              <Link href="/loads" className="text-sm font-semibold text-slate-500">
+              <Link href="/loads" className="text-sm font-semibold text-blue-600">
                 View all
               </Link>
             }
@@ -372,19 +433,20 @@ export default async function Home() {
             <PremiumTable
               rows={recentLoads}
               getRowKey={(load) => load.id}
+              getRowHref={(load) => `/?details=${load.id}`}
               columns={[
                 {
                   key: "load",
                   label: "Load",
                   render: (load) => (
-                    <Link href={`/loads/${load.id}`} className="block">
+                    <span className="block">
                       <span className="block font-semibold text-slate-950">
                         {load.reference}
                       </span>
                       <span className="mt-1 block text-xs text-slate-500">
                         {formatLoadLane(load)}
                       </span>
-                    </Link>
+                    </span>
                   ),
                 },
                 {
@@ -416,78 +478,203 @@ export default async function Home() {
               ]}
             />
           </DashboardPanel>
+          </div>
+        </section>
 
-          <DashboardPanel title="Alerts" eyebrow="Needs attention">
-            <div className="space-y-3">
-              {alerts.map((alert) => (
-                <div
-                  key={alert}
-                  className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700"
+        <section className="grid items-stretch gap-6 xl:grid-cols-12">
+          <div className="xl:col-span-4">
+            <EnterpriseBarChart
+              title="Profit Overview"
+              subtitle={`${profitMargin}% estimated margin`}
+              data={profitTrend}
+              valuePrefix="$"
+              href="/analytics?details=profit-trend"
+            />
+          </div>
+
+          <DashboardPanel title="Top Brokers" eyebrow="Revenue concentration" className="xl:col-span-4">
+            <div className="space-y-2">
+              {topBrokers.map((broker) => (
+                <Link
+                  key={broker.label}
+                  href="/loads"
+                  className="flex items-center justify-between rounded-xl border border-[#E5E7EB] bg-[#F8F9FB] px-3 py-2.5 text-sm transition hover:border-blue-200 hover:bg-blue-50/50"
                 >
-                  <span className="h-2 w-2 rounded-full bg-amber-500" />
-                  {alert}
-                </div>
+                  <span>
+                    <span className="block font-semibold text-[#111827]">{broker.label}</span>
+                    <span className="mt-0.5 block text-xs font-medium text-[#6B7280]">
+                      {broker.loads} loads
+                    </span>
+                  </span>
+                  <span className="font-semibold text-[#111827]">
+                    {formatCurrency(broker.revenue)}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </DashboardPanel>
+
+          <DashboardPanel title="Alerts" eyebrow="Exceptions" className="xl:col-span-4">
+            <div className="space-y-3">
+              {visibleActions.slice(0, 3).map((action) => (
+                <NovaInsightCard
+                  key={action.title}
+                  title={action.title}
+                  actionLabel={action.label}
+                  href={action.href}
+                  tone={
+                    action.severity === "danger"
+                      ? "red"
+                      : action.severity === "warning"
+                        ? "amber"
+                        : "green"
+                  }
+                />
               ))}
             </div>
           </DashboardPanel>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[0.8fr_0.8fr_1fr]">
-          <DashboardPanel title="Profit Overview" eyebrow="Operating view">
-            <div className="grid gap-4">
-              <div className="rounded-[1.5rem] bg-slate-950 p-5 text-white">
-                <p className="text-sm text-slate-400">Estimated profit</p>
-                <p className="mt-3 text-4xl font-semibold tracking-[-0.04em]">
-                  {formatCurrency(estimatedProfit)}
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs text-slate-500">Fuel</p>
-                  <p className="mt-2 font-semibold text-slate-950">
-                    {formatCurrency(fleetMetrics.monthlyFuelCost)}
-                  </p>
+        <section className="grid items-stretch gap-6 xl:grid-cols-12">
+          <DashboardPanel title="Today's Operations" eyebrow="Live status" className="xl:col-span-3">
+            <div className="grid gap-2">
+              {[
+                { label: "Dispatch waiting", value: loadCounts.pending, tone: "amber" as const },
+                { label: "Drivers on duty", value: driverMetrics.activeDrivers, tone: "green" as const },
+                { label: "Trucks in maintenance", value: fleetMetrics.maintenanceTrucks, tone: "blue" as const },
+                { label: "Loads requiring attention", value: attentionLoads.length, tone: "red" as const },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="flex items-center justify-between rounded-xl border border-[#DDE2EA] bg-[#F5F7FA] px-3 py-2.5"
+                >
+                  <span className="text-sm font-medium text-[#374151]">{item.label}</span>
+                  <PremiumStatusBadge label={item.value.toString()} tone={item.tone} />
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs text-slate-500">Margin</p>
-                  <p className="mt-2 font-semibold text-slate-950">{profitMargin}%</p>
-                </div>
-              </div>
+              ))}
+            </div>
+          </DashboardPanel>
+          <div className="xl:col-span-3">
+          <EnterpriseAreaChart
+            title="Cash Flow"
+            subtitle="Pending payments"
+            data={cashFlowTrend}
+            valuePrefix="$"
+            href="/analytics?details=cash-flow"
+          />
+          </div>
+          <div className="xl:col-span-3">
+          <EnterpriseDonutChart
+            title="Fleet Utilization"
+            subtitle="Assigned truck utilization"
+            value={fleetUtilization}
+            label="utilized"
+            href="/analytics?details=fleet-utilization"
+          />
+          </div>
+          <div className="xl:col-span-3">
+          <EnterpriseLineChart
+            title="Fuel Cost Trend"
+            subtitle={`${fuelRecords.length} fuel records`}
+            data={fuelCostTrend}
+            valuePrefix="$"
+            height={190}
+            href="/analytics?details=fuel-cost-trend"
+          />
+          </div>
+        </section>
+
+        <section className="grid items-stretch gap-6 xl:grid-cols-12">
+          <div className="xl:col-span-6">
+          <EnterpriseHorizontalBarChart
+            title="Driver Performance"
+            subtitle="On-time, documents, safety, and utilization"
+            data={driverPerformance}
+            href="/analytics?details=driver-performance"
+          />
+          </div>
+          <div className="xl:col-span-6">
+          <EnterpriseLineChart
+            title="Maintenance Cost Trend"
+            subtitle={`${fleetMetrics.openMaintenance} open maintenance items`}
+            data={maintenanceCostTrend}
+            valuePrefix="$"
+            height={210}
+            href="/analytics?details=maintenance-cost-trend"
+          />
+          </div>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-12">
+          <DashboardPanel title="Nova AI Command Center" eyebrow="Operations manager" className="xl:col-span-12">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {visibleActions.map((action) => (
+                <NovaInsightCard
+                  key={action.title}
+                  title={action.title}
+                  actionLabel={action.label}
+                  href={action.href}
+                  tone={
+                    action.severity === "danger"
+                      ? "red"
+                      : action.severity === "warning"
+                        ? "amber"
+                        : "green"
+                  }
+                />
+              ))}
+            </div>
+          </DashboardPanel>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-4">
+          <DashboardPanel title="Pending Invoices" eyebrow="AR">
+            <div className="space-y-2">
+              {packetSummaries.slice(0, 4).map(({ load, summary }) => (
+                <Link key={load.id} href={`/documents/packets/${load.id}`} className="flex items-center justify-between rounded-xl border border-[#E5E7EB] bg-[#F8F9FB] px-3 py-2 text-sm transition hover:border-blue-200">
+                  <span className="font-semibold text-slate-950">{load.reference}</span>
+                  <span className="text-slate-500">{summary.invoiceDraft ? "Ready" : "Draft needed"}</span>
+                </Link>
+              ))}
             </div>
           </DashboardPanel>
 
-          <DashboardPanel title="Top Brokers" eyebrow="Revenue">
-            <div className="space-y-4">
-              {topBrokers.map((broker, index) => (
-                <div key={broker.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">
-                      {index + 1}
-                    </span>
-                    <p className="font-medium text-slate-900">{broker.name}</p>
-                  </div>
-                  <p className="font-semibold text-slate-950">
-                    {formatCurrency(broker.revenue)}
-                  </p>
-                </div>
+          <DashboardPanel title="Driver Expirations" eyebrow="CDL / medical">
+            <div className="space-y-2">
+              {upcomingDriverExpirations.map(({ driver, expiresAt, type }) => (
+                <Link key={`${driver.id}-${type}`} href={`/drivers/${driver.id}`} className="flex items-center justify-between rounded-xl border border-[#E5E7EB] bg-[#F8F9FB] px-3 py-2 text-sm transition hover:border-blue-200">
+                  <span className="font-semibold text-slate-950">{driver.name}</span>
+                  <span className="text-slate-500">{type} · {expiresAt}</span>
+                </Link>
+              ))}
+            </div>
+          </DashboardPanel>
+
+          <DashboardPanel title="Open Maintenance" eyebrow="Shop">
+            <div className="space-y-2">
+              {openMaintenance.map((record) => (
+                <Link key={record.id} href="/fleet/maintenance" className="flex items-center justify-between rounded-xl border border-[#E5E7EB] bg-[#F8F9FB] px-3 py-2 text-sm transition hover:border-blue-200">
+                  <span className="font-semibold text-slate-950">{record.type}</span>
+                  <span className="text-slate-500">{record.status.replace("_", " ")}</span>
+                </Link>
               ))}
             </div>
           </DashboardPanel>
 
           <DashboardPanel title="Recent Activity" eyebrow="Live feed">
-            <div className="space-y-4">
+            <div className="space-y-2">
               {recentActivity.map((activity) => (
                 <Link
                   key={activity.id}
                   href={activity.href}
-                  className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 transition hover:bg-white hover:shadow-sm"
+                  className="flex gap-3 rounded-xl border border-[#E5E7EB] bg-[#F8F9FB] p-2.5 transition hover:border-blue-200"
                 >
-                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-blue-500" />
+                  <span className="mt-1 h-2 w-2 rounded-full bg-[#2563EB]" />
                   <span>
-                    <span className="block text-sm font-semibold text-slate-900">
+                    <span className="block text-sm font-semibold text-slate-950">
                       {activity.title}
                     </span>
-                    <span className="mt-1 block text-xs text-slate-500">
+                    <span className="mt-0.5 block text-xs text-slate-500">
                       {activity.meta}
                     </span>
                   </span>
@@ -496,6 +683,34 @@ export default async function Home() {
             </div>
           </DashboardPanel>
         </section>
+        {selectedLoad ? (
+          <DetailSlideOver
+            title={selectedLoad.reference}
+            subtitle={formatLoadLane(selectedLoad)}
+            closeHref="/"
+          >
+            <DetailSection title="Load Profile">
+              <DetailGrid
+                items={[
+                  { label: "Status", value: selectedLoad.status.replace("_", " ") },
+                  { label: "Rate", value: formatCurrency(selectedLoad.rate) },
+                  { label: "Miles", value: selectedLoad.miles.toLocaleString() },
+                  { label: "Pickup", value: `${selectedLoad.origin.city}, ${selectedLoad.origin.state}` },
+                  { label: "Delivery", value: `${selectedLoad.destination.city}, ${selectedLoad.destination.state}` },
+                  { label: "Tracking", value: selectedLoad.trackingEnabled ? "Live" : "Off" },
+                ]}
+              />
+            </DetailSection>
+            <DetailSection title="Documents, Invoices, Timeline & Notes">
+              <p className="text-sm leading-6 text-slate-600">
+                Open Dispatch for the full load execution record, including documents, invoice, tracking timeline, broker notes, and Nova recommendations.
+              </p>
+              <Link href={`/loads?details=${selectedLoad.id}`} className="mt-3 inline-block text-sm font-semibold text-blue-600">
+                Open in Dispatch
+              </Link>
+            </DetailSection>
+          </DetailSlideOver>
+        ) : null}
       </div>
     </div>
   );

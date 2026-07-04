@@ -14,17 +14,17 @@ export default function OperationalPageShell({
   children,
 }: OperationalPageShellProps) {
   return (
-    <div className="min-h-screen rounded-[2rem] bg-[#f6f8fb] p-5 text-slate-950 shadow-2xl shadow-black/20 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-[1500px] space-y-6">
-        <header className="flex flex-col gap-4 rounded-[1.75rem] border border-slate-200/80 bg-white px-6 py-5 shadow-[0_16px_55px_rgba(15,23,42,0.07)] lg:flex-row lg:items-center lg:justify-between">
+    <div className="w-full rounded-[16px] bg-white p-4 text-[#111827] sm:p-5 lg:p-6">
+      <div className="mx-auto max-w-[1560px] space-y-4">
+        <header className="flex flex-col gap-4 rounded-[16px] border border-[#DDE2EA] bg-[#F5F7FA] px-5 py-4 shadow-[0_10px_28px_rgba(15,23,42,0.05)] lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#6B7280]">
               {eyebrow}
             </p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em] text-slate-950">
+            <h1 className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-[#111827]">
               {title}
             </h1>
-            <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+            <p className="mt-1 text-sm text-[#6B7280]">{subtitle}</p>
           </div>
           {action ? <div className="shrink-0">{action}</div> : null}
         </header>

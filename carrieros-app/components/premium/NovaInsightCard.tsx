@@ -23,13 +23,13 @@ export default function NovaInsightCard({
   return (
     <Link
       href={href}
-      className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+      className="flex items-center justify-between gap-4 rounded-xl border border-[#E5E7EB] bg-[#F8F9FB] px-3 py-2.5 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-white hover:shadow-sm"
     >
       <div className="flex min-w-0 items-center gap-3">
         <span className={`h-2.5 w-2.5 rounded-full ${toneStyles[tone]}`} />
         <span className="truncate text-sm font-medium text-slate-800">{title}</span>
       </div>
-      <span className="shrink-0 text-sm font-semibold text-slate-950">
+      <span className="shrink-0 text-sm font-semibold text-blue-600">
         {actionLabel}
       </span>
     </Link>

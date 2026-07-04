@@ -2,17 +2,34 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  BarChart3,
+  Boxes,
+  Command,
+  FileText,
+  LayoutDashboard,
+  Route,
+  Settings,
+  ShieldCheck,
+  Truck,
+  Users,
+  WalletCards,
+} from "lucide-react";
 import Brand from "@/components/Brand";
+import { getCurrentSession, type CarrierOSRole } from "@/lib/auth/session";
 
 const navItems = [
-  { name: "Command", href: "/", icon: "command" },
-  { name: "Dispatch", href: "/loads", icon: "route" },
-  { name: "Drivers", href: "/drivers", icon: "users" },
-  { name: "Fleet", href: "/fleet", icon: "truck" },
-  { name: "Finance", href: "/finance", icon: "wallet" },
-  { name: "Documents", href: "/documents", icon: "file" },
-  { name: "Analytics", href: "/analytics", icon: "chart" },
-  { name: "Settings", href: "/settings", icon: "gear" },
+  { name: "Command", href: "/", icon: "command", roles: ["owner", "dispatcher", "fleet_manager", "safety"] },
+  { name: "Dispatch", href: "/loads", icon: "route", roles: ["owner", "dispatcher"] },
+  { name: "Drivers", href: "/drivers", icon: "users", roles: ["owner", "dispatcher", "safety"] },
+  { name: "Fleet", href: "/fleet", icon: "truck", roles: ["owner", "dispatcher", "fleet_manager", "mechanic"] },
+  { name: "Documents", href: "/documents", icon: "file", roles: ["owner", "dispatcher", "safety"] },
+  { name: "Finance", href: "/finance", icon: "wallet", roles: ["owner", "accountant"] },
+  { name: "Payroll", href: "/payroll", icon: "wallet", roles: ["owner", "accountant"] },
+  { name: "Compliance", href: "/compliance", icon: "shield", roles: ["owner", "safety"] },
+  { name: "Marketplace", href: "/marketplace", icon: "market", roles: ["owner", "fleet_manager", "mechanic"] },
+  { name: "Reports", href: "/analytics", icon: "chart", roles: ["owner", "accountant", "safety"] },
+  { name: "Settings", href: "/settings", icon: "gear", roles: ["owner"] },
 ];
 
 function isActiveRoute(pathname: string, href: string) {
@@ -24,137 +41,81 @@ function isActiveRoute(pathname: string, href: string) {
 }
 
 function NavIcon({ icon }: { icon: string }) {
-  const common = {
-    className: "h-4 w-4",
-    fill: "none",
-    viewBox: "0 0 24 24",
-    stroke: "currentColor",
-    strokeWidth: 1.8,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
+  const icons = {
+    command: LayoutDashboard,
+    route: Route,
+    users: Users,
+    truck: Truck,
+    wallet: WalletCards,
+    file: FileText,
+    chart: BarChart3,
+    gear: Settings,
+    shield: ShieldCheck,
+    market: Boxes,
   };
+  const Icon = icons[icon as keyof typeof icons] ?? Command;
 
-  if (icon === "route") {
-    return (
-      <svg {...common}>
-        <path d="M6 18c4-8 8 0 12-8" />
-        <path d="M6 18h.01" />
-        <path d="M18 10h.01" />
-      </svg>
-    );
-  }
-
-  if (icon === "users") {
-    return (
-      <svg {...common}>
-        <path d="M16 19c0-2.2-1.8-4-4-4s-4 1.8-4 4" />
-        <path d="M12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
-        <path d="M19 18c0-1.7-1-3.1-2.4-3.7" />
-      </svg>
-    );
-  }
-
-  if (icon === "truck") {
-    return (
-      <svg {...common}>
-        <path d="M3 7h11v8H3z" />
-        <path d="M14 10h4l3 3v2h-7z" />
-        <path d="M7 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
-        <path d="M17 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
-      </svg>
-    );
-  }
-
-  if (icon === "wallet") {
-    return (
-      <svg {...common}>
-        <path d="M4 7h16v12H4z" />
-        <path d="M16 12h4v4h-4z" />
-        <path d="M4 7l3-3h10l3 3" />
-      </svg>
-    );
-  }
-
-  if (icon === "file") {
-    return (
-      <svg {...common}>
-        <path d="M7 3h7l4 4v14H7z" />
-        <path d="M14 3v5h5" />
-        <path d="M10 13h5" />
-        <path d="M10 17h4" />
-      </svg>
-    );
-  }
-
-  if (icon === "chart") {
-    return (
-      <svg {...common}>
-        <path d="M4 19V5" />
-        <path d="M4 19h16" />
-        <path d="M8 15l3-4 3 2 5-7" />
-      </svg>
-    );
-  }
-
-  if (icon === "gear") {
-    return (
-      <svg {...common}>
-        <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
-        <path d="M19 12a7 7 0 0 0-.1-1.1l2-1.5-2-3.4-2.4 1a7.8 7.8 0 0 0-1.9-1.1L14.3 3h-4.6l-.3 2.9A7.8 7.8 0 0 0 7.5 7l-2.4-1-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.1l-2 1.5 2 3.4 2.4-1c.6.5 1.2.9 1.9 1.1l.3 2.9h4.6l.3-2.9c.7-.3 1.4-.7 1.9-1.1l2.4 1 2-3.4-2-1.5c.1-.3.1-.7.1-1.1Z" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg {...common}>
-      <path d="M5 12a7 7 0 1 0 14 0 7 7 0 0 0-14 0Z" />
-      <path d="M9 12h6" />
-      <path d="M12 9v6" />
-    </svg>
-  );
+  return <Icon className="h-[18px] w-[18px]" strokeWidth={1.9} />;
 }
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const session = getCurrentSession();
+  const visibleNavItems = navItems.filter((item) =>
+    item.roles.includes(session.role as CarrierOSRole),
+  );
 
   return (
-    <aside className="border-b border-slate-800 bg-[#0b1120] px-4 py-4 shadow-2xl shadow-slate-950/40 lg:fixed lg:left-0 lg:top-0 lg:flex lg:h-screen lg:w-72 lg:flex-col lg:border-b-0 lg:border-r lg:border-slate-800/80 lg:px-5 lg:py-6">
-      <div className="mb-4 lg:mb-9">
+    <aside className="group/sidebar relative z-30 w-full shrink-0 overflow-hidden border-b border-[#DDE2EA] bg-white px-3 py-4 shadow-[0_8px_26px_rgba(15,23,42,0.045)] lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-[88px] lg:flex-col lg:border-b-0 lg:border-r lg:px-3 lg:py-5 lg:transition-[width] lg:duration-300 lg:hover:w-[230px]">
+      <div className="mb-5 flex items-center justify-between">
         <Brand />
+        <button
+          type="button"
+          className="hidden rounded-lg border border-[#DDE2EA] px-2 py-1 text-xs font-semibold text-slate-500 opacity-0 transition group-hover/sidebar:opacity-100 hover:border-blue-200 hover:text-slate-900 lg:block"
+        >
+          ⌘
+        </button>
       </div>
 
       <nav className="flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-1.5 lg:overflow-visible lg:pb-0">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive = isActiveRoute(pathname, item.href);
 
           return (
             <Link
               key={item.name}
               href={item.href}
-              className={`group flex shrink-0 items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition duration-200 ${
+              className={`group flex shrink-0 items-center gap-2.5 rounded-full px-2.5 py-2 text-[13px] font-medium transition duration-200 ${
                 isActive
-                  ? "bg-white text-slate-950 shadow-xl shadow-slate-950/20"
-                  : "text-slate-400 hover:bg-white/5 hover:text-white"
+                  ? "border border-blue-100 bg-blue-50 text-[#2563EB] shadow-sm"
+                  : "text-slate-600 hover:bg-[#F5F7FA] hover:text-[#111827]"
               }`}
             >
               <span
-                className={`grid h-8 w-8 place-items-center rounded-xl transition ${
+                className={`grid h-7 w-7 place-items-center rounded-full transition ${
                   isActive
-                    ? "bg-slate-950 text-white"
-                    : "bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white"
+                    ? "bg-[#2563EB] text-white"
+                    : "bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-blue-600"
                 }`}
               >
                 <NavIcon icon={item.icon} />
               </span>
-              {item.name}
+              <span className="whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover/sidebar:opacity-100">
+                {item.name}
+              </span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="mt-auto hidden rounded-3xl border border-white/10 bg-white/[0.03] p-4 lg:block">
-        <p className="text-sm font-semibold text-white">Nova AI</p>
-        <p className="mt-1 text-sm leading-6 text-slate-400">Executive command assistant</p>
+      <div className="mt-auto hidden rounded-[14px] border border-[#DDE2EA] bg-[#F5F7FA] p-3 opacity-0 transition-opacity duration-200 group-hover/sidebar:opacity-100 lg:block">
+        <p className="text-sm font-semibold text-slate-950">Nova Command</p>
+        <p className="mt-1 text-xs leading-5 text-slate-600">
+          Priorities, exceptions, compliance, payroll, and cash flow.
+        </p>
+        <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-700">
+          Role: {session.role.replace("_", " ")}
+        </p>
       </div>
     </aside>
   );

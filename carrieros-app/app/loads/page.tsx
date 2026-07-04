@@ -1,5 +1,6 @@
 import Link from "next/link";
 import NovaAlert from "@/components/NovaAlert";
+import DetailSlideOver, { DetailGrid, DetailSection } from "@/components/premium/DetailSlideOver";
 import OperationalPageShell from "@/components/premium/OperationalPageShell";
 import OperationalTable from "@/components/premium/OperationalTable";
 import PremiumStatusBadge from "@/components/premium/StatusBadge";
@@ -19,6 +20,7 @@ type LoadsPageProps = {
   searchParams: Promise<{
     status?: string;
     q?: string;
+    details?: string;
   }>;
 };
 
@@ -49,6 +51,10 @@ export default async function LoadsPage({ searchParams }: LoadsPageProps) {
   const attentionCount = loads.filter(
     (load) => load.complianceStatus === "attention",
   ).length;
+  const selectedLoad = params.details
+    ? loads.find((load) => load.id === params.details)
+    : undefined;
+  const selectedLabels = selectedLoad ? resolveLoadLabels(selectedLoad) : undefined;
 
   return (
     <OperationalPageShell
@@ -58,7 +64,7 @@ export default async function LoadsPage({ searchParams }: LoadsPageProps) {
         action={
           <Link
             href="/loads/new"
-            className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-300 transition hover:-translate-y-0.5 hover:bg-slate-800"
+            className="rounded-xl bg-[#2563EB] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-100 transition hover:-translate-y-0.5 hover:bg-blue-500"
           >
             Create Load
           </Link>
@@ -73,7 +79,7 @@ export default async function LoadsPage({ searchParams }: LoadsPageProps) {
         <NovaAlert message="All visible loads are compliant and on track." />
       )}
 
-      <div className="mt-6 overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.07)]">
+      <div className="mt-4 overflow-hidden rounded-[14px] border border-[#E5E7EB] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
         <TableToolbar
           title="Loads"
           resultCount={loads.length}
@@ -84,7 +90,7 @@ export default async function LoadsPage({ searchParams }: LoadsPageProps) {
         <OperationalTable
           rows={loads}
           getRowKey={(load) => load.id}
-          getRowHref={(load) => `/loads/${load.id}`}
+          getRowHref={(load) => `/loads?details=${load.id}`}
           emptyTitle="No loads found"
           emptyDescription="Adjust filters or create a new load."
           columns={[
@@ -177,16 +183,67 @@ export default async function LoadsPage({ searchParams }: LoadsPageProps) {
               key: "actions",
               label: "Actions",
               align: "center",
-              render: (load) => (
-                <Link href={`/loads/${load.id}`} className="font-semibold text-slate-500">
-                  ⋯
-                </Link>
-              ),
+              render: () => <span className="font-semibold text-slate-500">Open</span>,
             },
           ]}
         />
         <TablePagination total={loads.length} />
       </div>
+      {selectedLoad && selectedLabels ? (
+        <DetailSlideOver
+          title={selectedLoad.reference}
+          subtitle={`${selectedLoad.origin.city}, ${selectedLoad.origin.state} → ${selectedLoad.destination.city}, ${selectedLoad.destination.state}`}
+          closeHref="/loads"
+        >
+          <DetailSection title="Overview">
+            <DetailGrid
+              items={[
+                { label: "Broker", value: selectedLabels.brokerName ?? "Direct" },
+                { label: "Customer", value: selectedLabels.customerName },
+                { label: "Driver", value: selectedLabels.driverName ?? "Unassigned" },
+                { label: "Truck", value: selectedLabels.truckLabel ?? "Unassigned" },
+                { label: "Trailer", value: "Pending" },
+                { label: "Rate", value: formatCurrency(selectedLoad.rate) },
+                { label: "Miles", value: selectedLoad.miles.toLocaleString() },
+                { label: "Status", value: selectedLoad.status.replace("_", " ") },
+              ]}
+            />
+          </DetailSection>
+          <DetailSection title="Stops">
+            <DetailGrid
+              items={[
+                { label: "Pickup", value: `${selectedLoad.origin.city}, ${selectedLoad.origin.state} · ${selectedLoad.pickupDate}` },
+                { label: "Delivery", value: `${selectedLoad.destination.city}, ${selectedLoad.destination.state} · ${selectedLoad.deliveryDate}` },
+              ]}
+            />
+          </DetailSection>
+          <DetailSection title="Documents, Invoice & Tracking">
+            <DetailGrid
+              items={[
+                { label: "Documents", value: selectedLoad.documentIds.length ? `${selectedLoad.documentIds.length} uploaded` : "Missing" },
+                { label: "Invoice", value: selectedLoad.invoiceId ?? "Not generated" },
+                { label: "Tracking", value: selectedLoad.trackingEnabled ? "Live tracking enabled" : "Tracking off" },
+                { label: "Compliance", value: selectedLoad.complianceStatus },
+              ]}
+            />
+          </DetailSection>
+          <DetailSection title="Timeline">
+            <div className="space-y-2">
+              {selectedLoad.timeline.map((event) => (
+                <div key={event.id} className="rounded-xl border border-[#E5E7EB] bg-white p-3">
+                  <p className="text-sm font-semibold text-slate-950">{event.label}</p>
+                  <p className="mt-1 text-xs text-slate-500">{event.occurredAt} · {event.location ?? "CarrierOS"}</p>
+                </div>
+              ))}
+            </div>
+          </DetailSection>
+          <DetailSection title="Notes & Nova Recommendations">
+            <p className="text-sm leading-6 text-slate-600">
+              Review assignment, missing documents, invoice state, and tracking exceptions before closing this load.
+            </p>
+          </DetailSection>
+        </DetailSlideOver>
+      ) : null}
     </OperationalPageShell>
   );
 }

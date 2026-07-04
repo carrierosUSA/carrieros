@@ -1,5 +1,5 @@
-import Link from "next/link";
 import FleetSubNav from "@/components/fleet/FleetSubNav";
+import DetailSlideOver, { DetailGrid, DetailSection } from "@/components/premium/DetailSlideOver";
 import OperationalPageShell from "@/components/premium/OperationalPageShell";
 import OperationalTable from "@/components/premium/OperationalTable";
 import PremiumMetricCard from "@/components/premium/MetricCard";
@@ -11,10 +11,20 @@ import { getActiveTenantId } from "@/lib/data/tenant";
 import { formatCurrency, formatTruckLabel } from "@/lib/services/fleet/fleet-helpers";
 import { getFleetService } from "@/lib/services/fleet";
 
-export default async function MaintenancePage() {
+type MaintenancePageProps = {
+  searchParams: Promise<{ details?: string }>;
+};
+
+export default async function MaintenancePage({ searchParams }: MaintenancePageProps) {
+  const params = await searchParams;
   const tenantId = getActiveTenantId();
   const records = await getFleetService().listMaintenance(tenantId);
   const openRecords = records.filter((record) => record.status !== "completed");
+  const selectedRecord = params.details
+    ? records.find((record) => record.id === params.details)
+    : undefined;
+  const selectedTruck = selectedRecord ? getTruckById(selectedRecord.truckId) : undefined;
+  const selectedTrailer = selectedRecord?.trailerId ? getTrailerById(selectedRecord.trailerId) : undefined;
 
   return (
     <OperationalPageShell
@@ -38,7 +48,7 @@ export default async function MaintenancePage() {
         />
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.07)]">
+      <div className="mt-4 overflow-hidden rounded-[14px] border border-[#E5E7EB] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
         <TableToolbar
           title="Maintenance Work Orders"
           resultCount={records.length}
@@ -49,6 +59,7 @@ export default async function MaintenancePage() {
         <OperationalTable
           rows={records}
           getRowKey={(record) => record.id}
+          getRowHref={(record) => `/fleet/maintenance?details=${record.id}`}
           emptyTitle="No maintenance records"
           emptyDescription="Maintenance history will appear here as work orders are logged."
           columns={[
@@ -91,12 +102,39 @@ export default async function MaintenancePage() {
               key: "actions",
               label: "Actions",
               align: "center",
-              render: () => <Link href="/fleet" className="font-semibold text-slate-500">⋯</Link>,
+              render: () => <span className="font-semibold text-slate-500">Open</span>,
             },
           ]}
         />
         <TablePagination total={records.length} />
       </div>
+      {selectedRecord ? (
+        <DetailSlideOver
+          title={selectedRecord.type}
+          subtitle={selectedTruck ? formatTruckLabel(selectedTruck) : selectedRecord.truckId}
+          closeHref="/fleet/maintenance"
+        >
+          <DetailSection title="Work Order">
+            <DetailGrid
+              items={[
+                { label: "Truck", value: selectedTruck ? formatTruckLabel(selectedTruck) : selectedRecord.truckId },
+                { label: "Trailer", value: selectedTrailer ? `Unit ${selectedTrailer.unitNumber}` : "N/A" },
+                { label: "Description", value: selectedRecord.description },
+                { label: "Status", value: selectedRecord.status.replace("_", " ") },
+                { label: "Scheduled", value: selectedRecord.scheduledDate },
+                { label: "Completed", value: selectedRecord.completedDate ?? "Open" },
+                { label: "Cost", value: formatCurrency(selectedRecord.cost) },
+                { label: "Mileage", value: selectedRecord.mileage.toString() },
+              ]}
+            />
+          </DetailSection>
+          <DetailSection title="Repair History, Photos, Documents & Notes">
+            <p className="text-sm leading-6 text-slate-600">
+              Attach estimates, repair invoices, inspection photos, mechanic notes, and Nova maintenance recommendations here.
+            </p>
+          </DetailSection>
+        </DetailSlideOver>
+      ) : null}
     </OperationalPageShell>
   );
 }

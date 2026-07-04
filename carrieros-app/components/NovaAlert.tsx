@@ -17,14 +17,14 @@ export default function NovaAlert({
 }: NovaAlertProps) {
   return (
     <div
-      className={`rounded-2xl border border-blue-900/50 bg-blue-950/40 p-5 ${className}`}
+      className={`rounded-[14px] border border-blue-100 bg-blue-50 p-5 shadow-[0_8px_24px_rgba(37,99,235,0.08)] ${className}`}
     >
-      <p className="text-sm font-semibold text-blue-300">{title}</p>
-      <p className="mt-1 text-sm text-blue-400/80">{message}</p>
+      <p className="text-sm font-semibold text-blue-700">{title}</p>
+      <p className="mt-1 text-sm text-blue-700/80">{message}</p>
       {actionHref ? (
         <Link
           href={actionHref}
-          className="mt-4 inline-flex rounded-xl border border-blue-800 px-4 py-2 text-sm font-semibold text-blue-200 transition hover:bg-blue-900/60"
+          className="mt-4 inline-flex rounded-xl border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 transition hover:border-blue-300"
         >
           {actionLabel}
         </Link>
