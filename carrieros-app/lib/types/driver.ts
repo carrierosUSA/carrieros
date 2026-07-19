@@ -2,7 +2,25 @@ import type { TenantEntity } from "@/lib/types/base";
 
 export type DriverStatus = "active" | "inactive" | "onboarding" | "terminated";
 
+export type DriverOperationalStatus =
+  | "on_load"
+  | "available"
+  | "off_duty"
+  | "onboarding";
+
 export type DriverPayType = "per_mile" | "hourly" | "percentage";
+
+export type DriverDocumentType =
+  | "cdl"
+  | "medical"
+  | "ssn"
+  | "passport"
+  | "visa"
+  | "drug_test"
+  | "clearinghouse"
+  | "employment"
+  | "insurance"
+  | "other";
 
 export interface Driver extends TenantEntity {
   id: string;
@@ -11,7 +29,9 @@ export interface Driver extends TenantEntity {
   role: string;
   status: DriverStatus;
   phone: string;
+  photoUrl?: string;
   location: string;
+  homeTerminal?: string;
   hireDate: string;
   truckId?: string;
   licenseClass: string;
@@ -19,6 +39,10 @@ export interface Driver extends TenantEntity {
   licenseState: string;
   licenseExpiresAt: string;
   medicalExpiresAt: string;
+  drugTestDueAt?: string;
+  annualReviewDueAt?: string;
+  lastInspectionAt?: string;
+  hoursRemaining?: number;
   payRate: number;
   payType: DriverPayType;
   novaSummary: string;
@@ -96,9 +120,29 @@ export interface DriverDocument extends TenantEntity {
   id: string;
   driverId: string;
   name: string;
-  type: string;
-  status: "valid" | "expiring" | "missing";
+  type: DriverDocumentType;
+  status: "valid" | "expiring" | "missing" | "expired";
   uploadedAt: string;
+  expiresAt?: string;
+  secured?: boolean;
+}
+
+export interface DriverViolation extends TenantEntity {
+  id: string;
+  driverId: string;
+  title: string;
+  description: string;
+  occurredAt: string;
+  severity: "minor" | "major" | "critical";
+  status: "open" | "resolved";
+}
+
+export interface DriverNote extends TenantEntity {
+  id: string;
+  driverId: string;
+  author: string;
+  body: string;
+  createdAt: string;
 }
 
 export type DriverTimeOffStatus = "pending" | "approved" | "denied";
@@ -130,4 +174,27 @@ export const DRIVER_PAY_TYPE_LABELS: Record<DriverPayType, string> = {
   per_mile: "Per Mile",
   hourly: "Hourly",
   percentage: "Percentage",
+};
+
+export const DRIVER_OPERATIONAL_STATUS_LABELS: Record<
+  DriverOperationalStatus,
+  string
+> = {
+  on_load: "On Load",
+  available: "Available",
+  off_duty: "Off Duty",
+  onboarding: "Onboarding",
+};
+
+export const DRIVER_DOCUMENT_TYPE_LABELS: Record<DriverDocumentType, string> = {
+  cdl: "CDL",
+  medical: "Medical Card",
+  ssn: "SSN",
+  passport: "Passport",
+  visa: "Visa",
+  drug_test: "Drug Test",
+  clearinghouse: "Clearinghouse",
+  employment: "Employment Docs",
+  insurance: "Insurance",
+  other: "Other",
 };

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import AiSafetyProvider from "@/components/ai-safety/AiSafetyProvider";
 import AppShell from "@/components/AppShell";
 import "./globals.css";
 
@@ -14,8 +15,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CarrierOS",
-  description: "The Operating System for Modern Carriers",
+  title: {
+    default: "Transpo.ai",
+    template: "%s · Transpo.ai",
+  },
+  description: "One Platform. Every Trucking Operation.",
 };
 
 export default function RootLayout({
@@ -29,7 +33,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">
-        <AppShell>{children}</AppShell>
+        <AiSafetyProvider>
+          <AppShell>{children}</AppShell>
+        </AiSafetyProvider>
       </body>
     </html>
   );

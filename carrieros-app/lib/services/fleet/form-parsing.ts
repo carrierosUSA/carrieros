@@ -10,6 +10,7 @@ export function parseCreateTruckInput(formData: FormData): CreateTruckInput {
   const driverId = String(formData.get("driverId") ?? "").trim();
   const location = String(formData.get("location") ?? "").trim();
   const lastServiceDate = String(formData.get("lastServiceDate") ?? "").trim();
+  const licenseState = String(formData.get("licenseState") ?? "").trim();
   const statusValue = String(formData.get("status") ?? "available").trim();
 
   return {
@@ -20,6 +21,7 @@ export function parseCreateTruckInput(formData: FormData): CreateTruckInput {
     year: Number(formData.get("year")),
     vin: String(formData.get("vin") ?? "").trim(),
     licensePlate: String(formData.get("licensePlate") ?? "").trim(),
+    licenseState: licenseState || undefined,
     mileage: Number(formData.get("mileage")),
     driverId: driverId || undefined,
     location: location || undefined,

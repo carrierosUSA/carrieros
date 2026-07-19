@@ -1,17 +1,24 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import PageHeader from "@/components/PageHeader";
-import TrackingETA from "@/components/tracking/TrackingETA";
-import TrackingExpiredView from "@/components/tracking/TrackingExpiredView";
-import TrackingMap from "@/components/tracking/TrackingMap";
-import TrackingShareDialog from "@/components/tracking/TrackingShareDialog";
-import TrackingStatusCard from "@/components/tracking/TrackingStatusCard";
-import TrackingTemperatureCard from "@/components/tracking/TrackingTemperatureCard";
-import TrackingTimeline from "@/components/tracking/TrackingTimeline";
-import { disableTrackingAction } from "@/app/tracking/actions";
+import FullScreenTrackingExperience from "@/components/tracking/map/FullScreenTrackingExperience";
+import { getCustomerById } from "@/lib/data/customers";
+import { getDriverById } from "@/lib/data/drivers";
+import { getTruckById } from "@/lib/data/trucks";
 import { getActiveTenantId } from "@/lib/data/tenant";
-import { getTrackingService } from "@/lib/services/tracking";
+import {
+  formatActivityTimestamp,
+  formatStopScheduleLine,
+  getTrailerForTruck,
+} from "@/lib/dispatch/load-board";
+import {
+  formatStopAppointment,
+  getDeliveryDetail,
+  getPickupDetail,
+} from "@/lib/dispatch/load-detail-meta";
+import { getDriverService } from "@/lib/services/drivers";
 import { formatLoadLane } from "@/lib/services/loads/load-helpers";
+import { getLoadService } from "@/lib/services/loads";
+import { getTrackingService } from "@/lib/services/tracking";
 
 export const dynamic = "force-dynamic";
 
@@ -24,89 +31,97 @@ type LoadTrackingPageProps = {
 export default async function LoadTrackingPage({ params }: LoadTrackingPageProps) {
   const { id } = await params;
   const tenantId = getActiveTenantId();
-  const tracking = await getTrackingService().getTrackingForLoad(tenantId, id);
+  const [tracking, fullLoad] = await Promise.all([
+    getTrackingService().getTrackingForLoad(tenantId, id),
+    getLoadService().getLoad(tenantId, id),
+  ]);
 
-  if (!tracking) {
+  if (!tracking || !fullLoad) {
     notFound();
   }
 
+  const customerName =
+    getCustomerById(fullLoad.customerId)?.name ?? "Unknown customer";
+  const pickupDetail = getPickupDetail(fullLoad, customerName);
+  const deliveryDetail = getDeliveryDetail(fullLoad, customerName);
+  const driver = fullLoad.driverId ? getDriverById(fullLoad.driverId) : undefined;
+  const truck = fullLoad.truckId ? getTruckById(fullLoad.truckId) : undefined;
+  const trailer = getTrailerForTruck(fullLoad.truckId);
+  const driverLocation = fullLoad.driverId
+    ? await getDriverService().getDriverLocation(tenantId, fullLoad.driverId)
+    : null;
+  const milesRemaining = driverLocation
+    ? Math.max(0, Math.round(fullLoad.miles * 0.35))
+    : undefined;
+
   return (
-    <>
+    <div className="px-1 pb-6">
       <Link
-        href={`/loads/${tracking.load.id}`}
-        className="text-sm font-medium text-blue-400 transition hover:text-blue-300"
+        href={`/loads/${id}`}
+        className="text-sm font-medium text-[#2563EB] transition hover:text-[#1D4ED8]"
       >
         ← Back to Load
       </Link>
 
-      <PageHeader
-        title="Live Tracking"
-        subtitle={`${tracking.load.reference} · ${formatLoadLane(tracking.load)}`}
-        className="mt-4"
-      />
-
-      <div className="mt-8 grid gap-5 lg:grid-cols-[1.3fr_0.9fr]">
-        <div className="space-y-5">
-          {tracking.status === "expired_delivered" ||
-          tracking.status === "disabled" ? (
-            <TrackingExpiredView tracking={tracking} />
-          ) : (
-            <>
-              <TrackingStatusCard tracking={tracking} />
-              <TrackingMap tracking={tracking} />
-            </>
-          )}
-        </div>
-
-        <div className="space-y-5">
-          <TrackingShareDialog
-            token={tracking.token}
-            loadId={tracking.load.id}
-            canShare={tracking.status !== "not_ready"}
-            warning="Assign a driver and truck before sharing public tracking."
-          />
-          <TrackingETA tracking={tracking} />
-          <TrackingTemperatureCard temperature={tracking.temperature} />
-          <TrackingTimeline tracking={tracking} />
-
-          {tracking.status === "live" || tracking.status === "not_ready" ? (
-            <form action={disableTrackingAction.bind(null, tracking.load.id)}>
-              <button
-                type="submit"
-                className="w-full rounded-xl border border-red-900 px-4 py-3 text-sm font-semibold text-red-300 transition hover:bg-red-950"
-              >
-                Disable Public Tracking
-              </button>
-            </form>
-          ) : null}
-
-          <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-            <p className="text-sm font-semibold text-blue-400">Nova Tracking</p>
-            <div className="mt-4 space-y-3">
-              {tracking.novaEvents.length ? (
-                tracking.novaEvents.slice(0, 4).map((event) => (
-                  <div
-                    key={event.id}
-                    className="rounded-xl border border-zinc-800 bg-zinc-950 p-3"
-                  >
-                    <p className="text-sm font-medium text-zinc-100">
-                      {event.message}
-                    </p>
-                    <p className="mt-1 text-xs text-zinc-500">
-                      {new Date(event.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-zinc-400">
-                  Nova is watching broker opens, expiration, stops, and ETA
-                  changes.
-                </p>
-              )}
-            </div>
-          </section>
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+            Live Tracking
+          </p>
+          <h1 className="mt-1 text-[28px] font-bold tracking-[-0.03em] text-slate-950">
+            {fullLoad.reference}
+          </h1>
+          <p className="mt-1 text-[14px] text-slate-500">{formatLoadLane(fullLoad)}</p>
         </div>
       </div>
-    </>
+
+      <div className="mt-6">
+        <FullScreenTrackingExperience
+          loadId={id}
+          loadReference={fullLoad.reference}
+          originCity={fullLoad.origin.city}
+          originState={fullLoad.origin.state}
+          destinationCity={fullLoad.destination.city}
+          destinationState={fullLoad.destination.state}
+          totalMiles={fullLoad.miles}
+          milesRemaining={milesRemaining}
+          eta={formatStopScheduleLine(fullLoad.deliveryDate)}
+          isLive={tracking.status === "live"}
+          loadStatus={fullLoad.status}
+          currentLocationLabel={tracking.currentStop}
+          lastUpdatedLabel={
+            tracking.location
+              ? `Updated ${formatActivityTimestamp(tracking.location.recordedAt)}`
+              : undefined
+          }
+          driverLocation={driverLocation}
+          fullscreenHref={`/loads/${id}/tracking`}
+          pickupDetails={{
+            city: fullLoad.origin.city,
+            state: fullLoad.origin.state,
+            company: pickupDetail.companyName,
+            address: pickupDetail.address,
+            appointment: formatStopAppointment(pickupDetail),
+          }}
+          deliveryDetails={{
+            city: fullLoad.destination.city,
+            state: fullLoad.destination.state,
+            company: deliveryDetail.companyName,
+            address: deliveryDetail.address,
+            appointment: formatStopAppointment(deliveryDetail),
+          }}
+          driver={
+            driver
+              ? {
+                  name: driver.name,
+                  phone: driver.phone,
+                  truckLabel: truck ? `Unit ${truck.unitNumber}` : undefined,
+                  trailerLabel: trailer ? `TRL-${trailer.unitNumber}` : undefined,
+                }
+              : undefined
+          }
+        />
+      </div>
+    </div>
   );
 }

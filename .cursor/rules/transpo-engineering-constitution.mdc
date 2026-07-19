@@ -1,0 +1,14 @@
+---
+description: Engineering Constitution summary — canonical in /constitution/03-engineering-constitution.md
+alwaysApply: true
+---
+
+# Transpo.ai Engineering Constitution
+
+> **Canonical source:** `/constitution/03-engineering-constitution.md`. This rule is a summary; **folder wins on conflict.** Master Constitution v1.0 is #1. See `/constitution/INDEX.md`.
+
+Twelve principles implementing Master Constitution + Charter. Product: `/platform/constitution`. Constants: `lib/engineering-constitution/`.
+
+1. Humans in control · 2. Safety before automation · 3. Compliance by design · 4. AI honest · 5. Explainability · 6. Approval tiers (`lib/ai-safety/`) · 7. Auditability · 8. Security · 9. Transparency · 10. Professional responsibility · 11. Connected ecosystem · 12. User ownership
+
+Full text: `/constitution/03-engineering-constitution.md`. AI policy: `/constitution/04-ai-safety-legal-policy.md`.

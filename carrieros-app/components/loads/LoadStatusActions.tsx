@@ -64,7 +64,7 @@ export default function LoadStatusActions({ load }: LoadStatusActionsProps) {
             Move this load through the alpha lifecycle
           </h2>
           <p className="mt-2 text-sm text-zinc-400">
-            Nova uses these milestones to update tracking, documents, finance,
+            Alph uses these milestones to update tracking, documents, finance,
             and owner alerts.
           </p>
         </div>

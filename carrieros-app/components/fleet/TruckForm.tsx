@@ -88,6 +88,12 @@ export default function TruckForm({
           required
         />
         <FormField
+          label="License State"
+          name="licenseState"
+          defaultValue={truck?.licenseState}
+          placeholder="TX"
+        />
+        <FormField
           label="Mileage"
           name="mileage"
           type="number"

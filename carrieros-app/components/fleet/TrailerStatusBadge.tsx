@@ -1,21 +1,33 @@
 import type { TrailerStatus } from "@/lib/types";
 import { TRAILER_STATUS_LABELS } from "@/lib/types";
+import { CARRIEROS_COLORS } from "@/lib/design-system/colors";
 
 type TrailerStatusBadgeProps = {
   status: TrailerStatus;
 };
 
-const statusStyles: Record<TrailerStatus, string> = {
-  available: "border-green-800 bg-green-950 text-green-400",
-  assigned: "border-blue-800 bg-blue-950 text-blue-400",
-  maintenance: "border-amber-800 bg-amber-950 text-amber-400",
-  out_of_service: "border-red-800 bg-red-950 text-red-400",
+const statusStyles: Record<
+  TrailerStatus,
+  { bg: string; text: string; border: string }
+> = {
+  available: CARRIEROS_COLORS.success,
+  loaded: CARRIEROS_COLORS.info,
+  empty: CARRIEROS_COLORS.disabled,
+  in_yard: {
+    bg: "bg-[#F1F5F9]",
+    text: "text-[#475569]",
+    border: "border-[#CBD5E1]",
+  },
+  in_shop: CARRIEROS_COLORS.warning,
+  out_of_service: CARRIEROS_COLORS.critical,
 };
 
 export default function TrailerStatusBadge({ status }: TrailerStatusBadgeProps) {
+  const styles = statusStyles[status];
+
   return (
     <span
-      className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusStyles[status]}`}
+      className={`inline-flex rounded-full px-2.5 py-1 text-[12px] font-semibold ring-1 ${styles.bg} ${styles.text} ${styles.border}`}
     >
       {TRAILER_STATUS_LABELS[status]}
     </span>

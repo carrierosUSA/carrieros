@@ -1,0 +1,20 @@
+---
+description: Trust & Safety Charter summary — canonical in /constitution/01-trust-safety-charter.md
+alwaysApply: true
+---
+
+# Transpo.ai Trust & Safety Charter
+
+> **Canonical source:** `/constitution/01-trust-safety-charter.md`. This rule is a summary; **folder wins on conflict.** Precedence: Master Constitution v1.0 (#1) → this Charter → Foundation → Engineering Constitution → AI Safety → Product Design. See `/constitution/INDEX.md`.
+
+Implements the Master Constitution for trust, safety, no-decision, AI autonomy. Product: `/platform/trust-charter`. Constants: `lib/trust-safety-charter/`.
+
+## Agent MUST / MUST NOT
+
+- **MUST** treat Transpo.ai as an assistant — never as operator of the customer’s business.
+- **MUST** keep people in control. **Users decide.**
+- **MUST NOT** approve/authorize/certify/guarantee outcomes; guess critical facts; auto-execute critical actions; bypass approvals.
+- **MUST** reuse `lib/ai-safety/` confirmation + automation levels.
+- Uncertainty → stop, explain, ask.
+
+Full text: `/constitution/01-trust-safety-charter.md`. Master Constitution: `/constitution/00-master-constitution.md`.

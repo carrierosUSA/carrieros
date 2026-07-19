@@ -139,14 +139,22 @@ export const mockFleetService: FleetService = {
       })
       .reduce((total, record) => total + record.cost, 0);
 
+    const onLoadTrucks = tenantTrucks.filter((truck) => truck.status === "on_load")
+      .length;
+    const inShopTrucks = tenantTrucks.filter((truck) => truck.status === "in_shop")
+      .length;
+
     return {
       totalTrucks: tenantTrucks.length,
       availableTrucks: tenantTrucks.filter((truck) => truck.status === "available")
         .length,
-      assignedTrucks: tenantTrucks.filter((truck) => truck.status === "assigned")
-        .length,
-      maintenanceTrucks: tenantTrucks.filter(
-        (truck) => truck.status === "maintenance",
+      assignedTrucks: onLoadTrucks,
+      onLoadTrucks,
+      idleTrucks: tenantTrucks.filter((truck) => truck.status === "idle").length,
+      maintenanceTrucks: inShopTrucks,
+      inShopTrucks,
+      outOfServiceTrucks: tenantTrucks.filter(
+        (truck) => truck.status === "out_of_service",
       ).length,
       totalTrailers: tenantTrailers.length,
       openMaintenance: tenantMaintenance.filter(

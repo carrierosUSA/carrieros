@@ -1,15 +1,25 @@
 import { getActiveCompany, getActiveTenantId } from "@/lib/data/tenant";
 
+/**
+ * Session roles used across CarrierOS.
+ * Legacy aliases (accountant, mechanic, fleet_manager) remain for Sidebar / docs.
+ * Enterprise permissions map these via mapSessionRoleToEnterprise().
+ */
 export type CarrierOSRole =
+  | "super_admin"
   | "owner"
   | "dispatcher"
-  | "driver"
+  | "accounting"
+  | "accountant"
   | "safety"
+  | "maintenance"
   | "mechanic"
   | "fleet_manager"
+  | "driver"
   | "broker"
+  | "shipper"
   | "customer"
-  | "accountant";
+  | "read_only";
 
 export type CarrierOSSession = {
   tenantId: string;

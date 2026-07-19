@@ -1,6 +1,13 @@
 import { loads as seedLoads } from "@/lib/data/loads";
+import { dispatchBoardSeedLoads } from "@/lib/dispatch/demo-loads";
+import { getBrokerById } from "@/lib/data/brokers";
 import { getDriverById } from "@/lib/data/drivers";
 import { getTruckById } from "@/lib/data/trucks";
+import {
+  getTrailerForTruck,
+  matchesDispatchTab,
+  resolveEquipmentType,
+} from "@/lib/dispatch/load-board";
 import type { Load, LoadStatus } from "@/lib/types";
 import { LOAD_STATUS_LABELS } from "@/lib/types";
 import type {
@@ -18,11 +25,26 @@ import {
 import { createSecureTrackingToken } from "@/lib/services/tracking/tracking-helpers";
 import type { LoadListFilters, LoadService } from "@/lib/services/loads/load-service";
 
-const loadStore: Load[] = structuredClone(seedLoads);
+const loadStore: Load[] = structuredClone([...seedLoads, ...dispatchBoardSeedLoads]);
 
 function formatStopSearch(load: Load): string {
+  const brokerName = load.brokerId
+    ? (getBrokerById(load.brokerId)?.name ?? "")
+    : "Direct";
+  const driverName = load.driverId
+    ? (getDriverById(load.driverId)?.name ?? "")
+    : "";
+  const truckLabel = load.truckId
+    ? (getTruckById(load.truckId)?.unitNumber ?? "")
+    : "";
+  const trailerLabel = getTrailerForTruck(load.truckId)?.unitNumber ?? "";
+
   return [
     load.reference,
+    brokerName,
+    driverName,
+    truckLabel,
+    trailerLabel,
     load.origin.city,
     load.origin.state,
     load.destination.city,
@@ -37,6 +59,34 @@ function filterLoads(tenantId: string, filters: LoadListFilters = {}): Load[] {
 
   if (filters.status && filters.status !== "all") {
     result = result.filter((load) => load.status === filters.status);
+  }
+
+  if (filters.dispatchTab && filters.dispatchTab !== "all") {
+    result = result.filter((load) =>
+      matchesDispatchTab(load, filters.dispatchTab!),
+    );
+  }
+
+  if (filters.driverId) {
+    result = result.filter((load) => load.driverId === filters.driverId);
+  }
+
+  if (filters.brokerId) {
+    result = result.filter((load) => load.brokerId === filters.brokerId);
+  }
+
+  if (filters.equipmentType) {
+    result = result.filter(
+      (load) => resolveEquipmentType(load) === filters.equipmentType,
+    );
+  }
+
+  if (filters.dateFrom) {
+    result = result.filter((load) => load.pickupDate >= filters.dateFrom!);
+  }
+
+  if (filters.dateTo) {
+    result = result.filter((load) => load.pickupDate <= filters.dateTo!);
   }
 
   if (filters.search?.trim()) {
@@ -130,7 +180,7 @@ export const mockLoadService: LoadService = {
     const load: Load = {
       tenantId,
       id,
-      reference: nextLoadReference(tenantLoads),
+      reference: input.loadNumber?.trim() || nextLoadReference(tenantLoads),
       status: "pending",
       customerId: input.customerId,
       brokerId: input.brokerId,
@@ -140,6 +190,19 @@ export const mockLoadService: LoadService = {
       deliveryDate: input.deliveryDate,
       rate: input.rate,
       miles: input.miles,
+      equipmentType: input.equipmentType,
+      temperature: input.temperature,
+      paymentTerms: input.paymentTerms,
+      brokerContactName: input.brokerContactName,
+      brokerPhone: input.brokerPhone,
+      brokerEmail: input.brokerEmail,
+      loadNumber: input.loadNumber,
+      brokerLoadId: input.brokerLoadId,
+      poNumber: input.poNumber,
+      commodity: input.commodity,
+      weight: input.weight,
+      pieces: input.pieces,
+      notes: input.notes,
       documentIds: [],
       trackingToken: createSecureTrackingToken(),
       trackingEnabled: true,
@@ -174,12 +237,38 @@ export const mockLoadService: LoadService = {
     if (input.brokerId !== undefined) {
       load.brokerId = input.brokerId || undefined;
     }
+    if (input.driverId !== undefined) {
+      load.driverId = input.driverId || undefined;
+    }
+    if (input.truckId !== undefined) {
+      load.truckId = input.truckId || undefined;
+    }
     if (input.origin) load.origin = input.origin;
     if (input.destination) load.destination = input.destination;
     if (input.pickupDate) load.pickupDate = input.pickupDate;
     if (input.deliveryDate) load.deliveryDate = input.deliveryDate;
     if (input.rate !== undefined) load.rate = input.rate;
     if (input.miles !== undefined) load.miles = input.miles;
+    if (input.equipmentType !== undefined) load.equipmentType = input.equipmentType;
+    if (input.temperature !== undefined) load.temperature = input.temperature;
+    if (input.paymentTerms !== undefined) load.paymentTerms = input.paymentTerms;
+    if (input.brokerContactName !== undefined) {
+      load.brokerContactName = input.brokerContactName;
+    }
+    if (input.brokerPhone !== undefined) load.brokerPhone = input.brokerPhone;
+    if (input.brokerEmail !== undefined) load.brokerEmail = input.brokerEmail;
+    if (input.loadNumber !== undefined) {
+      load.loadNumber = input.loadNumber;
+      if (input.loadNumber.trim()) {
+        load.reference = input.loadNumber.trim();
+      }
+    }
+    if (input.brokerLoadId !== undefined) load.brokerLoadId = input.brokerLoadId;
+    if (input.poNumber !== undefined) load.poNumber = input.poNumber;
+    if (input.commodity !== undefined) load.commodity = input.commodity;
+    if (input.weight !== undefined) load.weight = input.weight;
+    if (input.pieces !== undefined) load.pieces = input.pieces;
+    if (input.notes !== undefined) load.notes = input.notes;
     if (input.invoiceId !== undefined) load.invoiceId = input.invoiceId;
 
     if (input.status && input.status !== load.status) {
@@ -209,6 +298,11 @@ export const mockLoadService: LoadService = {
     }
 
     load.driverId = input.driverId;
+
+    if (driver.truckId) {
+      load.truckId = driver.truckId;
+    }
+
     appendTimelineEvent(
       load,
       "assigned",

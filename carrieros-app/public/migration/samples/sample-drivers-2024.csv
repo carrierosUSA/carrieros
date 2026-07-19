@@ -1,0 +1,5 @@
+Driver Name,Phone,Email,CDL Number,CDL State,CDL Class,License Expires,Medical Expires,Hire Date,Status,Location
+James Rivera,210-555-0142,james.rivera@example.com,TX-CDL-990112,TX,A,2028-04-15,2027-02-01,2022-06-12,active,San Antonio, TX
+Priya Nair,512-555-0198,priya.nair@example.com,TX-CDL-881203,TX,A,2027-11-30,2026-10-12,2023-01-08,active,Austin, TX
+Devon Clark,713-555-0177,devon.clark@example.com,TX-CDL-770441,TX,A,2026-09-01,2026-08-20,2024-03-22,onboarding,Houston, TX
+Maria Gomez,210-555-0133,maria.gomez@example.com,TX-CDL-660228,TX,A,2029-01-10,2027-05-05,2021-09-14,active,San Antonio, TX

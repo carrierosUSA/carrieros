@@ -1,3 +1,4 @@
+import type { DispatchTab } from "@/lib/dispatch/load-board";
 import type { Load, LoadStatus } from "@/lib/types";
 import type {
   AssignDriverInput,
@@ -14,9 +15,17 @@ export type {
   UpdateLoadInput,
 } from "@/lib/services/loads/load-inputs";
 
+export type { DispatchTab } from "@/lib/dispatch/load-board";
+
 export type LoadListFilters = {
   status?: LoadStatus | "all";
+  dispatchTab?: DispatchTab;
   search?: string;
+  driverId?: string;
+  brokerId?: string;
+  equipmentType?: string;
+  dateFrom?: string;
+  dateTo?: string;
 };
 
 export interface LoadService {

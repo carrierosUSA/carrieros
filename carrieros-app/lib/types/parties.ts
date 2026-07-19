@@ -6,8 +6,27 @@ export interface Customer extends TenantEntity {
   type: "shipper" | "consignee" | "both";
 }
 
-export interface Broker extends TenantEntity {
-  id: string;
-  name: string;
-  mcNumber?: string;
-}
+export type {
+  Broker,
+  BrokerStatus,
+  BrokerPaymentMethod,
+  BrokerContact,
+  BrokerContactRole,
+  BrokerDocument,
+  BrokerDocumentType,
+  BrokerDocumentStatus,
+  BrokerRateHistoryEntry,
+  BrokerNote,
+  BrokerTimelineEvent,
+} from "@/lib/types/broker";
+
+export {
+  BROKER_STATUSES,
+  BROKER_STATUS_LABELS,
+  BROKER_PAYMENT_METHODS,
+  BROKER_PAYMENT_METHOD_LABELS,
+  BROKER_CONTACT_ROLES,
+  BROKER_CONTACT_ROLE_LABELS,
+  BROKER_DOCUMENT_TYPES,
+  BROKER_DOCUMENT_TYPE_LABELS,
+} from "@/lib/types/broker";

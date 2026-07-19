@@ -1,0 +1,19 @@
+---
+description: Transpo.ai Foundation summary — canonical in /constitution/02-foundation.md
+alwaysApply: true
+---
+
+# Transpo.ai Foundation
+
+> **Canonical source:** `/constitution/02-foundation.md`. This rule is a summary; **folder wins on conflict.** Master Constitution v1.0 is #1. See `/constitution/INDEX.md`.
+
+Owns architecture, tradeoffs, long-term quality. Does not outrank Master Constitution or Charter. Product: `/platform/foundation`. Constants: `lib/foundation/`.
+
+## Core
+
+- AI assists. Humans decide. Accuracy and trust beat speed and novelty.
+- Prefer integrations; configuration over customization; safest simplest maintainable option.
+- Tradeoffs: safer → trustworthy → simpler → maintainable → reliable → performant → faster only if above intact.
+- Conflict → refuse, explain, redesign. Do not rebuild the app for a feature ask.
+
+Full text: `/constitution/02-foundation.md`.

@@ -89,7 +89,7 @@ export default async function MarketplacePage({ searchParams }: MarketplacePageP
           </DetailSection>
           <DetailSection title="Actions & Notes">
             <p className="text-sm leading-6 text-slate-600">
-              Vendor profile, quotes, request workflow, partner notes, and Nova recommendations will attach to this marketplace category.
+              Vendor profile, quotes, request workflow, partner notes, and Alph recommendations will attach to this marketplace category.
             </p>
           </DetailSection>
         </DetailSlideOver>

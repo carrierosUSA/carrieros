@@ -17,7 +17,7 @@ export default function PacketReadyPanel({ loadId, summary }: PacketReadyPanelPr
           : "Packet needs required documents"}
       </h2>
       <p className="mt-2 text-sm text-zinc-400">
-        PDF generation is mocked for alpha. CarrierOS validates packet sequence
+        PDF generation is mocked for alpha. Transpo.ai validates packet sequence
         before enabling send/upload preparation.
       </p>
 

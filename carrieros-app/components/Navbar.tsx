@@ -2,7 +2,7 @@ export default function Navbar() {
   return (
     <nav className="flex items-center justify-between border-b border-gray-200 bg-white px-8 py-4">
       <h1 className="text-xl font-bold text-blue-900">
-        CarrierOS
+        Transpo.ai
       </h1>
 
       <div className="flex items-center gap-8 text-gray-700">

@@ -9,7 +9,7 @@ type NovaAlertProps = {
 };
 
 export default function NovaAlert({
-  title = "Nova Alert",
+  title = "Alph Alert",
   message,
   actionHref,
   actionLabel = "Show Me",

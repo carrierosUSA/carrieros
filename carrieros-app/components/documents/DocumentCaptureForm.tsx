@@ -20,7 +20,7 @@ export default function DocumentCaptureForm({ loadId }: DocumentCaptureFormProps
           Add BOL, POD, lumper, invoice, or check image
         </h2>
         <p className="mt-2 text-sm text-zinc-400">
-          Alpha uses a file upload/mock capture flow. CarrierOS converts it into
+          Alpha uses a file upload/mock capture flow. Transpo.ai converts it into
           a clean scanned document record for the packet.
         </p>
       </div>

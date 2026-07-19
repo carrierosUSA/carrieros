@@ -1,39 +1,36 @@
-import Link from "next/link";
-import PageHeader from "@/components/PageHeader";
-import LoadForm from "@/components/loads/LoadForm";
-import { createLoadAction } from "@/app/loads/actions";
+import NewLoadForm from "@/components/loads/new/NewLoadForm";
+import NewLoadPageShell from "@/components/loads/new/NewLoadPageShell";
+import { buildSmartLoadFormContext } from "@/lib/forms/smart-load-intelligence";
 import { listBrokersByTenant } from "@/lib/data/brokers";
 import { listCustomersByTenant } from "@/lib/data/customers";
 import { getActiveTenantId } from "@/lib/data/tenant";
+import { getDriverService } from "@/lib/services/drivers";
+import { getFleetService } from "@/lib/services/fleet";
+import { createLoadAction } from "@/app/loads/actions";
 
-export default function CreateLoadPage() {
+export default async function CreateLoadPage() {
   const tenantId = getActiveTenantId();
-  const customers = listCustomersByTenant(tenantId);
-  const brokers = listBrokersByTenant(tenantId);
+  const [customers, brokers, drivers, trucks, trailers, smartContext] =
+    await Promise.all([
+      Promise.resolve(listCustomersByTenant(tenantId)),
+      Promise.resolve(listBrokersByTenant(tenantId)),
+      getDriverService().listDrivers(tenantId),
+      getFleetService().listTrucks(tenantId),
+      getFleetService().listTrailers(tenantId),
+      buildSmartLoadFormContext(tenantId),
+    ]);
 
   return (
-    <>
-      <Link
-        href="/loads"
-        className="text-sm font-medium text-blue-400 transition hover:text-blue-300"
-      >
-        ← Back to Dispatch
-      </Link>
-
-      <PageHeader
-        title="Create Load"
-        subtitle="Enter lane, customer, and schedule details for a new shipment."
-        className="mt-4"
+    <NewLoadPageShell>
+      <NewLoadForm
+        action={createLoadAction}
+        customers={customers}
+        brokers={brokers}
+        drivers={drivers}
+        trucks={trucks}
+        trailers={trailers}
+        smartContext={smartContext}
       />
-
-      <div className="mt-8">
-        <LoadForm
-          action={createLoadAction}
-          customers={customers}
-          brokers={brokers}
-          submitLabel="Create Load"
-        />
-      </div>
-    </>
+    </NewLoadPageShell>
   );
 }

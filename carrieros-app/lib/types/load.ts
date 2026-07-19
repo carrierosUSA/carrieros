@@ -9,10 +9,18 @@ export type LoadStatus =
   | "invoiced"
   | "cancelled";
 
+export type AppointmentType = "apt" | "fcfs";
+
 export interface LoadStop {
   city: string;
   state: string;
+  address?: string;
   scheduledAt?: string;
+  appointmentType?: AppointmentType;
+  company?: string;
+  contactName?: string;
+  phone?: string;
+  email?: string;
 }
 
 export interface LoadTimelineEvent {
@@ -38,6 +46,19 @@ export interface Load extends TenantEntity {
   deliveryDate: string;
   rate: number;
   miles: number;
+  equipmentType?: string;
+  temperature?: string;
+  paymentTerms?: string;
+  brokerContactName?: string;
+  brokerPhone?: string;
+  brokerEmail?: string;
+  loadNumber?: string;
+  brokerLoadId?: string;
+  poNumber?: string;
+  commodity?: string;
+  weight?: number;
+  pieces?: number;
+  notes?: string;
   documentIds: string[];
   invoiceId?: string;
   trackingToken?: string;

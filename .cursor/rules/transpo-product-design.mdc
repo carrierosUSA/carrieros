@@ -1,0 +1,36 @@
+---
+description: CarrierOS product design — UI polish; subordinate to /constitution
+alwaysApply: true
+---
+
+# CarrierOS Product Design
+
+> **Canonical governance:** `/constitution/` (see `INDEX.md`). This rule is a **UI summary**; **folder wins on conflict**. Precedence: Master Constitution v1.0 → Charter → Foundation → Engineering Constitution → AI Safety → this design rule.
+
+> **Canonical design system:** `/docs/design-system/` (start at `docs/design-system/00-README.md`) — permanent Transpo.ai Enterprise Design System. Prefer that folder over this summary for design detail.
+
+CarrierOS is **not a TMS**. It is a premium operations product that should feel like Apple, Linear, and Stripe — calm, confident, and instantly legible.
+
+## Core Principles
+
+- **No clutter** — show only what the user needs right now; hide secondary detail behind progressive disclosure.
+- **No unnecessary borders** — use spacing, typography, and subtle background shifts to separate content, not boxes and grid lines.
+- **No developer-looking tables** — prefer cards, lists, and scannable rows.
+- **No tiny text** — body copy comfortable at a glance.
+- **No empty white space** — every screen intentional and complete.
+- **Two-second comprehension** — plain language, not jargon or internal codes.
+- **One-click tasks** — assign, send rate con, request POD, invoice, notify broker open a single modal or preview.
+
+## Loading · Color · Typography
+
+- Never blank white pages — skeleton loaders on `#F5F7FA`; shimmer; fade-in.
+- Semantic colors only: Blue info · Green success · Orange warning · Red critical · Gray inactive.
+- Page title Bold · Card titles SemiBold · Labels Medium · Values Regular · Important numbers Bold.
+
+## Interaction · Five-Question Test
+
+Every control does a meaningful action; disable + tooltip when unavailable. Never dead clicks.
+
+1. What is happening? 2. Any problem? 3. What next? 4. Who to contact? 5. One-click finish?
+
+Would this feel at home in Linear or Stripe? If not, simplify. Never at the expense of `/constitution`.

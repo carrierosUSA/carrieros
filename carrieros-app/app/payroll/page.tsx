@@ -1,3 +1,4 @@
+import Link from "next/link";
 import DetailSlideOver, { DetailGrid, DetailSection } from "@/components/premium/DetailSlideOver";
 import OperationalPageShell from "@/components/premium/OperationalPageShell";
 import OperationalTable from "@/components/premium/OperationalTable";
@@ -38,7 +39,28 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
       title="Payroll"
       subtitle="Driver settlements, paid miles, deductions, advances, exports, and year-end reporting readiness."
       eyebrow="Accounting"
+      action={
+        <Link
+          href="/finance?tab=payroll"
+          className="inline-flex h-10 items-center justify-center rounded-full bg-[#2563EB] px-5 text-[13px] font-semibold text-white transition hover:bg-[#1D4ED8]"
+        >
+          Open Finance Payroll
+        </Link>
+      }
     >
+      <div className="rounded-[14px] bg-[#EFF6FF] px-4 py-3 ring-1 ring-[#BFDBFE]">
+        <p className="text-[14px] font-semibold text-[#2563EB]">
+          Part of Accounting & Finance
+        </p>
+        <p className="mt-0.5 text-[13px] text-slate-600">
+          Full settlements with CPM, detention, advances, and owner payouts live in{" "}
+          <Link href="/finance?tab=payroll" className="font-semibold text-[#2563EB] underline-offset-2 hover:underline">
+            Finance → Driver Payroll
+          </Link>
+          .
+        </p>
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <PremiumMetricCard label="Settlements" value={rows.length.toString()} detail="Payroll records" accent="blue" />
         <PremiumMetricCard label="Gross Pay" value={formatCurrency(grossPay)} detail="Before deductions" accent="emerald" />

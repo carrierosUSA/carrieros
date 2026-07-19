@@ -2,7 +2,12 @@ import FormField from "@/components/forms/FormField";
 import FormSection from "@/components/forms/FormSection";
 import SelectField from "@/components/forms/SelectField";
 import type { Trailer, Truck } from "@/lib/types";
-import { TRAILER_STATUSES, TRAILER_STATUS_LABELS } from "@/lib/types";
+import {
+  TRAILER_STATUSES,
+  TRAILER_STATUS_LABELS,
+  TRAILER_TYPES,
+  TRAILER_TYPE_LABELS,
+} from "@/lib/types";
 
 type TrailerFormProps = {
   action: (formData: FormData) => Promise<void>;
@@ -20,6 +25,11 @@ export default function TrailerForm({
   const statusOptions = TRAILER_STATUSES.map((status) => ({
     value: status,
     label: TRAILER_STATUS_LABELS[status],
+  }));
+
+  const typeOptions = TRAILER_TYPES.map((type) => ({
+    value: type,
+    label: TRAILER_TYPE_LABELS[type],
   }));
 
   const truckOptions = [
@@ -43,12 +53,19 @@ export default function TrailerForm({
           placeholder="2201"
           required
         />
-        <FormField
+        <SelectField
           label="Type"
           name="type"
-          defaultValue={trailer?.type}
-          placeholder="Dry Van"
+          options={typeOptions}
+          defaultValue={trailer?.type ?? "dry_van"}
           required
+        />
+        <FormField
+          label="Length (ft)"
+          name="lengthFt"
+          type="number"
+          defaultValue={trailer?.lengthFt?.toString()}
+          placeholder="53"
         />
         <SelectField
           label="Status"
@@ -58,11 +75,36 @@ export default function TrailerForm({
           required
         />
         <FormField
+          label="VIN"
+          name="vin"
+          defaultValue={trailer?.vin}
+          placeholder="1JJV532D5KL220101"
+        />
+        <FormField
+          label="Year"
+          name="year"
+          type="number"
+          defaultValue={trailer?.year?.toString()}
+          placeholder="2022"
+        />
+        <FormField
+          label="Make"
+          name="make"
+          defaultValue={trailer?.make}
+          placeholder="Great Dane"
+        />
+        <FormField
           label="License Plate"
           name="licensePlate"
           defaultValue={trailer?.licensePlate}
           placeholder="TX-TRL2201"
           required
+        />
+        <FormField
+          label="State"
+          name="licenseState"
+          defaultValue={trailer?.licenseState}
+          placeholder="TX"
         />
         <SelectField
           label="Assigned Truck"
@@ -75,6 +117,19 @@ export default function TrailerForm({
           name="location"
           defaultValue={trailer?.location}
           placeholder="San Antonio, TX"
+        />
+        <FormField
+          label="Mileage"
+          name="mileage"
+          type="number"
+          defaultValue={trailer?.mileage?.toString()}
+          placeholder="100000"
+        />
+        <FormField
+          label="Last Service Date"
+          name="lastServiceDate"
+          type="date"
+          defaultValue={trailer?.lastServiceDate}
         />
       </FormSection>
 

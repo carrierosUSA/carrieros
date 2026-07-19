@@ -15,8 +15,14 @@ import type {
 export type FleetMetrics = {
   totalTrucks: number;
   availableTrucks: number;
+  /** @deprecated Prefer onLoadTrucks — kept for older dashboard cards. */
   assignedTrucks: number;
+  onLoadTrucks: number;
+  idleTrucks: number;
+  /** @deprecated Prefer inShopTrucks. */
   maintenanceTrucks: number;
+  inShopTrucks: number;
+  outOfServiceTrucks: number;
   totalTrailers: number;
   openMaintenance: number;
   monthlyFuelCost: number;

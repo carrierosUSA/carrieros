@@ -1,0 +1,4 @@
+Unit #,VIN,Make,Model,Year,License Plate,State,Mileage,Status,Location
+201,1FUJGBDV8NLBT2011,Freightliner,Cascadia,2021,TX-MIG201,TX,98000,available,San Antonio, TX
+204,1XKYD49X2MJ204882,Kenworth,T680,2020,TX-MIG204,TX,145200,on_load,Dallas, TX
+208,4V4NC9EH5LN208441,Volvo,VNL 760,2019,TX-MIG208,TX,210400,in_shop,Austin, TX

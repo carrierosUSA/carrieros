@@ -1,0 +1,33 @@
+---
+description: Master Constitution v1.0 — /constitution is highest authority; overrides feature requests
+alwaysApply: true
+---
+
+# Transpo.ai Constitution Folder (canonical)
+
+**Canonical source:** `/constitution/` — start at `constitution/INDEX.md` and `constitution/00-master-constitution.md` (**Master Constitution Version 1.0**).
+
+Every AI feature, API, database, workflow, automation, integration, app, dashboard, and future update **MUST** follow `/constitution`.
+
+## Highest authority
+
+1. **Master Constitution Version 1.0** — `constitution/00-master-constitution.md`
+2. Trust & Safety Charter — `01-trust-safety-charter.md`
+3. Foundation — `02-foundation.md`
+4. Engineering Constitution — `03-engineering-constitution.md`
+5. AI Safety & Legal Policy — `04-ai-safety-legal-policy.md`
+6. Product Design — UI only (never at expense of 1–5)
+
+Historical appendix: `00a-permanent-constitution.md` (superseded; does not outrank Master).
+
+## Conflict protocol
+
+If a request conflicts with the Constitution: **DO NOT implement it**. Explain the risk and conflict. Recommend safer / simpler / more maintainable / more secure alternatives. **Constitution always overrides feature requests.**
+
+## Agent MUST
+
+- Read and follow `/constitution` before implementing features.
+- Treat other `.cursor/rules/*.mdc` and `lib/*` / `/platform/*` as summaries — **folder wins on conflict**.
+- When uncertain: never guess/fabricate; explain; request human verification.
+
+Product hub: `/platform/governance`. Migration Center requirements: Master Constitution → `/platform/migration`.

@@ -23,7 +23,7 @@ export default function NovaAlphaSummary({
     <section className="rounded-2xl border border-blue-900/50 bg-blue-950/40 p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-semibold text-blue-300">Nova Alpha</p>
+          <p className="text-sm font-semibold text-blue-300">Alph</p>
           <h2 className="mt-2 text-2xl font-semibold text-zinc-100">
             Today&apos;s business command summary
           </h2>
