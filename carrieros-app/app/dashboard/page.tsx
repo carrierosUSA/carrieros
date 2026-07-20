@@ -18,8 +18,8 @@ export default async function DashboardPage() {
     const home = await buildHomeCommandCenter(board, summary, tenantId);
 
     return (
-      <div className="w-full bg-white p-3 text-[#111827] sm:p-5 lg:p-6">
-        <div className="mx-auto max-w-[1280px]">
+      <div className="w-full bg-white text-[#111827]">
+        <div className="mx-auto max-w-[1320px]">
           <ExecutiveDashboardClient
             data={{
               home,

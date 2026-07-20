@@ -123,6 +123,8 @@ export default function Sidebar() {
   const pathname = usePathname();
   const session = getCurrentSession();
   const isClient = useIsClient();
+  /** Home reference uses a fixed expanded compact rail with labels. */
+  const isHomeDashboard = pathname === "/dashboard";
   const visibleNavItems = PRIMARY_NAV.filter((item) =>
     item.roles.includes(session.role as CarrierOSRole),
   );
@@ -164,7 +166,7 @@ export default function Sidebar() {
     });
   }, []);
 
-  const expanded = pinned || !collapsed || hovered;
+  const expanded = isHomeDashboard || pinned || !collapsed || hovered;
   const showLabels = expanded;
 
   return (
@@ -177,9 +179,9 @@ export default function Sidebar() {
     >
       <div className="mb-4 flex items-center justify-between gap-2 px-2 lg:mb-5 lg:px-0">
         <div className={`min-w-0 ${showLabels ? "" : "lg:mx-auto"}`}>
-          <Brand />
+          <Brand showLabels={showLabels} />
         </div>
-        {showLabels ? (
+        {showLabels && !isHomeDashboard ? (
           <div className="hidden items-center gap-1 lg:flex">
             <button
               type="button"
@@ -273,6 +275,14 @@ export default function Sidebar() {
               <PanelLeftOpen className="h-3.5 w-3.5" strokeWidth={2} />
             </button>
           </div>
+        ) : isHomeDashboard ? (
+          <Link
+            href="/"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-[12px] border border-[#2563EB] bg-white px-3 py-2.5 text-[13px] font-semibold text-[#2563EB] transition hover:bg-[#EFF6FF]"
+          >
+            <Sparkles className="h-4 w-4" strokeWidth={2} aria-hidden />
+            Ask Alph
+          </Link>
         ) : (
           <div className="rounded-[14px] bg-[#F8F9FB] p-3 shadow-[inset_0_0_0_1px_#DDE2EA]">
             <p className="text-sm font-semibold text-[#111827]">Ask Alph</p>

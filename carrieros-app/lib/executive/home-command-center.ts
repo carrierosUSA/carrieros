@@ -52,6 +52,10 @@ export type HomeRevenueBlock = {
   outstanding: { label: string; value: string; href: string };
   trendLabel: string;
   trendTone: HomeStatTone;
+  /** Short day-over-day label for compact Revenue card (from real revenue). */
+  dayTrendLabel: string;
+  /** Last 7 daily revenue amounts (existing store) for sparkline. */
+  sparkline: number[];
 };
 
 export type HomeInvoiceActionStatus =
@@ -445,6 +449,16 @@ export async function buildHomeCommandCenter(
   const trendTone: HomeStatTone =
     weekDelta < -5 ? "critical" : weekDelta > 5 ? "success" : "neutral";
 
+  const sparkline = Array.from({ length: 7 }, (_, i) => {
+    const day = shiftIsoDate(today, -6 + i);
+    return sumRev(day, day);
+  });
+  const dayArrow = dayDelta > 0 ? "↑" : dayDelta < 0 ? "↓" : "·";
+  const dayTrendLabel =
+    dayDelta === 0
+      ? "Flat vs yesterday"
+      : `${dayDelta > 0 ? "+" : ""}${dayDelta}% ${dayArrow} vs yesterday`;
+
   const revenueBlock: HomeRevenueBlock = {
     today: {
       label: "Today",
@@ -468,6 +482,8 @@ export async function buildHomeCommandCenter(
     },
     trendLabel: trendParts.join(" · "),
     trendTone,
+    dayTrendLabel,
+    sparkline,
   };
 
   // —— Invoices & payments ——
@@ -616,7 +632,7 @@ export async function buildHomeCommandCenter(
       s === "Needs load" ? 0 : s === "On load" ? 1 : 2;
     return rank(a.statusLabel) - rank(b.statusLabel) || a.name.localeCompare(b.name);
   });
-  const driversForHome = driverRows.slice(0, 8);
+  const driversForHome = driverRows.slice(0, 6);
 
   // —— Needs attention ——
   const needsAttention: HomeAttentionItem[] = [];

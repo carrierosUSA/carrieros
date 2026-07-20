@@ -100,6 +100,8 @@ export default function AppShell({ children }: AppShellProps) {
   const isPortal = pathname === "/portal" || pathname.startsWith("/portal/");
   const isIftaAccountant =
     pathname === "/ifta/accountant" || pathname.startsWith("/ifta/accountant/");
+  /** Home uses its own greeting + Alph bar — hide duplicate shell chrome/badge. */
+  const isHomeDashboard = pathname === "/dashboard";
 
   if (isPublicTracking || isDriverMobile || isPortal || isIftaAccountant) {
     return <div className="min-h-screen">{children}</div>;
@@ -111,30 +113,39 @@ export default function AppShell({ children }: AppShellProps) {
         <CommandPaletteProvider>
           <NotificationProvider>
             <div
-              className="min-h-screen bg-[#F5F7FA] text-slate-950"
+              className={`min-h-screen text-slate-950 ${
+                isHomeDashboard ? "bg-white" : "bg-[#F5F7FA]"
+              }`}
               data-workspace={workspaceId}
             >
               <div className="flex min-h-screen flex-col lg:flex-row">
                 <Sidebar />
                 <div className="relative flex min-w-0 flex-1 flex-col">
-                  <MaintenanceBanner />
-                  <SupportIssueBanner />
-                  <AppHeader />
+                  {isHomeDashboard ? null : <MaintenanceBanner />}
+                  {isHomeDashboard ? null : <SupportIssueBanner />}
+                  {isHomeDashboard ? null : <AppHeader />}
                   <main
-                    className="min-w-0 flex-1 px-3 py-4 sm:px-4 lg:px-6 lg:py-6"
+                    className={
+                      isHomeDashboard
+                        ? "min-w-0 flex-1 bg-white px-3 py-3 sm:px-4 lg:px-6 lg:py-4"
+                        : "min-w-0 flex-1 px-3 py-4 sm:px-4 lg:px-6 lg:py-6"
+                    }
                     data-workspace={workspaceId}
                   >
                     {children}
                   </main>
-                  <footer className="hidden border-t border-[#EAEAEA] bg-white/80 px-4 py-2 backdrop-blur-sm lg:block lg:px-6">
-                    <KeyboardShortcutHints />
-                  </footer>
+                  {isHomeDashboard ? null : (
+                    <footer className="hidden border-t border-[#EAEAEA] bg-white/80 px-4 py-2 backdrop-blur-sm lg:block lg:px-6">
+                      <KeyboardShortcutHints />
+                    </footer>
+                  )}
                 </div>
               </div>
             </div>
             <QuickActionsPopup />
-            <NotificationCenterFlyout />
-            <AlphFloatingOrb />
+            {isHomeDashboard ? null : <NotificationCenterFlyout />}
+            {/* Home already has a single Alph bar — avoid a second floating entry. */}
+            {isHomeDashboard ? null : <AlphFloatingOrb />}
           </NotificationProvider>
         </CommandPaletteProvider>
       </QuickActionsProvider>

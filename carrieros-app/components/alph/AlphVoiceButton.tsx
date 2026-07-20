@@ -11,11 +11,14 @@ import {
 type AlphVoiceButtonProps = {
   onTranscript: (text: string, isFinal: boolean) => void;
   disabled?: boolean;
+  /** Compact control for dense surfaces (e.g. Home Alph bar). */
+  compact?: boolean;
 };
 
 export default function AlphVoiceButton({
   onTranscript,
   disabled,
+  compact = false,
 }: AlphVoiceButtonProps) {
   const [status, setStatus] = useState<AlphVoiceStatus>("idle");
   const [supported, setSupported] = useState(false);
@@ -63,18 +66,26 @@ export default function AlphVoiceButton({
         }
         listenerRef.current.startListening();
       }}
-      className={`grid h-11 w-11 place-items-center rounded-xl transition ${
+      className={`grid place-items-center transition ${
+        compact ? "h-9 w-9 rounded-lg" : "h-11 w-11 rounded-xl"
+      } ${
         listening
           ? "bg-[#2563EB] text-white shadow-[0_8px_18px_rgba(37,99,235,0.28)]"
           : supported
-            ? "bg-[#F5F7FA] text-[#334155] hover:bg-[#EFF6FF] hover:text-[#1D4ED8]"
-            : "cursor-not-allowed bg-[#F8FAFC] text-[#94A3B8]"
+            ? "text-[#64748B] hover:bg-[#EFF6FF] hover:text-[#1D4ED8]"
+            : "cursor-not-allowed text-[#94A3B8]"
       }`}
     >
       {listening ? (
-        <MicOff className="h-[18px] w-[18px]" strokeWidth={2} />
+        <MicOff
+          className={compact ? "h-4 w-4" : "h-[18px] w-[18px]"}
+          strokeWidth={2}
+        />
       ) : (
-        <Mic className="h-[18px] w-[18px]" strokeWidth={2} />
+        <Mic
+          className={compact ? "h-4 w-4" : "h-[18px] w-[18px]"}
+          strokeWidth={2}
+        />
       )}
     </button>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles, X } from "lucide-react";
+import { Send, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   useCallback,
@@ -28,7 +28,7 @@ type HomeAlphBarProps = {
   initialQuery?: string;
 };
 
-/** Single compact Alph control for Home — input + voice, no duplicate search fields. */
+/** Single compact Alph control for Home — mic + input + send (one bar only). */
 export default function HomeAlphBar({ initialQuery = "" }: HomeAlphBarProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -133,29 +133,27 @@ export default function HomeAlphBar({ initialQuery = "" }: HomeAlphBarProps) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="w-full space-y-2">
       <form onSubmit={onSubmit}>
-        <div className="flex items-center gap-2 rounded-[14px] bg-[#F5F7FA] px-3 py-2.5 transition focus-within:bg-[#EFF6FF] focus-within:ring-2 focus-within:ring-[#2563EB]/30">
-          <Sparkles
-            className="h-4 w-4 shrink-0 text-[#2563EB]"
-            strokeWidth={1.9}
-            aria-hidden
+        <div className="flex items-center gap-2 rounded-[14px] border border-[#E8ECF1] bg-[#F8FAFC] px-2.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition focus-within:border-[#BFDBFE] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#2563EB]/20">
+          <AlphVoiceButton
+            compact
+            onTranscript={handleVoiceTranscript}
           />
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Ask Alph to find a load, call a driver, check revenue…"
-            className="min-w-0 flex-1 bg-transparent text-[15px] text-[#111827] outline-none placeholder:text-[#94A3B8]"
+            placeholder="Ask Alph — find a load, call a driver, check revenue…"
+            className="min-w-0 flex-1 bg-transparent text-[14px] text-[#111827] outline-none placeholder:text-[#94A3B8]"
             aria-label="Ask Alph"
           />
-          <AlphVoiceButton onTranscript={handleVoiceTranscript} />
           {query ? (
             <button
               type="button"
               aria-label="Clear"
-              className="grid h-9 w-9 place-items-center rounded-xl text-[#94A3B8] transition hover:bg-white hover:text-[#334155]"
+              className="grid h-8 w-8 place-items-center rounded-lg text-[#94A3B8] transition hover:bg-white hover:text-[#334155]"
               onClick={() => {
                 setQuery("");
                 setResult(null);
@@ -163,15 +161,16 @@ export default function HomeAlphBar({ initialQuery = "" }: HomeAlphBarProps) {
                 inputRef.current?.focus();
               }}
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </button>
           ) : null}
           <button
             type="submit"
             disabled={isPending || !query.trim()}
-            className="hidden rounded-full bg-[#2563EB] px-3.5 py-2 text-[13px] font-semibold text-white transition hover:bg-[#1D4ED8] disabled:opacity-40 sm:inline-flex"
+            aria-label={isPending ? "Sending" : "Send to Alph"}
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-[#2563EB] text-white transition hover:bg-[#1D4ED8] disabled:opacity-40"
           >
-            {isPending ? "…" : "Ask"}
+            <Send className="h-4 w-4" strokeWidth={2.1} />
           </button>
         </div>
       </form>
@@ -181,7 +180,7 @@ export default function HomeAlphBar({ initialQuery = "" }: HomeAlphBarProps) {
         </p>
       ) : null}
       {isPending ? (
-        <div className="h-16 animate-pulse rounded-[12px] bg-[#F5F7FA]" />
+        <div className="h-12 animate-pulse rounded-[12px] bg-[#F5F7FA]" />
       ) : null}
       {result ? (
         <div className="rounded-[14px] bg-[#F8F9FB] p-3">
