@@ -62,6 +62,12 @@ export type DispatchLoadRow = {
   equipmentType: string;
 };
 
+export type DispatchFocus =
+  | "pickup_today"
+  | "delivery_today"
+  | "missing_pod"
+  | "needs_load";
+
 export type DispatchSearchParams = {
   tab?: string;
   q?: string;
@@ -75,7 +81,20 @@ export type DispatchSearchParams = {
   page?: string;
   pageSize?: string;
   details?: string;
+  /** Home command-center deep links */
+  focus?: string;
 };
+
+export function isDispatchFocus(
+  value: string | undefined,
+): value is DispatchFocus {
+  return (
+    value === "pickup_today" ||
+    value === "delivery_today" ||
+    value === "missing_pod" ||
+    value === "needs_load"
+  );
+}
 
 export const DEFAULT_PAGE_SIZE = 18;
 
@@ -106,6 +125,33 @@ export function matchesDispatchTab(load: Load, tab: DispatchTab): boolean {
       return load.status === "invoiced";
     case "cancelled":
       return load.status === "cancelled";
+    default:
+      return true;
+  }
+}
+
+function hasPodDocument(load: Load): boolean {
+  return load.documentIds.some((id) => id.toLowerCase().includes("pod"));
+}
+
+/** Home deep-link filters — uses FINANCE_TODAY-aligned demo date when provided. */
+export function matchesDispatchFocus(
+  load: Load,
+  focus: DispatchFocus,
+  today: string,
+): boolean {
+  switch (focus) {
+    case "pickup_today":
+      return load.pickupDate === today;
+    case "delivery_today":
+      return load.deliveryDate === today;
+    case "missing_pod":
+      return (
+        (load.status === "delivered" || load.status === "in_transit") &&
+        !hasPodDocument(load)
+      );
+    case "needs_load":
+      return load.status === "pending" && !load.driverId;
     default:
       return true;
   }
@@ -226,6 +272,7 @@ export function buildLoadsHref(
   const search = new URLSearchParams();
 
   if (merged.tab && merged.tab !== "all") search.set("tab", merged.tab);
+  if (merged.focus) search.set("focus", merged.focus);
   if (merged.q) search.set("q", merged.q);
   if (merged.driver) search.set("driver", merged.driver);
   if (merged.broker) search.set("broker", merged.broker);
@@ -481,10 +528,6 @@ function isActiveLoad(load: Load): boolean {
     load.status !== "invoiced" &&
     load.status !== "cancelled"
   );
-}
-
-function hasPodDocument(load: Load): boolean {
-  return load.documentIds.some((id) => id.toLowerCase().includes("pod"));
 }
 
 export function computeDispatchSummary(loads: Load[]): DispatchSummaryStats {

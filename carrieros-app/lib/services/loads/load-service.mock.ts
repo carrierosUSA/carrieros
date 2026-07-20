@@ -5,9 +5,11 @@ import { getDriverById } from "@/lib/data/drivers";
 import { getTruckById } from "@/lib/data/trucks";
 import {
   getTrailerForTruck,
+  matchesDispatchFocus,
   matchesDispatchTab,
   resolveEquipmentType,
 } from "@/lib/dispatch/load-board";
+import { FINANCE_TODAY } from "@/lib/finance/finance-board";
 import type { Load, LoadStatus } from "@/lib/types";
 import { LOAD_STATUS_LABELS } from "@/lib/types";
 import type {
@@ -64,6 +66,13 @@ function filterLoads(tenantId: string, filters: LoadListFilters = {}): Load[] {
   if (filters.dispatchTab && filters.dispatchTab !== "all") {
     result = result.filter((load) =>
       matchesDispatchTab(load, filters.dispatchTab!),
+    );
+  }
+
+  if (filters.focus) {
+    const today = filters.focusToday ?? FINANCE_TODAY;
+    result = result.filter((load) =>
+      matchesDispatchFocus(load, filters.focus!, today),
     );
   }
 

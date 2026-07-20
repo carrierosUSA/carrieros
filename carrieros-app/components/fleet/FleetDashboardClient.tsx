@@ -30,6 +30,10 @@ type FleetDashboardClientProps = {
   loads: Load[];
   drivers: Driver[];
   maintenance: MaintenanceRecord[];
+  /** Deep-link from Home truck status chips */
+  initialFilter?: FleetFilter;
+  /** When set with a status filter, also require this equipment group (e.g. trucks). */
+  equipmentConstraint?: string;
 };
 
 export default function FleetDashboardClient({
@@ -38,9 +42,11 @@ export default function FleetDashboardClient({
   loads,
   drivers,
   maintenance,
+  initialFilter = null,
+  equipmentConstraint,
 }: FleetDashboardClientProps) {
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<FleetFilter>(null);
+  const [filter, setFilter] = useState<FleetFilter>(initialFilter);
 
   const rows = useMemo(
     () =>
@@ -60,10 +66,15 @@ export default function FleetDashboardClient({
     filter?.kind === "status" && filter.id === "in_shop";
 
   const visibleRows = useMemo(() => {
-    const filtered = rows.filter((row) => filterMatchesRow(row, filter));
+    const filtered = rows.filter((row) => {
+      if (!filterMatchesRow(row, filter)) return false;
+      if (!equipmentConstraint) return true;
+      if (equipmentConstraint === "trucks") return row.assetKind === "truck";
+      return row.equipmentGroupId === equipmentConstraint;
+    });
     const searched = searchFleetRows(filtered, query);
     return sortRowsForFilter(searched, filter);
-  }, [rows, filter, query]);
+  }, [rows, filter, query, equipmentConstraint]);
 
   const clearFilters = () => {
     setFilter(null);

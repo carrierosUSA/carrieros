@@ -26,6 +26,14 @@ export type LoadListFilters = {
   equipmentType?: string;
   dateFrom?: string;
   dateTo?: string;
+  /** Home command-center deep links */
+  focus?:
+    | "pickup_today"
+    | "delivery_today"
+    | "missing_pod"
+    | "needs_load";
+  /** Reference day for focus filters (demo-aligned). */
+  focusToday?: string;
 };
 
 export interface LoadService {

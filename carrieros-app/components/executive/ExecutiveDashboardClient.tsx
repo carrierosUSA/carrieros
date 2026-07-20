@@ -1,294 +1,528 @@
 "use client";
 
 import Link from "next/link";
-import { Search, Sparkles } from "lucide-react";
+import type { ReactNode } from "react";
 import FadeIn from "@/components/ui/FadeIn";
-import { getCurrentSession } from "@/lib/auth/session";
-import {
-  buildWorkspaceRecommendations,
-  greetingForNow,
-} from "@/lib/alph/workspace";
-import type { AlphExecutiveSummary } from "@/lib/executive/executive-alph";
-import type { ExecutiveBoard } from "@/lib/executive/executive-board";
-import type { ExecutiveTrendsByRange } from "@/lib/executive/executive-trends";
+import HomeAlphBar from "@/components/executive/HomeAlphBar";
+import { openCommunicationUrl } from "@/lib/dispatch/communication";
+import type { HomeCommandCenter, HomeStatTone } from "@/lib/executive/home-command-center";
 
 export type ExecutiveDashboardData = {
-  board: ExecutiveBoard;
-  summary: AlphExecutiveSummary;
-  trendsByRange: ExecutiveTrendsByRange;
+  home: HomeCommandCenter;
+  greeting: string;
 };
 
 type ExecutiveDashboardClientProps = {
   data: ExecutiveDashboardData;
 };
 
-const QUICK_ACTIONS = [
-  { label: "Create load", href: "/loads/new" },
-  { label: "Assign driver", href: "/loads?assign=1" },
-  { label: "Upload POD", href: "/documents?upload=pod" },
-  { label: "Create invoice", href: "/finance?tab=invoices" },
-  { label: "Ask Alph", href: "/?workspace=home" },
-] as const;
+function toneText(tone: HomeStatTone): string {
+  switch (tone) {
+    case "critical":
+      return "text-[#DC2626]";
+    case "warning":
+      return "text-[#D97706]";
+    case "success":
+      return "text-[#059669]";
+    case "info":
+      return "text-[#2563EB]";
+    default:
+      return "text-[#111827]";
+  }
+}
 
-/** Daily Home: simple command center over existing executive data. */
+function toneDot(tone: HomeStatTone): string {
+  switch (tone) {
+    case "critical":
+      return "bg-[#DC2626]";
+    case "warning":
+      return "bg-[#D97706]";
+    case "success":
+      return "bg-[#059669]";
+    case "info":
+      return "bg-[#2563EB]";
+    default:
+      return "bg-[#94A3B8]";
+  }
+}
+
+function Panel({
+  title,
+  action,
+  children,
+  className = "",
+}: {
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      className={`flex min-h-0 flex-col rounded-[16px] border border-[#E8ECF1] bg-white ${className}`}
+    >
+      <div className="flex items-center justify-between gap-3 border-b border-[#EEF1F5] px-4 py-3 sm:px-5">
+        <h2 className="text-[14px] font-semibold tracking-[-0.01em] text-[#111827]">
+          {title}
+        </h2>
+        {action}
+      </div>
+      <div className="flex-1 px-4 py-3 sm:px-5 sm:py-4">{children}</div>
+    </section>
+  );
+}
+
+function StatRows({
+  items,
+}: {
+  items: HomeCommandCenter["truckStatus"];
+}) {
+  return (
+    <ul className="space-y-1">
+      {items.map((item) => (
+        <li key={item.id}>
+          <Link
+            href={item.href}
+            className="flex items-center justify-between gap-3 rounded-[10px] px-2.5 py-2 transition hover:bg-[#F5F7FA] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
+          >
+            <span className="flex min-w-0 items-center gap-2.5">
+              <span
+                className={`h-1.5 w-1.5 shrink-0 rounded-full ${toneDot(item.tone)}`}
+                aria-hidden
+              />
+              <span className="truncate text-[14px] text-[#374151]">
+                {item.label}
+              </span>
+            </span>
+            <span
+              className={`shrink-0 text-[16px] font-bold tabular-nums tracking-tight ${toneText(item.tone)}`}
+            >
+              {item.count}
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Premium carrier-owner Home — one cohesive command composition. */
 export default function ExecutiveDashboardClient({
   data,
 }: ExecutiveDashboardClientProps) {
-  const { board, summary } = data;
-  const session = getCurrentSession();
-  const greeting = greetingForNow(session.name);
-  const recommendations = buildWorkspaceRecommendations(summary);
-
-  const financial = board.sections.find((s) => s.id === "financial");
-  const operations = board.sections.find((s) => s.id === "operations");
-  const compliance = board.sections.find((s) => s.id === "compliance");
-
-  const kpiById = (id: string) =>
-    [...(financial?.kpis ?? []), ...(operations?.kpis ?? []), ...(compliance?.kpis ?? [])].find(
-      (k) => k.id === id,
-    );
-
-  const todayCards = [
-    {
-      id: "loads",
-      label: "Loads in progress",
-      value: kpiById("loads-today")?.value ?? "—",
-      href: "/loads?tab=in_transit",
-    },
-    {
-      id: "drivers",
-      label: "Drivers available",
-      value: kpiById("drivers-available")?.value ?? "—",
-      href: "/drivers",
-    },
-    {
-      id: "equipment",
-      label: "Equipment available",
-      value: kpiById("trucks-available")?.value ?? "—",
-      href: "/fleet/trucks",
-    },
-    {
-      id: "documents",
-      label: "Documents missing",
-      value: summary.topPriorities.some((p) => /pod|document/i.test(p.text))
-        ? "Action needed"
-        : "None",
-      href: "/documents",
-    },
-    {
-      id: "cash",
-      label: "Cash requiring attention",
-      value: kpiById("outstanding")?.value ?? kpiById("open-invoices")?.value ?? "—",
-      href: "/finance?tab=invoices",
-    },
-  ];
-
-  const nextAction =
-    recommendations[0] ??
-    (summary.topPriorities[0]
-      ? {
-          id: summary.topPriorities[0].id,
-          text: summary.topPriorities[0].text,
-          reason: "Highest impact on today’s operations.",
-          href: summary.topPriorities[0].href ?? "/loads",
-          resolveHref: summary.topPriorities[0].href ?? "/loads",
-          priority: "high" as const,
-        }
-      : null);
-
-  const exceptions = [
-    ...summary.risks.filter((p) => p.severity === "critical" || p.severity === "warning"),
-    ...summary.topPriorities.filter((p) => p.severity === "critical"),
-  ]
-    .filter(
-      (item, index, all) => all.findIndex((x) => x.id === item.id) === index,
-    )
-    .slice(0, 4);
-
-  const alphPrompt = nextAction
-    ? `Help me handle: ${nextAction.text}`
-    : "What should I do next today?";
+  const { home, greeting } = data;
 
   return (
-    <FadeIn className="space-y-6 sm:space-y-7">
+    <FadeIn className="space-y-5 lg:space-y-6">
+      {/* Header: greeting + single Alph bar */}
       <header className="space-y-4">
-        <div>
-          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#6B7280]">
-            Home
-          </p>
-          <h1 className="mt-1 text-[24px] font-bold tracking-[-0.03em] text-[#111827] sm:text-[28px]">
-            {greeting}
-          </h1>
-          <p className="mt-1 text-[15px] text-[#6B7280]">
-            What needs your attention today?
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-[28px] font-bold tracking-[-0.035em] text-[#111827] sm:text-[32px] lg:text-[36px]">
+              {greeting.replace(/\.$/, "")}
+            </h1>
+            <p className="mt-1 text-[14px] text-[#6B7280]">{home.dateLabel}</p>
+          </div>
+          <p className="text-[13px] font-medium text-[#94A3B8]">
+            {home.companyName}
           </p>
         </div>
-        <Link
-          href={`/?workspace=home&q=${encodeURIComponent(alphPrompt)}`}
-          className="flex items-center gap-3 rounded-[14px] bg-[#F5F7FA] px-4 py-3.5 transition hover:bg-[#EFF6FF]"
-        >
-          <Sparkles className="h-5 w-5 shrink-0 text-[#2563EB]" strokeWidth={1.9} />
-          <span className="min-w-0 flex-1 truncate text-[15px] text-[#6B7280]">
-            Ask Alph anything — assign a driver, find a load, create an invoice…
-          </span>
-          <Search className="h-4 w-4 shrink-0 text-[#94A3B8]" strokeWidth={1.9} />
-        </Link>
+        <HomeAlphBar />
       </header>
 
-      {nextAction ? (
-        <section className="rounded-[16px] bg-[#F8F9FB] px-5 py-5">
+      {/* Desktop: 3-column composition · Tablet: 2-col · Mobile: stack */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-5">
+        {/* Hero — Today's Report spans full width on mobile, 8 cols on desktop */}
+        <section className="rounded-[16px] border border-[#E8ECF1] bg-[#F8FAFC] px-5 py-5 sm:px-6 sm:py-6 lg:col-span-8">
           <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#2563EB]">
-            Next best action
+            Today&apos;s Report
           </p>
-          <h2 className="mt-2 text-[20px] font-bold tracking-[-0.02em] text-[#111827]">
-            {nextAction.text}
-          </h2>
-          <p className="mt-1.5 max-w-2xl text-[14px] leading-6 text-[#6B7280]">
-            {nextAction.reason}
+          <p className="mt-3 max-w-3xl text-[17px] font-medium leading-7 tracking-[-0.015em] text-[#111827] sm:text-[18px] sm:leading-8">
+            {home.todaysReport.summary}
           </p>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-5 flex flex-wrap gap-2">
             <Link
-              href={nextAction.resolveHref ?? nextAction.href}
-              className="inline-flex rounded-full bg-[#2563EB] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[#1D4ED8]"
+              href={home.todaysReport.viewDetailsHref}
+              className="inline-flex h-9 items-center rounded-full bg-[#2563EB] px-4 text-[13px] font-semibold text-white transition hover:bg-[#1D4ED8]"
             >
-              Take action
+              View details
             </Link>
             <Link
-              href={`/?workspace=home&q=${encodeURIComponent(`Handle this for me: ${nextAction.text}`)}`}
-              className="inline-flex rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-[#2563EB] shadow-[inset_0_0_0_1px_#BFDBFE]"
+              href={home.todaysReport.askAlphHref}
+              className="inline-flex h-9 items-center rounded-full bg-white px-4 text-[13px] font-semibold text-[#2563EB] ring-1 ring-[#BFDBFE] transition hover:bg-[#EFF6FF]"
             >
-              Ask Alph to handle this
+              Ask Alph
             </Link>
           </div>
         </section>
-      ) : null}
 
-      <section>
-        <div className="mb-3">
-          <h2 className="text-[16px] font-semibold text-[#111827]">
-            Today&apos;s Operations
-          </h2>
-          <p className="mt-0.5 text-[13px] text-[#6B7280]">
-            {board.companyName} · a quick read on the day
-          </p>
-        </div>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-          {todayCards.map((card) => (
-            <Link
-              key={card.id}
-              href={card.href}
-              className="rounded-[14px] bg-[#F8F9FB] px-4 py-4 transition hover:bg-[#EFF6FF]"
-            >
-              <p className="text-[12px] font-medium text-[#6B7280]">{card.label}</p>
-              <p className="mt-2 text-[22px] font-bold tracking-tight text-[#111827]">
-                {card.value}
-              </p>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <div className="mb-3">
-          <h2 className="text-[16px] font-semibold text-[#111827]">
-            Exceptions
-          </h2>
-          <p className="mt-0.5 text-[13px] text-[#6B7280]">
-            Urgent or blocked items only — Alph suggests, you decide.
-          </p>
-        </div>
-        {exceptions.length === 0 ? (
-          <div className="rounded-[14px] bg-[#F8F9FB] px-4 py-5 text-[14px] text-[#6B7280]">
-            Nothing urgent is blocked right now.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {exceptions.map((item) => {
-              const urgent = item.severity === "critical";
-              return (
-                <div
+        {/* Right rail top: Needs Attention */}
+        <Panel
+          title="Needs Attention"
+          className="lg:col-span-4"
+          action={
+            home.needsAttention.length > 0 ? (
+              <span className="text-[12px] font-semibold text-[#DC2626]">
+                {home.needsAttention.length}
+              </span>
+            ) : null
+          }
+        >
+          {home.needsAttention.length === 0 ? (
+            <p className="text-[14px] leading-6 text-[#6B7280]">
+              Nothing urgent right now. Operations look clear.
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {home.needsAttention.slice(0, 5).map((item) => (
+                <li
                   key={item.id}
-                  className={`flex flex-wrap items-center justify-between gap-3 rounded-[14px] px-4 py-3 ${
-                    urgent ? "bg-[#FEF2F2]" : "bg-[#F8F9FB]"
-                  }`}
+                  className="border-b border-[#EEF1F5] pb-3 last:border-0 last:pb-0"
                 >
-                  <div className="min-w-0">
-                    <p className="text-[14px] font-semibold text-[#111827]">
-                      {item.text}
-                    </p>
-                    <p className="mt-0.5 text-[12px] text-[#6B7280]">
-                      {urgent
-                        ? "Blocked or high risk — decide before the next move."
-                        : "At risk — clear today to avoid delay."}
-                    </p>
-                  </div>
-                  <Link
-                    href={item.href ?? "/notifications"}
-                    className="inline-flex shrink-0 rounded-full bg-[#2563EB] px-3 py-1.5 text-[12px] font-semibold text-white"
+                  <p
+                    className={`text-[12px] font-semibold ${
+                      item.tone === "critical"
+                        ? "text-[#DC2626]"
+                        : "text-[#D97706]"
+                    }`}
                   >
-                    Open
+                    {item.category}
+                  </p>
+                  <p className="mt-1 text-[14px] font-medium leading-5 text-[#111827]">
+                    {item.whatHappened}
+                  </p>
+                  <p className="mt-0.5 text-[13px] leading-5 text-[#6B7280]">
+                    {item.whyItMatters}
+                  </p>
+                  <Link
+                    href={item.actionHref}
+                    className="mt-2 inline-flex text-[13px] font-semibold text-[#2563EB] transition hover:text-[#1D4ED8]"
+                  >
+                    {item.actionLabel} →
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+
+        {/* Three equal summary panels */}
+        <Panel
+          title="Truck Status"
+          className="lg:col-span-4"
+          action={
+            <Link
+              href="/fleet"
+              className="text-[12px] font-semibold text-[#2563EB] hover:text-[#1D4ED8]"
+            >
+              Fleet
+            </Link>
+          }
+        >
+          <StatRows items={home.truckStatus} />
+        </Panel>
+
+        <Panel
+          title="Load Status"
+          className="lg:col-span-4"
+          action={
+            <Link
+              href="/loads"
+              className="text-[12px] font-semibold text-[#2563EB] hover:text-[#1D4ED8]"
+            >
+              Dispatch
+            </Link>
+          }
+        >
+          <StatRows items={home.loadStatus} />
+        </Panel>
+
+        <Panel
+          title="Revenue"
+          className="lg:col-span-4"
+          action={
+            <Link
+              href="/finance"
+              className="text-[12px] font-semibold text-[#2563EB] hover:text-[#1D4ED8]"
+            >
+              Money
+            </Link>
+          }
+        >
+          <div className="grid grid-cols-2 gap-3">
+            {(
+              [
+                home.revenue.today,
+                home.revenue.week,
+                home.revenue.collected,
+                home.revenue.outstanding,
+              ] as const
+            ).map((cell) => (
+              <Link
+                key={cell.label}
+                href={cell.href}
+                className="rounded-[12px] bg-[#F8FAFC] px-3 py-3 transition hover:bg-[#EFF6FF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
+              >
+                <p className="text-[12px] font-medium text-[#6B7280]">
+                  {cell.label}
+                </p>
+                <p className="mt-1.5 text-[18px] font-bold tabular-nums tracking-tight text-[#111827]">
+                  {cell.value}
+                </p>
+              </Link>
+            ))}
+          </div>
+          <p
+            className={`mt-3 text-[13px] font-medium ${toneText(home.revenue.trendTone)}`}
+          >
+            {home.revenue.trendLabel}
+          </p>
+        </Panel>
+
+        {/* Invoices table — 8 cols */}
+        <Panel
+          title="Invoices and Payments"
+          className="lg:col-span-8"
+          action={
+            <Link
+              href="/finance?tab=invoices"
+              className="text-[12px] font-semibold text-[#2563EB] hover:text-[#1D4ED8]"
+            >
+              All invoices
+            </Link>
+          }
+        >
+          {home.invoices.length === 0 ? (
+            <p className="text-[14px] text-[#6B7280]">No open invoice work.</p>
+          ) : (
+            <div className="-mx-1 overflow-x-auto">
+              <table className="w-full min-w-[640px] border-collapse text-left">
+                <thead>
+                  <tr className="text-[12px] font-medium text-[#6B7280]">
+                    <th className="pb-2 pr-3 font-medium">Invoice</th>
+                    <th className="pb-2 pr-3 font-medium">Load</th>
+                    <th className="pb-2 pr-3 font-medium">Broker</th>
+                    <th className="pb-2 pr-3 font-medium">Amount</th>
+                    <th className="pb-2 pr-3 font-medium">Status</th>
+                    <th className="pb-2 pr-3 font-medium">Expected</th>
+                    <th className="pb-2 pr-3 font-medium">Timing</th>
+                    <th className="pb-2 font-medium">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {home.invoices.slice(0, 8).map((row) => (
+                    <tr
+                      key={row.id}
+                      className="border-t border-[#EEF1F5] text-[13px]"
+                    >
+                      <td className="py-2.5 pr-3 font-semibold text-[#111827]">
+                        {row.invoiceNumber}
+                      </td>
+                      <td className="py-2.5 pr-3">
+                        {row.loadId ? (
+                          <Link
+                            href={`/loads/${row.loadId}`}
+                            className="font-medium text-[#2563EB] hover:underline"
+                          >
+                            {row.loadNumber}
+                          </Link>
+                        ) : (
+                          <span className="text-[#374151]">{row.loadNumber}</span>
+                        )}
+                      </td>
+                      <td className="max-w-[120px] truncate py-2.5 pr-3 text-[#374151]">
+                        {row.brokerName}
+                      </td>
+                      <td className="py-2.5 pr-3 font-semibold tabular-nums text-[#111827]">
+                        {row.amountLabel}
+                      </td>
+                      <td className={`py-2.5 pr-3 font-medium ${toneText(row.tone)}`}>
+                        {row.status}
+                      </td>
+                      <td className="py-2.5 pr-3 text-[#6B7280]">
+                        {row.paymentExpectedLabel}
+                      </td>
+                      <td className="py-2.5 pr-3 text-[#6B7280]">{row.daysLabel}</td>
+                      <td className="py-2.5">
+                        <Link
+                          href={row.actionHref}
+                          className="font-semibold text-[#2563EB] hover:text-[#1D4ED8]"
+                        >
+                          {row.actionLabel}
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Panel>
+
+        {/* FMCSA News — 4 cols side panel */}
+        <Panel
+          title="FMCSA News"
+          className="lg:col-span-4"
+          action={
+            <span className="text-[11px] font-medium text-[#94A3B8]">
+              Demo
+            </span>
+          }
+        >
+          <p className="mb-3 text-[12px] leading-5 text-[#94A3B8]">
+            {home.fmcsaDemoLabel}
+          </p>
+          <ul className="space-y-4">
+            {home.fmcsaNews.map((item) => (
+              <li
+                key={item.id}
+                className="border-b border-[#EEF1F5] pb-4 last:border-0 last:pb-0"
+              >
+                <p className="text-[14px] font-semibold leading-5 text-[#111827]">
+                  {item.headline}
+                </p>
+                <p className="mt-1.5 text-[13px] leading-5 text-[#6B7280]">
+                  {item.alphSummary}
+                </p>
+                <p className="mt-1.5 text-[12px] text-[#94A3B8]">
+                  {item.dateLabel}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                  <Link
+                    href={item.readHref}
+                    className="text-[13px] font-semibold text-[#2563EB] hover:text-[#1D4ED8]"
+                  >
+                    Read summary
+                  </Link>
+                  <Link
+                    href={item.affectMeHref}
+                    className="text-[13px] font-semibold text-[#374151] hover:text-[#111827]"
+                  >
+                    Does this affect me?
                   </Link>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+              </li>
+            ))}
+          </ul>
+        </Panel>
 
-      <section>
-        <div className="mb-3">
-          <h2 className="text-[16px] font-semibold text-[#111827]">
-            Recommended Actions
-          </h2>
-          <p className="mt-0.5 text-[13px] text-[#6B7280]">
-            Clear next moves when you have a spare minute.
-          </p>
-        </div>
-        <div className="grid gap-3 md:grid-cols-2">
-          {recommendations.slice(0, 4).map((rec, index) => (
-            <div
-              key={rec.id}
-              className="flex flex-col justify-between rounded-[14px] bg-[#F8F9FB] px-4 py-4"
-            >
-              <div>
-                <p className="text-[14px] font-semibold text-[#111827]">{rec.text}</p>
-                <p className="mt-1 text-[12px] text-[#6B7280]">{rec.reason}</p>
-              </div>
-              <Link
-                href={rec.resolveHref ?? rec.href}
-                className={`mt-3 inline-flex w-fit rounded-full px-3 py-1.5 text-[12px] font-semibold ${
-                  index === 0
-                    ? "bg-[#2563EB] text-white"
-                    : "bg-white text-[#2563EB] shadow-[inset_0_0_0_1px_#BFDBFE]"
-                }`}
-              >
-                {index === 0 ? "Do this next" : "Open"}
-              </Link>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-3 text-[16px] font-semibold text-[#111827]">
-          Quick actions
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {QUICK_ACTIONS.map((action, index) => (
+        {/* Drivers table — full width */}
+        <Panel
+          title="Drivers"
+          className="lg:col-span-12"
+          action={
             <Link
-              key={action.label}
-              href={action.href}
-              className={`inline-flex rounded-full px-4 py-2 text-[13px] font-semibold transition ${
-                index === 0
-                  ? "bg-[#2563EB] text-white hover:bg-[#1D4ED8]"
-                  : "bg-[#F5F7FA] text-[#334155] hover:bg-[#EFF6FF] hover:text-[#2563EB]"
-              }`}
+              href="/drivers"
+              className="text-[12px] font-semibold text-[#2563EB] hover:text-[#1D4ED8]"
             >
-              {action.label}
+              All drivers
             </Link>
-          ))}
-        </div>
-      </section>
+          }
+        >
+          {home.drivers.length === 0 ? (
+            <p className="text-[14px] text-[#6B7280]">
+              No drivers need attention today.
+            </p>
+          ) : (
+            <div className="-mx-1 overflow-x-auto">
+              <table className="w-full min-w-[720px] border-collapse text-left">
+                <thead>
+                  <tr className="text-[12px] font-medium text-[#6B7280]">
+                    <th className="pb-2 pr-3 font-medium">Driver</th>
+                    <th className="pb-2 pr-3 font-medium">Truck</th>
+                    <th className="pb-2 pr-3 font-medium">Load</th>
+                    <th className="pb-2 pr-3 font-medium">Location</th>
+                    <th className="pb-2 pr-3 font-medium">Status</th>
+                    <th className="pb-2 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {home.drivers.map((driver) => (
+                    <tr
+                      key={driver.id}
+                      className="border-t border-[#EEF1F5] text-[13px]"
+                    >
+                      <td className="py-2.5 pr-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            href={driver.viewHref}
+                            className="font-semibold text-[#111827] hover:text-[#2563EB]"
+                          >
+                            {driver.name}
+                          </Link>
+                          <span className="inline-flex gap-1">
+                            {driver.callHref ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openCommunicationUrl(driver.callHref!)
+                                }
+                                className="rounded-md px-1.5 py-0.5 text-[12px] font-semibold text-[#2563EB] hover:bg-[#EFF6FF]"
+                              >
+                                Call
+                              </button>
+                            ) : null}
+                            {driver.messageHref ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openCommunicationUrl(driver.messageHref!)
+                                }
+                                className="rounded-md px-1.5 py-0.5 text-[12px] font-semibold text-[#2563EB] hover:bg-[#EFF6FF]"
+                              >
+                                Message
+                              </button>
+                            ) : null}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-2.5 pr-3 text-[#374151]">
+                        {driver.truckLabel}
+                      </td>
+                      <td className="py-2.5 pr-3">
+                        {driver.loadId ? (
+                          <Link
+                            href={`/loads/${driver.loadId}`}
+                            className="font-medium text-[#2563EB] hover:underline"
+                          >
+                            {driver.loadLabel}
+                          </Link>
+                        ) : (
+                          <span className="text-[#6B7280]">{driver.loadLabel}</span>
+                        )}
+                      </td>
+                      <td className="max-w-[140px] truncate py-2.5 pr-3 text-[#6B7280]">
+                        {driver.location}
+                      </td>
+                      <td
+                        className={`py-2.5 pr-3 font-medium ${toneText(driver.statusTone)}`}
+                      >
+                        {driver.statusLabel}
+                      </td>
+                      <td className="py-2.5">
+                        <div className="flex flex-wrap gap-2">
+                          <Link
+                            href={driver.assignHref}
+                            className="font-semibold text-[#2563EB] hover:text-[#1D4ED8]"
+                          >
+                            Assign load
+                          </Link>
+                          <Link
+                            href={driver.viewHref}
+                            className="font-semibold text-[#374151] hover:text-[#111827]"
+                          >
+                            View
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Panel>
+      </div>
     </FadeIn>
   );
 }

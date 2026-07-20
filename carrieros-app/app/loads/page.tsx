@@ -10,6 +10,7 @@ import { getActiveTenantId } from "@/lib/data/tenant";
 import {
   computeDispatchSummary,
   enrichLoadRow,
+  isDispatchFocus,
   isDispatchSortKey,
   isDispatchTab,
   paginateRows,
@@ -17,6 +18,7 @@ import {
   sortDispatchRows,
   type DispatchSearchParams,
 } from "@/lib/dispatch/load-board";
+import { FINANCE_TODAY } from "@/lib/finance/finance-board";
 import { getDriverService } from "@/lib/services/drivers";
 import { getLoadService } from "@/lib/services/loads";
 
@@ -30,6 +32,7 @@ async function DispatchBoard({ params }: { params: DispatchSearchParams }) {
   const driverService = getDriverService();
 
   const dispatchTab = isDispatchTab(params.tab) ? params.tab : "all";
+  const focus = isDispatchFocus(params.focus) ? params.focus : undefined;
   const sortKey = isDispatchSortKey(params.sort) ? params.sort : "reference";
   const sortDir = params.dir === "asc" ? "asc" : "desc";
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
@@ -45,7 +48,12 @@ async function DispatchBoard({ params }: { params: DispatchSearchParams }) {
 
   const [allLoads, filteredLoads, drivers, brokers] = await Promise.all([
     loadService.listLoads(tenantId, baseFilters),
-    loadService.listLoads(tenantId, { ...baseFilters, dispatchTab }),
+    loadService.listLoads(tenantId, {
+      ...baseFilters,
+      dispatchTab: focus ? "all" : dispatchTab,
+      focus,
+      focusToday: FINANCE_TODAY,
+    }),
     driverService.listDrivers(tenantId),
     Promise.resolve(listBrokersByTenant(tenantId)),
   ]);
