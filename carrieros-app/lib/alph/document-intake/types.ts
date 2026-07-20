@@ -25,6 +25,6 @@ export interface DocumentIntakeRepository {
   saveUpload(input: DocumentUpload): Promise<PersistedDocument>;
   saveExtraction(input: { documentId: string; versionId: string; companyId: string; userId: string; extraction: DocumentExtraction }): Promise<string>;
   createProposedAction(input: { documentId: string; ocrResultId: string; companyId: string; userId: string; actionKind: string; summary: string; payload: Record<string, unknown>; confidence: number }): Promise<string>;
-  recordApproval(input: { proposedActionId: string; companyId: string; userId: string; decision: "approved" | "rejected"; note?: string }): Promise<string>;
+  recordApproval(input: { proposedActionId: string; companyId: string; userId: string; accessToken: string; decision: "approved" | "rejected"; note?: string }): Promise<string>;
   appendAudit(input: { documentId: string; companyId: string; userId: string; eventType: string; detail: string; requestId?: string }): Promise<void>;
 }

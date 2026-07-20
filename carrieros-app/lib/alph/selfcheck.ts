@@ -403,11 +403,25 @@ export async function runAlphFoundationSelfCheck(): Promise<AlphSelfCheckResult>
     "supabase/migrations/20260720090000_document_intake_foundation.sql",
     "utf8",
   );
+  const permissionMigrationSql = readFileSync(
+    "supabase/migrations/20260720210000_document_intake_role_grants.sql",
+    "utf8",
+  );
   const rollbackSql = readFileSync(
     "supabase/rollback/20260720090000_document_intake_foundation_rollback.sql",
     "utf8",
   );
   const gitignore = readFileSync(".gitignore", "utf8");
+  const documentRepositorySource = readFileSync(
+    "lib/alph/document-intake/supabase-repository.ts",
+    "utf8",
+  );
+  const supabaseServerSource = readFileSync("lib/supabase/server.ts", "utf8");
+  const permissionSql = permissionMigrationSql.replace(/\s+/g, " ").toLowerCase();
+  const approvalMethodSource =
+    documentRepositorySource.split("async recordApproval")[1]?.split("async appendAudit")[0] ?? "";
+  const authenticatedClientSource =
+    supabaseServerSource.split("export function getSupabaseAuthenticatedUserClient")[1] ?? "";
 
   checks.push({
     name: "document_rls_uses_verified_app_metadata_claims",
@@ -441,6 +455,36 @@ export async function runAlphFoundationSelfCheck(): Promise<AlphSelfCheckResult>
       migrationSql.includes("document_ocr_fields_result_company_fk") &&
       migrationSql.includes("document_actions_document_company_fk") &&
       migrationSql.includes("document_audit_document_company_fk"),
+  });
+  checks.push({
+    name: "document_table_grants_are_least_privilege",
+    pass:
+      permissionSql.includes(
+        "revoke all privileges on table public.documents, public.document_versions, public.document_ocr_results, public.document_ocr_fields, public.document_proposed_actions, public.document_approvals, public.document_audit_history from anon, authenticated, service_role;",
+      ) &&
+      permissionSql.includes(
+        "grant insert on table public.document_approvals to authenticated;",
+      ) &&
+      !/grant [^;]* to anon;/.test(permissionSql) &&
+      !/grant [^;]*document_approvals[^;]* to service_role;/.test(
+        permissionSql.replace(/grant select[^;]+to service_role;/, ""),
+      ) &&
+      !/grant [^;]*(delete|truncate|references|trigger)[^;]*;/.test(
+        permissionSql,
+      ) &&
+      !permissionSql.includes("disable row level security") &&
+      !permissionSql.includes("drop policy"),
+  });
+  checks.push({
+    name: "document_approval_uses_authenticated_user_client",
+    pass:
+      approvalMethodSource.includes(
+        "getSupabaseAuthenticatedUserClient(input.accessToken)",
+      ) &&
+      approvalMethodSource.includes('userDb.from("document_approvals")') &&
+      !approvalMethodSource.includes('this.db.from("document_approvals")') &&
+      authenticatedClientSource.includes("NEXT_PUBLIC_SUPABASE_ANON_KEY") &&
+      !authenticatedClientSource.includes("SUPABASE_SERVICE_ROLE_KEY"),
   });
   checks.push({
     name: "document_rollback_refuses_data_or_file_loss",

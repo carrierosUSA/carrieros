@@ -1,6 +1,9 @@
 import "server-only";
 
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  getSupabaseAuthenticatedUserClient,
+  getSupabaseServerClient,
+} from "@/lib/supabase/server";
 import type { DocumentIntakeRepository, DocumentUpload, PersistedDocument } from "@/lib/alph/document-intake/types";
 
 function safeName(name: string) { return name.normalize("NFKC").replace(/[^a-zA-Z0-9._-]+/g, "-").slice(0, 160); }
@@ -36,6 +39,18 @@ export class SupabaseDocumentIntakeRepository implements DocumentIntakeRepositor
   }
 
   async createProposedAction(input: Parameters<DocumentIntakeRepository["createProposedAction"]>[0]) { const row = await this.db.from("document_proposed_actions").insert({ company_id: input.companyId, document_id: input.documentId, ocr_result_id: input.ocrResultId, action_kind: input.actionKind, summary: input.summary, payload: input.payload, confidence: input.confidence, requires_approval: true, created_by: input.userId }).select("id").single(); fail(row.error, "Proposed action insert failed"); if (!row.data) throw new Error("Proposed action insert returned no row."); return String(row.data.id); }
-  async recordApproval(input: Parameters<DocumentIntakeRepository["recordApproval"]>[0]) { const row = await this.db.from("document_approvals").insert({ company_id: input.companyId, proposed_action_id: input.proposedActionId, decision: input.decision, decided_by: input.userId, decision_note: input.note }).select("id").single(); fail(row.error, "Document approval insert failed"); if (!row.data) throw new Error("Document approval insert returned no row."); return String(row.data.id); }
+  async recordApproval(input: Parameters<DocumentIntakeRepository["recordApproval"]>[0]) {
+    const userDb = getSupabaseAuthenticatedUserClient(input.accessToken);
+    const row = await userDb.from("document_approvals").insert({
+      company_id: input.companyId,
+      proposed_action_id: input.proposedActionId,
+      decision: input.decision,
+      decided_by: input.userId,
+      decision_note: input.note,
+    }).select("id").single();
+    fail(row.error, "Document approval insert failed");
+    if (!row.data) throw new Error("Document approval insert returned no row.");
+    return String(row.data.id);
+  }
   async appendAudit(input: Parameters<DocumentIntakeRepository["appendAudit"]>[0]) { const row = await this.db.from("document_audit_history").insert({ company_id: input.companyId, document_id: input.documentId, actor_user_id: input.userId, event_type: input.eventType, detail: input.detail, request_id: input.requestId }); fail(row.error, "Document audit insert failed"); }
 }
