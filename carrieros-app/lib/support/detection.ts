@@ -76,6 +76,8 @@ export function detectSeedIssues(tenantId: string): SupportIssue[] {
       autoResolvable: true,
       risky: false,
       carrierVisible: true,
+      // Demo integration sample — visible in Support, not as a global app-failure banner.
+      surfaceInBanner: false,
       estimatedUpdate: "Usually under 15 minutes",
       timeline: [
         {
@@ -126,6 +128,7 @@ export function detectSeedIssues(tenantId: string): SupportIssue[] {
       autoResolvable: false,
       risky: false,
       carrierVisible: true,
+      surfaceInBanner: true,
       timeline: [
         {
           id: "p1",
@@ -158,6 +161,8 @@ export function detectSeedIssues(tenantId: string): SupportIssue[] {
       autoResolvable: true,
       risky: false,
       carrierVisible: true,
+      // Platform demo sample — do not present as a persistent app-failure badge.
+      surfaceInBanner: false,
       timeline: [
         {
           id: "e1",
@@ -189,6 +194,7 @@ export function detectSeedIssues(tenantId: string): SupportIssue[] {
       autoResolvable: true,
       risky: false,
       carrierVisible: true,
+      surfaceInBanner: true,
       timeline: [
         {
           id: "s1",

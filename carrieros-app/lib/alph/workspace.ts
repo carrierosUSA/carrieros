@@ -46,7 +46,7 @@ export const WORKSPACE_CONTEXT_LABELS: Record<string, string> = {
   drivers: "Drivers",
   fleet: "Fleet",
   documents: "Documents",
-  finance: "Finance",
+  finance: "Money",
   customers: "Customers",
   reports: "Reports",
   alph: "Alph",
@@ -202,27 +202,27 @@ export function buildWorkspaceBriefing(
   return [
     {
       id: "priorities",
-      title: "Today's Priorities",
+      title: "Needs Your Attention",
       items: mapItems(summary.topPriorities, "high"),
     },
     {
       id: "risks",
-      title: "Risks",
+      title: "At Risk",
       items: mapItems(summary.risks, "critical"),
     },
     {
       id: "opportunities",
-      title: "Opportunities",
+      title: "Recommended Actions",
       items: mapItems(summary.opportunities, "medium"),
     },
     {
       id: "financial",
-      title: "Financial Health",
+      title: "Cash & Invoices",
       items: mapItems(summary.financialHealth, "info"),
     },
     {
       id: "fleet",
-      title: "Fleet Health",
+      title: "Fleet Readiness",
       items: mapItems(summary.fleetHealth, "medium"),
     },
     {

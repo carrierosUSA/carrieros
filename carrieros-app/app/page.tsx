@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import AlphWorkspace from "@/components/alph/AlphWorkspace";
 import { getCurrentSession } from "@/lib/auth/session";
 import { getActiveTenantId } from "@/lib/data/tenant";
@@ -62,13 +63,15 @@ export default async function Home({ searchParams }: HomePageProps) {
   return (
     <div className="w-full rounded-[16px] bg-white p-3 text-[#111827] sm:p-5 lg:p-6">
       <div className="mx-auto max-w-[1280px]">
-        <AlphWorkspace
-          board={board}
-          summary={summary}
-          userName={session.name}
-          greeting={greetingForNow(session.name)}
-          workspaceId={workspaceId}
-        />
+        <Suspense fallback={<div className="h-40 animate-pulse rounded-[16px] bg-[#F5F7FA]" />}>
+          <AlphWorkspace
+            board={board}
+            summary={summary}
+            userName={session.name}
+            greeting={greetingForNow(session.name)}
+            workspaceId={workspaceId}
+          />
+        </Suspense>
       </div>
     </div>
   );

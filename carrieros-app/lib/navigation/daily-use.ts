@@ -43,12 +43,6 @@ export const PRIMARY_NAV: PrimaryNavItem[] = [
     roles: ["super_admin", "owner", "dispatcher", "read_only", "safety"],
   },
   {
-    name: "Drivers",
-    href: "/drivers",
-    icon: "drivers",
-    roles: ["super_admin", "owner", "dispatcher", "safety", "read_only"],
-  },
-  {
     name: "Fleet",
     href: "/fleet",
     icon: "fleet",
@@ -59,6 +53,19 @@ export const PRIMARY_NAV: PrimaryNavItem[] = [
       "fleet_manager",
       "maintenance",
       "mechanic",
+      "read_only",
+    ],
+  },
+  {
+    name: "Money",
+    href: "/finance",
+    icon: "finance",
+    roles: [
+      "super_admin",
+      "owner",
+      "dispatcher",
+      "accounting",
+      "accountant",
       "read_only",
     ],
   },
@@ -77,62 +84,119 @@ export const PRIMARY_NAV: PrimaryNavItem[] = [
     ],
   },
   {
-    name: "Finance",
-    href: "/finance",
-    icon: "finance",
-    roles: [
-      "super_admin",
-      "owner",
-      "dispatcher",
-      "accounting",
-      "accountant",
-      "read_only",
-    ],
-  },
-  {
-    name: "Customers",
-    href: "/customers",
-    icon: "customers",
-    roles: [
-      "super_admin",
-      "owner",
-      "dispatcher",
-      "accounting",
-      "accountant",
-      "read_only",
-    ],
-  },
-  {
-    name: "Reports",
-    href: "/analytics",
-    icon: "reports",
-    roles: [
-      "super_admin",
-      "owner",
-      "accounting",
-      "accountant",
-      "safety",
-      "dispatcher",
-      "read_only",
-    ],
-  },
-  {
     name: "Alph",
     href: "/",
     icon: "alph",
     roles: OPS,
   },
   {
-    name: "Advanced",
-    href: "/advanced",
-    icon: "advanced",
-    roles: ["super_admin", "owner"],
+    name: "More",
+    href: "/more",
+    icon: "more",
+    roles: OPS,
+  },
+];
+
+export type MoreNavLink = NavLink & {
+  description?: string;
+  roles?: CarrierOSRole[];
+};
+
+export type MoreNavGroup = {
+  id: string;
+  name: string;
+  links: MoreNavLink[];
+};
+
+/** Secondary destinations under More — all existing routes preserved. */
+export const MORE_NAV_GROUPS: MoreNavGroup[] = [
+  {
+    id: "operations",
+    name: "Operations",
+    links: [
+      {
+        name: "Drivers",
+        href: "/drivers",
+        description: "Roster, documents, and availability.",
+        roles: ["super_admin", "owner", "dispatcher", "safety", "read_only"],
+      },
+      {
+        name: "Customers",
+        href: "/customers",
+        description: "Brokers, shippers, and credit.",
+        roles: [
+          "super_admin",
+          "owner",
+          "dispatcher",
+          "accounting",
+          "accountant",
+          "read_only",
+        ],
+      },
+      {
+        name: "Reports",
+        href: "/analytics",
+        description: "Revenue, loads, fleet, and compliance.",
+        roles: [
+          "super_admin",
+          "owner",
+          "accounting",
+          "accountant",
+          "safety",
+          "dispatcher",
+          "read_only",
+        ],
+      },
+    ],
   },
   {
-    name: "Settings",
-    href: "/settings",
-    icon: "settings",
-    roles: ["super_admin", "owner"],
+    id: "platform",
+    name: "Platform",
+    links: [
+      {
+        name: "Integrations",
+        href: "/integrations",
+        description: "ELD, fuel, accounting, and partner connections.",
+        roles: ["super_admin", "owner"],
+      },
+      {
+        name: "Automation",
+        href: "/workflows",
+        description: "Workflows and recipes — you approve critical steps.",
+        roles: ["super_admin", "owner"],
+      },
+      {
+        name: "Advanced",
+        href: "/advanced",
+        description: "Automation, integrations, and platform tools.",
+        roles: ["super_admin", "owner"],
+      },
+    ],
+  },
+  {
+    id: "administration",
+    name: "Administration",
+    links: [
+      {
+        name: "Company",
+        href: "/settings",
+        exactPath: true,
+        description: "Company profile and billing basics.",
+        roles: ["super_admin", "owner"],
+      },
+      {
+        name: "Users and permissions",
+        href: "/settings/permissions",
+        description: "People, roles, and access.",
+        roles: ["super_admin", "owner"],
+      },
+      {
+        name: "Settings",
+        href: "/settings",
+        description: "Notifications, security, and support.",
+        roles: ["super_admin", "owner"],
+      },
+    ],
   },
 ];
 
@@ -726,6 +790,7 @@ export function getWorkspaceIdFromPathname(pathname: string): WorkspaceId {
   if (pathname.startsWith("/analytics") || pathname.startsWith("/compliance")) {
     return "reports";
   }
+  if (pathname.startsWith("/more")) return "home";
   if (
     pathname.startsWith("/advanced") ||
     pathname.startsWith("/integrations") ||

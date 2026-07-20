@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Pin,
   PinOff,
@@ -58,14 +58,6 @@ type AlphWorkspaceProps = {
   workspaceId?: string;
 };
 
-function priorityTone(priority: string) {
-  if (priority === "critical") return CARRIEROS_COLORS.critical;
-  if (priority === "high") return CARRIEROS_COLORS.warning;
-  if (priority === "medium") return CARRIEROS_COLORS.info;
-  if (priority === "low") return CARRIEROS_COLORS.success;
-  return CARRIEROS_COLORS.disabled;
-}
-
 export default function AlphWorkspace({
   board,
   summary,
@@ -74,6 +66,7 @@ export default function AlphWorkspace({
   workspaceId,
 }: AlphWorkspaceProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const [result, setResult] = useState<AlphResult | null>(null);
@@ -107,6 +100,14 @@ export default function AlphWorkspace({
     setMounted(true);
     setFavorites(listAlphFavorites());
   }, []);
+
+  useEffect(() => {
+    const seeded = searchParams.get("q")?.trim();
+    if (seeded) {
+      setQuery(seeded);
+      inputRef.current?.focus();
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     function onKey(e: globalThis.KeyboardEvent) {
@@ -204,33 +205,22 @@ export default function AlphWorkspace({
         <h1 className="text-[30px] font-bold tracking-[-0.03em] text-slate-950 sm:text-[34px]">
           {greeting}
         </h1>
-        <p className="text-[16px] text-slate-600">How can I help you today?</p>
+        <p className="text-[16px] text-slate-600">
+          What needs your attention today? Alph assists — you decide.
+        </p>
         {workspaceId && workspaceId !== "alph" ? (
           <p className="pt-1 text-[13px] font-medium text-[#2563EB]">
             Context: {WORKSPACE_CONTEXT_LABELS[workspaceId] ?? workspaceId}{" "}
-            workspace — Alph assists, you decide.
+            workspace.
           </p>
         ) : null}
-        <div className="flex flex-wrap gap-2 pt-2">
-          <span className="inline-flex items-center rounded-full bg-[#EFF6FF] px-3 py-1 text-[12px] font-medium text-[#1E3A8A]">
-            Alph
-          </span>
-          {workspaceId ? (
-            <span className="inline-flex items-center rounded-full bg-[#F1F5F9] px-3 py-1 text-[12px] font-medium text-[#334155]">
-              {WORKSPACE_CONTEXT_LABELS[workspaceId] ?? workspaceId}
-            </span>
-          ) : null}
-          <span className="inline-flex items-center rounded-full bg-[#F1F5F9] px-3 py-1 text-[12px] font-medium text-[#334155]">
-            Your permissions
-          </span>
-        </div>
         <div className="pt-1">
           <AiPolicyNotice variant="assist" />
         </div>
       </header>
 
       {/* Search */}
-      <section className="rounded-[20px] border border-[#EAEAEA] bg-white p-4 shadow-sm sm:p-5">
+      <section className="rounded-[20px] bg-[#F8F9FB] p-4 sm:p-5">
         <form onSubmit={onSubmit} className="relative">
           <div className="flex items-center gap-3 rounded-[16px] border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 transition focus-within:border-[#2563EB] focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(37,99,235,0.12)]">
             <Sparkles className="h-5 w-5 shrink-0 text-[#2563EB]" strokeWidth={1.9} />
@@ -297,54 +287,88 @@ export default function AlphWorkspace({
         <EmptyAlphState onAction={(cmd) => runCommand(cmd)} />
       ) : (
         <>
+          {/* Next best action */}
+          {recommendations[0] ? (
+            <section className="rounded-[16px] bg-[#F8F9FB] px-5 py-5">
+              <SectionTitle title="Next best action" />
+              <p className="mt-2 text-[18px] font-bold text-slate-950">
+                {recommendations[0].text}
+              </p>
+              <p className="mt-1 text-[13px] text-slate-500">
+                {recommendations[0].reason}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link
+                  href={recommendations[0].resolveHref ?? recommendations[0].href}
+                  className="rounded-full bg-[#2563EB] px-3 py-1.5 text-[12px] font-semibold text-white"
+                >
+                  Take action
+                </Link>
+                <button
+                  type="button"
+                  onClick={() =>
+                    runCommand(`Handle this: ${recommendations[0].text}`, {
+                      autoNavigate: false,
+                    })
+                  }
+                  className="rounded-full bg-white px-3 py-1.5 text-[12px] font-semibold text-[#2563EB] shadow-[inset_0_0_0_1px_#BFDBFE]"
+                >
+                  Ask Alph to handle this
+                </button>
+              </div>
+            </section>
+          ) : null}
+
           {/* Snapshot */}
           <section>
-            <SectionTitle title="Today's Business Snapshot" />
+            <SectionTitle title="Today's Operations" />
             <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
-              {snapshot.map((kpi) => (
+              {snapshot.slice(0, 4).map((kpi) => (
                 <SnapshotCard key={kpi.id} kpi={kpi} />
               ))}
             </div>
           </section>
 
-          {/* Briefing */}
+          {/* Briefing — attention + at risk first */}
           <section>
             <SectionTitle
-              title="Alph Morning Briefing"
+              title="Needs Your Attention"
               subtitle={summary.subtitle}
             />
-            <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {briefing.map((section) => (
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              {briefing
+                .filter((section) =>
+                  ["priorities", "risks", "opportunities"].includes(section.id),
+                )
+                .map((section) => (
                 <div
                   key={section.id}
-                  className="rounded-[16px] border border-[#EAEAEA] bg-white p-4 shadow-sm"
+                  className="rounded-[16px] bg-[#F8F9FB] p-4"
                 >
                   <h3 className="text-[14px] font-semibold text-slate-950">
                     {section.title}
                   </h3>
                   <ul className="mt-3 space-y-3">
-                    {section.items.map((item) => {
-                      const tone = priorityTone(item.priority);
+                    {section.items.slice(0, 2).map((item) => {
+                      const urgent = item.priority === "critical";
                       return (
-                        <li key={item.id} className="rounded-[12px] bg-[#F8FAFC] p-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="text-[13px] font-medium text-slate-900">
-                              {item.text}
-                            </p>
-                            <span
-                              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${tone.bg} ${tone.text}`}
-                            >
-                              {item.priority}
-                            </span>
-                          </div>
+                        <li
+                          key={item.id}
+                          className={`rounded-[12px] p-3 ${
+                            urgent ? "bg-[#FEF2F2]" : "bg-white"
+                          }`}
+                        >
+                          <p className="text-[13px] font-medium text-slate-900">
+                            {item.text}
+                          </p>
                           <p className="mt-1 text-[12px] text-slate-500">
                             {item.reason}
                           </p>
                           <Link
                             href={item.href}
-                            className="mt-2 inline-flex text-[12px] font-semibold text-[#2563EB]"
+                            className="mt-2 inline-flex rounded-full bg-[#2563EB] px-2.5 py-1 text-[12px] font-semibold text-white"
                           >
-                            {item.actionLabel} →
+                            {item.actionLabel}
                           </Link>
                         </li>
                       );
@@ -358,19 +382,18 @@ export default function AlphWorkspace({
           {/* Quick actions */}
           <section>
             <SectionTitle title="Quick Actions" />
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
-              {ALPH_QUICK_ACTIONS.map((action) => (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {ALPH_QUICK_ACTIONS.slice(0, 5).map((action, index) => (
                 <Link
                   key={action.id}
                   href={action.href}
-                  className="group rounded-[14px] border border-[#EAEAEA] bg-white px-3 py-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-[#BFDBFE] hover:shadow-md"
+                  className={`rounded-full px-4 py-2 text-[13px] font-semibold transition ${
+                    index === 0
+                      ? "bg-[#2563EB] text-white"
+                      : "bg-[#F5F7FA] text-slate-700 hover:bg-[#EFF6FF] hover:text-[#1D4ED8]"
+                  }`}
                 >
-                  <span className="text-[18px]" aria-hidden>
-                    {action.emoji}
-                  </span>
-                  <p className="mt-1.5 text-[12px] font-semibold text-slate-800 group-hover:text-[#1D4ED8]">
-                    {action.label}
-                  </p>
+                  {action.label}
                 </Link>
               ))}
             </div>
@@ -378,61 +401,48 @@ export default function AlphWorkspace({
 
           {/* Recommendations */}
           <section>
-            <SectionTitle title="AI Recommendations" />
+            <SectionTitle title="Recommended Actions" />
             <div className="mt-3 space-y-2">
-              {recommendations.map((rec) => {
-                const tone = priorityTone(rec.priority);
-                return (
+              {recommendations.slice(0, 3).map((rec, index) => (
                   <div
                     key={rec.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-[#EAEAEA] bg-white px-4 py-3 shadow-sm"
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] bg-[#F8F9FB] px-4 py-3"
                   >
                     <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-[14px] font-semibold text-slate-900">
-                          {rec.text}
-                        </p>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${tone.bg} ${tone.text}`}
-                        >
-                          {rec.priority}
-                        </span>
-                      </div>
+                      <p className="text-[14px] font-semibold text-slate-900">
+                        {rec.text}
+                      </p>
                       <p className="mt-0.5 text-[12px] text-slate-500">{rec.reason}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Link
                         href={rec.resolveHref ?? rec.href}
-                        className="rounded-full bg-[#2563EB] px-3 py-1.5 text-[12px] font-semibold text-white"
+                        className={`rounded-full px-3 py-1.5 text-[12px] font-semibold ${
+                          index === 0
+                            ? "bg-[#2563EB] text-white"
+                            : "bg-white text-[#2563EB] shadow-[inset_0_0_0_1px_#BFDBFE]"
+                        }`}
                       >
-                        Resolve
-                      </Link>
-                      <Link
-                        href={rec.href}
-                        className="rounded-full border border-[#EAEAEA] px-3 py-1.5 text-[12px] font-semibold text-slate-700"
-                      >
-                        View Details
+                        {index === 0 ? "Do this next" : "Open"}
                       </Link>
                       <button
                         type="button"
                         onClick={() => setIgnored((ids) => [...ids, rec.id])}
-                        className="rounded-full border border-[#EAEAEA] px-3 py-1.5 text-[12px] font-semibold text-slate-500"
+                        className="rounded-full px-3 py-1.5 text-[12px] font-semibold text-slate-500"
                       >
-                        Ignore
+                        Dismiss
                       </button>
                     </div>
                   </div>
-                );
-              })}
+              ))}
             </div>
           </section>
 
           <div className="grid gap-5 lg:grid-cols-2">
-            {/* Activity */}
-            <section className="rounded-[16px] border border-[#EAEAEA] bg-white p-4 shadow-sm">
+            <section className="rounded-[16px] bg-[#F8F9FB] p-4">
               <SectionTitle title="Recent Activity" />
               <ol className="mt-3 space-y-3">
-                {activity.map((item) => (
+                {activity.slice(0, 4).map((item) => (
                   <li key={item.id} className="flex gap-3">
                     <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#2563EB]" />
                     <div className="min-w-0">
@@ -443,20 +453,13 @@ export default function AlphWorkspace({
                         {item.title}
                       </Link>
                       <p className="text-[12px] text-slate-500">{item.detail}</p>
-                      <p className="text-[11px] text-slate-400">
-                        {new Date(item.at).toLocaleTimeString([], {
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })}
-                      </p>
                     </div>
                   </li>
                 ))}
               </ol>
             </section>
 
-            {/* Favorites */}
-            <section className="rounded-[16px] border border-[#EAEAEA] bg-white p-4 shadow-sm">
+            <section className="rounded-[16px] bg-[#F8F9FB] p-4">
               <SectionTitle title="Favorites" />
               <div className="mt-3 flex flex-wrap gap-2">
                 {(mounted ? favorites : ALPH_QUICK_ACTIONS.slice(0, 0)).length ===
@@ -466,7 +469,7 @@ export default function AlphWorkspace({
                   favorites.map((fav) => (
                     <div
                       key={fav.id}
-                      className="inline-flex items-center gap-1 rounded-full border border-[#EAEAEA] bg-[#F8FAFC] pl-3 pr-1.5 py-1"
+                      className="inline-flex items-center gap-1 rounded-full bg-white pl-3 pr-1.5 py-1"
                     >
                       <Link
                         href={fav.href}
@@ -477,7 +480,7 @@ export default function AlphWorkspace({
                       <button
                         type="button"
                         aria-label={`Unpin ${fav.label}`}
-                        className="grid h-7 w-7 place-items-center rounded-full text-slate-400 hover:bg-white hover:text-slate-700"
+                        className="grid h-7 w-7 place-items-center rounded-full text-slate-400 hover:bg-[#F5F7FA] hover:text-slate-700"
                         onClick={() => setFavorites(toggleAlphFavorite(fav))}
                       >
                         <PinOff className="h-3.5 w-3.5" />
@@ -493,7 +496,7 @@ export default function AlphWorkspace({
                 {ALPH_QUICK_ACTIONS.filter(
                   (a) => !favorites.some((f) => f.id === a.id),
                 )
-                  .slice(0, 6)
+                  .slice(0, 4)
                   .map((action) => (
                     <button
                       key={action.id}
@@ -507,7 +510,7 @@ export default function AlphWorkspace({
                           }),
                         )
                       }
-                      className="inline-flex items-center gap-1 rounded-full border border-dashed border-[#CBD5E1] px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:border-[#2563EB] hover:text-[#2563EB]"
+                      className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:text-[#2563EB]"
                     >
                       <Pin className="h-3 w-3" />
                       {action.label}

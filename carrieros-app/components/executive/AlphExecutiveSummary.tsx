@@ -117,7 +117,7 @@ export default function AlphExecutiveSummaryCard({
         </div>
         <div className="mt-3 flex flex-col items-start gap-2 sm:mt-0 sm:items-end">
           <p className="max-w-sm text-[13px] leading-relaxed text-[#6B7280] sm:text-right">
-            Five equal cards — priorities, opportunities, risks, and health.
+            Needs attention, recommended actions, and what is at risk.
           </p>
           <Link
             href="/alph/copilot/owner"
@@ -130,35 +130,35 @@ export default function AlphExecutiveSummaryCard({
 
       <div className="mt-5 grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
         <SummaryCard
-          title="Priority"
+          title="Needs Your Attention"
           items={summary.topPriorities}
           tone="warning"
           icon={ListChecks}
           viewAllHref="/alph/copilot/owner"
         />
         <SummaryCard
-          title="Opportunities"
+          title="Recommended Actions"
           items={summary.opportunities}
           tone="info"
           icon={Lightbulb}
           viewAllHref="/alph/copilot/owner"
         />
         <SummaryCard
-          title="Risks"
+          title="At Risk"
           items={summary.risks}
           tone="critical"
           icon={AlertTriangle}
           viewAllHref="/compliance"
         />
         <SummaryCard
-          title="Fleet Health"
+          title="Fleet Readiness"
           items={summary.fleetHealth}
           tone="info"
           icon={Truck}
           viewAllHref="/fleet"
         />
         <SummaryCard
-          title="Financial Health"
+          title="Cash & Invoices"
           items={summary.financialHealth}
           tone="success"
           icon={CircleDollarSign}

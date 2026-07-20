@@ -3,21 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BarChart3,
-  BriefcaseBusiness,
   FileText,
   Home,
   LayoutDashboard,
+  MoreHorizontal,
   PanelLeftClose,
   PanelLeftOpen,
   Pin,
   PinOff,
   Route,
-  Settings,
-  Layers,
   Sparkles,
   Truck,
-  Users,
   WalletCards,
 } from "lucide-react";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
@@ -52,8 +48,15 @@ function isActiveRoute(pathname: string, href: string) {
     );
   }
 
-  if (href === "/advanced") {
+  if (href === "/more") {
     return (
+      pathname.startsWith("/more") ||
+      pathname.startsWith("/drivers") ||
+      pathname.startsWith("/customers") ||
+      pathname.startsWith("/brokers") ||
+      pathname.startsWith("/companies") ||
+      pathname.startsWith("/analytics") ||
+      pathname.startsWith("/compliance") ||
       pathname.startsWith("/advanced") ||
       pathname.startsWith("/integrations") ||
       pathname.startsWith("/platform") ||
@@ -64,12 +67,7 @@ function isActiveRoute(pathname: string, href: string) {
       pathname.startsWith("/network") ||
       pathname.startsWith("/wallet") ||
       pathname.startsWith("/workforce") ||
-      pathname.startsWith("/alph/copilot")
-    );
-  }
-
-  if (href === "/settings") {
-    return (
+      pathname.startsWith("/alph/copilot") ||
       pathname.startsWith("/settings") ||
       pathname.startsWith("/support") ||
       pathname.startsWith("/setup")
@@ -83,15 +81,11 @@ function NavIcon({ icon }: { icon: string }) {
   const icons = {
     home: Home,
     dispatch: Route,
-    drivers: Users,
     fleet: Truck,
     documents: FileText,
     finance: WalletCards,
-    customers: BriefcaseBusiness,
-    reports: BarChart3,
     alph: Sparkles,
-    advanced: Layers,
-    settings: Settings,
+    more: MoreHorizontal,
     dashboard: LayoutDashboard,
   };
   const Icon = icons[icon as keyof typeof icons] ?? LayoutDashboard;

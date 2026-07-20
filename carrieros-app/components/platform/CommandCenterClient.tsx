@@ -47,7 +47,7 @@ export default function CommandCenterClient({ snapshot }: { snapshot: Snapshot }
       </div>
 
       <section className={`rounded-[16px] p-5 ${TRANSPO_COLORS.info.bg}`}>
-        <p className="text-[13px] font-medium text-[#6B7280]">Business Health Score</p>
+        <p className="text-[13px] font-medium text-[#6B7280]">Today&apos;s Operations</p>
         <div className="mt-2 flex flex-wrap items-end gap-4">
           <p className={`text-[40px] font-bold leading-none ${TRANSPO_COLORS.info.text}`}>
             {health.score}

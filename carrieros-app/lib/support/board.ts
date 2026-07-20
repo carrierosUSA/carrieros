@@ -36,9 +36,22 @@ export function buildSupportStats(store: SupportStoreSnapshot): SupportDashboard
   };
 }
 
+/** Platform demo seeds that must not look like a live app failure in the shell. */
+const DEMO_BANNER_EXCLUDED_IDS = new Set([
+  "issue-eld-token",
+  "issue-email-lane",
+  "issue-resolved-demo",
+]);
+
 export function activeIssueBanner(issues: SupportIssue[]): SupportIssue | null {
   const open = issues
-    .filter((i) => i.carrierVisible && !["resolved", "closed"].includes(i.status))
+    .filter(
+      (i) =>
+        i.carrierVisible &&
+        i.surfaceInBanner !== false &&
+        !DEMO_BANNER_EXCLUDED_IDS.has(i.id) &&
+        !["resolved", "closed"].includes(i.status),
+    )
     .sort((a, b) => severityRank(b.severity) - severityRank(a.severity));
   return open[0] ?? null;
 }

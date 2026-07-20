@@ -130,6 +130,11 @@ export type SupportIssue = {
   autoResolvable: boolean;
   risky: boolean;
   carrierVisible: boolean;
+  /**
+   * When false, keep the ticket in Support but do not show the global red banner.
+   * Use for demo/platform seed noise so ops alerts stay visible without looking like app failure.
+   */
+  surfaceInBanner?: boolean;
   rootCause?: string;
   resolutionSummary?: string;
   changesMade?: string;

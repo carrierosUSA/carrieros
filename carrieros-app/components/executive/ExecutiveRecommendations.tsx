@@ -30,10 +30,10 @@ export default function ExecutiveRecommendations({
     <section>
       <div className="mb-3">
         <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[#0F172A]">
-          AI Recommendations
+          Recommended Actions
         </h2>
         <p className="mt-0.5 text-[13px] text-[#64748B]">
-          Alph-ranked next moves for this morning
+          Clear next moves for today — Alph suggests, you decide
         </p>
       </div>
 

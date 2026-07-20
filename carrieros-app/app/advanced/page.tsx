@@ -9,8 +9,8 @@ export default function AdvancedPage() {
   return (
     <OperationalPageShell
       title="Advanced"
-      subtitle="Platform-power tools — automation, marketplace, exchange, integrations, migration, developer, security, governance, and admin. Everyday prefs stay in Settings."
-      eyebrow="Advanced"
+      subtitle="Automation, integrations, and platform tools. Everyday company prefs stay in Settings."
+      eyebrow="Platform"
       action={
         <Link
           href="/settings"

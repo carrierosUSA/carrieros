@@ -50,7 +50,7 @@ export default function PlatformHomeClient({ snapshot }: { snapshot: Snapshot })
     <div className="space-y-8">
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div className={`rounded-[16px] p-4 ${TRANSPO_COLORS.info.bg}`}>
-          <p className="text-[13px] font-medium text-[#6B7280]">Business Health</p>
+          <p className="text-[13px] font-medium text-[#6B7280]">Today&apos;s Operations</p>
           <p className={`mt-2 text-[28px] font-bold tracking-tight ${TRANSPO_COLORS.info.text}`}>
             {health.score}
           </p>
