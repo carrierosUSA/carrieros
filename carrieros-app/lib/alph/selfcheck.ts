@@ -36,6 +36,8 @@ import {
   packetStore,
 } from "@/lib/data/document-store";
 import { getLoadService } from "@/lib/services/loads";
+import { MockDocumentExtractionAdapter } from "@/lib/alph/document-intake/mock-adapter";
+import { validateDocumentFile } from "@/lib/alph/document-intake/validation";
 
 export type AlphSelfCheckResult = {
   ok: boolean;
@@ -365,6 +367,35 @@ export async function runAlphFoundationSelfCheck(): Promise<AlphSelfCheckResult>
       invoiceDraftStore.length === podInvoicesBefore + 1 &&
       packetStore.length >= podPacketsBefore,
     detail: podExecution.error ?? `status=${podLoadAfterApproval?.status}`,
+  });
+
+  const mockExtraction = await new MockDocumentExtractionAdapter().extract({
+    companyId: ctx.companyId,
+    userId: ctx.userId,
+    fileName: "opaque-upload.pdf",
+    mimeType: "application/pdf",
+    bytes: new TextEncoder().encode("RATE CONFIRMATION\nLoad Number: LD-TEST"),
+    checksumSha256: "selfcheck",
+  });
+  checks.push({
+    name: "document_mock_uses_content_not_filename",
+    pass:
+      mockExtraction.category === "rate_confirmation" &&
+      mockExtraction.provider === "mock",
+  });
+
+  let unsupportedRejected = false;
+  try {
+    await validateDocumentFile(
+      new File(["unsafe"], "unsafe.svg", { type: "image/svg+xml" }),
+      { companyId: ctx.companyId, userId: ctx.userId },
+    );
+  } catch {
+    unsupportedRejected = true;
+  }
+  checks.push({
+    name: "document_upload_rejects_unsupported_mime",
+    pass: unsupportedRejected,
   });
 
   const ok = checks.every((c) => c.pass);
