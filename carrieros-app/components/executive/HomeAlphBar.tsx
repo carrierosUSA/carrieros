@@ -135,7 +135,7 @@ export default function HomeAlphBar({ initialQuery = "" }: HomeAlphBarProps) {
   return (
     <div className="w-full space-y-2">
       <form onSubmit={onSubmit}>
-        <div className="flex items-center gap-2 rounded-[14px] border border-[#E8ECF1] bg-[#F8FAFC] px-2.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition focus-within:border-[#BFDBFE] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#2563EB]/20">
+        <div className="flex items-center gap-2 rounded-[12px] border border-[#E5E7EB] bg-[#F8FAFC] px-2 py-1 shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition focus-within:border-[#BFDBFE] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#2563EB]/20">
           <AlphVoiceButton
             compact
             onTranscript={handleVoiceTranscript}
@@ -168,7 +168,7 @@ export default function HomeAlphBar({ initialQuery = "" }: HomeAlphBarProps) {
             type="submit"
             disabled={isPending || !query.trim()}
             aria-label={isPending ? "Sending" : "Send to Alph"}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-[#2563EB] text-white transition hover:bg-[#1D4ED8] disabled:opacity-40"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] bg-[#2563EB] text-white transition hover:bg-[#1D4ED8] disabled:opacity-40"
           >
             <Send className="h-4 w-4" strokeWidth={2.1} />
           </button>

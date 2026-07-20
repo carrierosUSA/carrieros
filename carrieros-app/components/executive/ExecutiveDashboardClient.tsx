@@ -4,12 +4,18 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import {
   Bell,
+  Building2,
+  Clock,
   DollarSign,
+  FileText,
   FileWarning,
   MessageSquare,
   MoreHorizontal,
+  Package,
   Phone,
   Sparkles,
+  Truck,
+  Users,
   Wrench,
 } from "lucide-react";
 import FadeIn from "@/components/ui/FadeIn";
@@ -29,6 +35,9 @@ export type ExecutiveDashboardData = {
 type ExecutiveDashboardClientProps = {
   data: ExecutiveDashboardData;
 };
+
+const CARD_SHADOW =
+  "shadow-[0_1px_2px_rgba(15,23,42,0.04),0_4px_12px_rgba(15,23,42,0.03)]";
 
 const SEGMENT_COLORS: Record<HomeStatTone, string> = {
   critical: "#DC2626",
@@ -97,18 +106,16 @@ function Panel({
 }) {
   return (
     <section
-      className={`flex min-h-0 flex-col rounded-[14px] border border-[#E8ECF1] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_20px_rgba(15,23,42,0.03)] ${className}`}
+      className={`flex min-h-0 flex-col rounded-[12px] border border-[#E5E7EB] bg-white ${CARD_SHADOW} ${className}`}
     >
-      <div className="flex items-center justify-between gap-2 px-3.5 py-2 sm:px-4">
-        <h2 className="flex items-center gap-1.5 text-[13px] font-semibold tracking-[-0.01em] text-[#111827]">
+      <div className="flex items-center justify-between gap-2 px-4 py-2">
+        <h2 className="flex items-center gap-1.5 text-[14px] font-semibold tracking-[-0.01em] text-[#111827]">
           {icon}
           {title}
         </h2>
         {action ?? <MoreMenuButton />}
       </div>
-      <div className={`flex-1 px-3.5 pb-3 sm:px-4 ${bodyClassName}`}>
-        {children}
-      </div>
+      <div className={`flex-1 px-4 pb-3.5 ${bodyClassName}`}>{children}</div>
     </section>
   );
 }
@@ -164,7 +171,7 @@ function StatusDonut({
 
   return (
     <div
-      className="relative h-[68px] w-[68px] shrink-0 rounded-full"
+      className="relative h-[72px] w-[72px] shrink-0 rounded-full"
       style={{
         background:
           segments.every((s) => s.value === 0)
@@ -173,13 +180,13 @@ function StatusDonut({
       }}
       aria-hidden
     >
-      <div className="absolute inset-[20%] flex flex-col items-center justify-center rounded-full bg-white">
+      <div className="absolute inset-[22%] flex flex-col items-center justify-center rounded-full bg-white">
         {showCenter ? (
           <>
-            <span className="text-[15px] font-bold tabular-nums leading-none text-[#111827]">
+            <span className="text-[17px] font-bold tabular-nums leading-none text-[#111827]">
               {centerValue}
             </span>
-            <span className="mt-0.5 text-[9px] font-medium uppercase tracking-[0.04em] text-[#94A3B8]">
+            <span className="mt-0.5 text-[9px] font-medium uppercase tracking-[0.05em] text-[#94A3B8]">
               {centerLabel}
             </span>
           </>
@@ -192,7 +199,7 @@ function StatusDonut({
 function RevenueSparkline({ values }: { values: number[] }) {
   if (values.length < 2) return null;
   const width = 200;
-  const height = 48;
+  const height = 44;
   const pad = 3;
   const max = Math.max(...values, 1);
   const min = Math.min(...values, 0);
@@ -210,7 +217,7 @@ function RevenueSparkline({ values }: { values: number[] }) {
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
-      className="h-12 w-full"
+      className="h-11 w-full"
       aria-hidden
     >
       <polygon points={area} fill="rgba(37,99,235,0.08)" />
@@ -230,7 +237,9 @@ function chipById(items: HomeStatChip[], id: string): HomeStatChip | undefined {
   return items.find((item) => item.id === id);
 }
 
-function attentionIcon(category: HomeCommandCenter["needsAttention"][number]["category"]) {
+function attentionIcon(
+  category: HomeCommandCenter["needsAttention"][number]["category"],
+) {
   if (category === "Missing POD") {
     return (
       <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#FEF2F2] text-[#DC2626]">
@@ -238,9 +247,15 @@ function attentionIcon(category: HomeCommandCenter["needsAttention"][number]["ca
       </span>
     );
   }
+  if (category === "Late load") {
+    return (
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#FFF7ED] text-[#D97706]">
+        <Clock className="h-3.5 w-3.5" strokeWidth={2} />
+      </span>
+    );
+  }
   if (
     category === "Maintenance overdue" ||
-    category === "Late load" ||
     category === "Expiring driver document"
   ) {
     return (
@@ -263,6 +278,49 @@ function driverInitials(name: string): string {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
+}
+
+function driverDisplayStatus(statusLabel: string): {
+  label: string;
+  tone: HomeStatTone;
+} {
+  if (statusLabel === "Needs load") {
+    return { label: "Available", tone: "neutral" };
+  }
+  if (statusLabel === "On load") {
+    return { label: "On load", tone: "success" };
+  }
+  if (statusLabel === "Delivering") {
+    return { label: "Delivering", tone: "info" };
+  }
+  return { label: statusLabel, tone: "neutral" };
+}
+
+function DriverAvatar({
+  name,
+  photoUrl,
+}: {
+  name: string;
+  photoUrl?: string;
+}) {
+  if (photoUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- remote demo avatars; avoid layout shift
+      <img
+        src={photoUrl}
+        alt=""
+        className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-[#E5E7EB]"
+      />
+    );
+  }
+  return (
+    <span
+      className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#EFF6FF] text-[11px] font-bold text-[#2563EB] ring-1 ring-[#E5E7EB]"
+      aria-hidden
+    >
+      {driverInitials(name)}
+    </span>
+  );
 }
 
 /** Premium carrier-owner Home — compact reference composition. */
@@ -301,25 +359,27 @@ export default function ExecutiveDashboardClient({
   const driverRows = home.drivers.slice(0, 3);
 
   return (
-    <FadeIn className="space-y-3 lg:space-y-3">
+    <FadeIn className="space-y-2.5">
       {/* Header: greeting + date | single Alph bar */}
-      <header className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
+      <header className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
         <div className="min-w-0 shrink-0">
-          <h1 className="text-[28px] font-bold tracking-[-0.035em] text-[#111827] sm:text-[32px] lg:text-[34px]">
+          <h1 className="text-[28px] font-bold tracking-[-0.035em] text-[#111827] sm:text-[30px] lg:text-[32px]">
             {greetingLabel}
           </h1>
           <p className="mt-0.5 text-[13px] text-[#6B7280]">{home.dateLabel}</p>
         </div>
-        <div className="w-full min-w-0 lg:max-w-[560px] xl:max-w-[620px]">
+        <div className="w-full min-w-0 lg:max-w-[540px] xl:max-w-[600px]">
           <HomeAlphBar />
         </div>
       </header>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12 xl:gap-3">
-        {/* Row 1: Today's Report (2/3) + Needs Attention (1/3) */}
-        <section className="flex flex-col rounded-[14px] border border-[#E8ECF1] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_20px_rgba(15,23,42,0.03)] sm:px-5 md:col-span-2 xl:col-span-8">
+      <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 xl:grid-cols-12">
+        {/* Row 1: Today's Report (2fr) + Needs Attention (1fr) */}
+        <section
+          className={`flex flex-col rounded-[12px] border border-[#E5E7EB] bg-white px-4 py-3 md:col-span-2 xl:col-span-8 ${CARD_SHADOW}`}
+        >
           <div className="flex items-center justify-between gap-2">
-            <p className="flex items-center gap-1.5 text-[13px] font-semibold text-[#111827]">
+            <p className="flex items-center gap-1.5 text-[14px] font-semibold text-[#111827]">
               <Sparkles
                 className="h-3.5 w-3.5 text-[#2563EB]"
                 strokeWidth={2}
@@ -329,13 +389,13 @@ export default function ExecutiveDashboardClient({
             </p>
             <MoreMenuButton />
           </div>
-          <p className="mt-2 flex-1 text-[14px] font-medium leading-6 tracking-[-0.01em] text-[#111827] sm:text-[15px]">
+          <p className="mt-2 flex-1 text-[14px] font-medium leading-[1.4] tracking-[-0.01em] text-[#111827] sm:text-[15px]">
             {home.todaysReport.summary}
           </p>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-2.5 flex flex-wrap gap-2">
             <Link
               href={home.todaysReport.viewDetailsHref}
-              className="inline-flex h-8 items-center rounded-full bg-[#2563EB] px-3.5 text-[12px] font-semibold text-white shadow-[0_6px_14px_rgba(37,99,235,0.22)] transition hover:bg-[#1D4ED8]"
+              className="inline-flex h-8 items-center rounded-full bg-[#2563EB] px-3.5 text-[12px] font-semibold text-white shadow-[0_4px_12px_rgba(37,99,235,0.22)] transition hover:bg-[#1D4ED8]"
             >
               View today
             </Link>
@@ -376,7 +436,7 @@ export default function ExecutiveDashboardClient({
                     <li key={item.id} className="flex items-start gap-2.5">
                       {attentionIcon(item.category)}
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-medium leading-4 text-[#111827]">
+                        <p className="truncate text-[13px] font-semibold leading-4 text-[#111827]">
                           {categoryLabel}
                           {refMatch ? ` — ${refMatch[0]}` : ""}
                         </p>
@@ -406,43 +466,41 @@ export default function ExecutiveDashboardClient({
           )}
         </Panel>
 
-        {/* Row 2: Truck · Load · Revenue */}
+        {/* Row 2: Truck · Load · Revenue — numbers in donut centers */}
         <Panel
           title="Truck Status"
-          className="xl:col-span-4 xl:min-h-[168px]"
+          className="xl:col-span-4"
+          icon={
+            <Truck className="h-3.5 w-3.5 text-[#64748B]" strokeWidth={2} />
+          }
           bodyClassName="pt-0"
         >
-          <div className="flex items-center gap-3">
-            <div className="min-w-[52px]">
-              <p className="text-[26px] font-bold tabular-nums leading-none tracking-tight text-[#111827]">
-                {truckTotal?.count ?? 0}
-              </p>
-              <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.06em] text-[#94A3B8]">
-                Total
-              </p>
-            </div>
+          <div className="flex items-center gap-4">
             <StatusDonut
-              centerValue=""
-              centerLabel=""
+              centerValue={truckTotal?.count ?? 0}
+              centerLabel="Total"
               segments={truckLegend.map((item) => ({
                 value: item.count,
                 color: SEGMENT_COLORS[item.tone],
               }))}
             />
-            <ul className="min-w-0 flex-1 space-y-1.5">
+            <ul className="min-w-0 flex-1 space-y-2">
               {truckLegend.map((item) => (
                 <li key={item.id}>
                   <Link
                     href={item.href}
-                    className="flex items-center gap-2 rounded-md px-1 py-0.5 transition hover:bg-[#F5F7FA]"
+                    className="flex items-center gap-2 rounded-md px-0.5 py-0.5 transition hover:bg-[#F5F7FA]"
                   >
                     <span
-                      className="h-1.5 w-1.5 shrink-0 rounded-full"
+                      className="h-2 w-2 shrink-0 rounded-full"
                       style={{ backgroundColor: SEGMENT_COLORS[item.tone] }}
                       aria-hidden
                     />
-                    <span className="truncate text-[13px] text-[#374151]">
-                      {item.count} {item.label}
+                    <span className="truncate text-[13px] font-medium text-[#374151]">
+                      <span className="font-bold tabular-nums text-[#111827]">
+                        {item.count}
+                      </span>{" "}
+                      {item.label}
                     </span>
                   </Link>
                 </li>
@@ -453,40 +511,46 @@ export default function ExecutiveDashboardClient({
 
         <Panel
           title="Load Status"
-          className="xl:col-span-4 xl:min-h-[168px]"
+          className="xl:col-span-4"
+          icon={
+            <Package className="h-3.5 w-3.5 text-[#64748B]" strokeWidth={2} />
+          }
           bodyClassName="pt-0"
         >
-          <div className="flex items-center gap-3">
-            <div className="min-w-[52px]">
-              <p className="text-[26px] font-bold tabular-nums leading-none tracking-tight text-[#111827]">
-                {loadActive}
-              </p>
-              <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.06em] text-[#94A3B8]">
-                Active
-              </p>
-            </div>
+          <div className="flex items-center gap-4">
             <StatusDonut
-              centerValue=""
-              centerLabel=""
+              centerValue={loadActive}
+              centerLabel="Active"
               segments={loadLegend.map((item) => ({
                 value: item.count,
-                color: SEGMENT_COLORS[item.tone],
+                color:
+                  item.id === "missing-pod"
+                    ? SEGMENT_COLORS.warning
+                    : SEGMENT_COLORS[item.tone],
               }))}
             />
-            <ul className="min-w-0 flex-1 space-y-1.5">
+            <ul className="min-w-0 flex-1 space-y-2">
               {loadLegend.map((item) => (
                 <li key={item.id}>
                   <Link
                     href={item.href}
-                    className="flex items-center gap-2 rounded-md px-1 py-0.5 transition hover:bg-[#F5F7FA]"
+                    className="flex items-center gap-2 rounded-md px-0.5 py-0.5 transition hover:bg-[#F5F7FA]"
                   >
                     <span
-                      className="h-1.5 w-1.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: SEGMENT_COLORS[item.tone] }}
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{
+                        backgroundColor:
+                          item.id === "missing-pod"
+                            ? SEGMENT_COLORS.warning
+                            : SEGMENT_COLORS[item.tone],
+                      }}
                       aria-hidden
                     />
-                    <span className="truncate text-[13px] text-[#374151]">
-                      {item.count} {item.label}
+                    <span className="truncate text-[13px] font-medium text-[#374151]">
+                      <span className="font-bold tabular-nums text-[#111827]">
+                        {item.count}
+                      </span>{" "}
+                      {item.label}
                     </span>
                   </Link>
                 </li>
@@ -497,7 +561,10 @@ export default function ExecutiveDashboardClient({
 
         <Panel
           title="Revenue"
-          className="xl:col-span-4 xl:min-h-[168px]"
+          className="xl:col-span-4"
+          icon={
+            <DollarSign className="h-3.5 w-3.5 text-[#64748B]" strokeWidth={2} />
+          }
           bodyClassName="pt-0"
         >
           <Link
@@ -506,7 +573,7 @@ export default function ExecutiveDashboardClient({
           >
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="text-[26px] font-bold tabular-nums leading-none tracking-tight text-[#111827]">
+                <p className="text-[28px] font-bold tabular-nums leading-none tracking-tight text-[#111827]">
                   {home.revenue.today.value}
                 </p>
                 <p className="mt-1 text-[12px] font-medium text-[#6B7280]">
@@ -514,12 +581,12 @@ export default function ExecutiveDashboardClient({
                 </p>
               </div>
               <p
-                className={`shrink-0 rounded-full bg-[#ECFDF5] px-2 py-0.5 text-[11px] font-semibold ${
+                className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                   home.revenue.trendTone === "critical"
                     ? "bg-[#FEF2F2] text-[#DC2626]"
                     : home.revenue.trendTone === "success"
-                      ? "text-[#047857]"
-                      : toneText(home.revenue.trendTone)
+                      ? "bg-[#ECFDF5] text-[#047857]"
+                      : `bg-[#EFF6FF] ${toneText(home.revenue.trendTone)}`
                 }`}
               >
                 {home.revenue.dayTrendLabel}
@@ -528,8 +595,8 @@ export default function ExecutiveDashboardClient({
             <div className="mt-2">
               <RevenueSparkline values={home.revenue.sparkline} />
             </div>
-            <p className="mt-1 text-[12px] text-[#6B7280]">
-              <span className="font-semibold tabular-nums text-[#111827]">
+            <p className="mt-1.5 text-[13px] text-[#6B7280]">
+              <span className="font-bold tabular-nums text-[#111827]">
                 {home.revenue.week.value}
               </span>{" "}
               This week
@@ -537,10 +604,13 @@ export default function ExecutiveDashboardClient({
           </Link>
         </Panel>
 
-        {/* Row 3: Invoices (2/3) + Drivers Today (1/3) */}
+        {/* Row 3: Invoices (2fr) + Drivers Today (1fr) */}
         <Panel
           title="Invoices & Payments"
           className="md:col-span-2 xl:col-span-8"
+          icon={
+            <FileText className="h-3.5 w-3.5 text-[#64748B]" strokeWidth={2} />
+          }
           bodyClassName="pt-0"
         >
           {invoiceRows.length === 0 ? (
@@ -563,32 +633,36 @@ export default function ExecutiveDashboardClient({
                     {invoiceRows.map((row) => (
                       <tr
                         key={row.id}
-                        className="border-t border-[#EEF1F5] text-[12px]"
+                        className="border-t border-[#E5E7EB] text-[12px]"
                       >
-                        <td className="py-2 pr-2 font-semibold text-[#111827]">
+                        <td className="py-1.5 pr-2 font-semibold text-[#111827]">
                           {row.invoiceNumber !== "—"
                             ? row.invoiceNumber
                             : row.loadNumber}
                         </td>
-                        <td className="max-w-[110px] truncate py-2 pr-2 text-[#374151]">
+                        <td className="max-w-[110px] truncate py-1.5 pr-2 text-[#374151]">
                           {row.brokerName}
                         </td>
-                        <td className="py-2 pr-2 font-semibold tabular-nums text-[#111827]">
+                        <td className="py-1.5 pr-2 font-semibold tabular-nums text-[#111827]">
                           {row.amountLabel}
                         </td>
-                        <td className="py-2 pr-2 text-[#6B7280]">
+                        <td className="py-1.5 pr-2 text-[#6B7280]">
                           {row.paymentExpectedLabel}
                         </td>
-                        <td className="py-2 pr-2">
+                        <td className="py-1.5 pr-2">
                           <span
-                            className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusBadgeClass(row.tone)}`}
+                            className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusBadgeClass(
+                              row.status === "Missing POD"
+                                ? "warning"
+                                : row.tone,
+                            )}`}
                           >
                             {row.status === "Payment expected"
                               ? "Expected"
                               : row.status}
                           </span>
                         </td>
-                        <td className="py-2">
+                        <td className="py-1.5">
                           <Link
                             href={row.actionHref}
                             className="font-semibold text-[#2563EB] hover:text-[#1D4ED8]"
@@ -601,7 +675,7 @@ export default function ExecutiveDashboardClient({
                   </tbody>
                 </table>
               </div>
-              <div className="mt-2.5 text-center">
+              <div className="mt-2 text-center">
                 <Link
                   href="/finance?tab=invoices"
                   className="text-[12px] font-semibold text-[#2563EB] hover:text-[#1D4ED8]"
@@ -613,76 +687,86 @@ export default function ExecutiveDashboardClient({
           )}
         </Panel>
 
-        <Panel title="Drivers Today" className="xl:col-span-4" bodyClassName="pt-0">
+        <Panel
+          title="Drivers Today"
+          className="xl:col-span-4"
+          icon={
+            <Users className="h-3.5 w-3.5 text-[#64748B]" strokeWidth={2} />
+          }
+          bodyClassName="pt-0"
+        >
           {driverRows.length === 0 ? (
             <p className="text-[13px] text-[#6B7280]">
               No drivers need attention today.
             </p>
           ) : (
             <ul className="space-y-2.5">
-              {driverRows.map((driver) => (
-                <li
-                  key={driver.id}
-                  className="flex items-center gap-2.5"
-                >
-                  <span
-                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#EFF6FF] text-[11px] font-bold text-[#2563EB]"
-                    aria-hidden
-                  >
-                    {driverInitials(driver.name)}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={driver.viewHref}
-                      className="block truncate text-[13px] font-semibold text-[#111827] hover:text-[#2563EB]"
+              {driverRows.map((driver) => {
+                const status = driverDisplayStatus(driver.statusLabel);
+                return (
+                  <li key={driver.id} className="flex items-center gap-2.5">
+                    <DriverAvatar
+                      name={driver.name}
+                      photoUrl={driver.photoUrl}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <Link
+                        href={driver.viewHref}
+                        className="block truncate text-[13px] font-semibold text-[#111827] hover:text-[#2563EB]"
+                      >
+                        {driver.name}
+                      </Link>
+                      <p className="truncate text-[11px] text-[#6B7280]">
+                        {driver.truckLabel}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusBadgeClass(status.tone)}`}
                     >
-                      {driver.name}
-                    </Link>
-                    <p className="truncate text-[11px] text-[#6B7280]">
-                      {driver.truckLabel}
-                    </p>
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusBadgeClass(driver.statusTone)}`}
-                  >
-                    {driver.statusLabel === "Needs load"
-                      ? "Available"
-                      : driver.statusLabel}
-                  </span>
-                  <span className="flex shrink-0 items-center gap-1">
-                    {driver.callHref ? (
-                      <button
-                        type="button"
-                        onClick={() => openCommunicationUrl(driver.callHref!)}
-                        className="grid h-7 w-7 place-items-center rounded-lg border border-[#E8ECF1] text-[#2563EB] transition hover:bg-[#EFF6FF]"
-                        aria-label={`Call ${driver.name}`}
-                      >
-                        <Phone className="h-3 w-3" strokeWidth={2} />
-                      </button>
-                    ) : null}
-                    {driver.messageHref ? (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          openCommunicationUrl(driver.messageHref!)
-                        }
-                        className="grid h-7 w-7 place-items-center rounded-lg border border-[#E8ECF1] text-[#2563EB] transition hover:bg-[#EFF6FF]"
-                        aria-label={`Message ${driver.name}`}
-                      >
-                        <MessageSquare className="h-3 w-3" strokeWidth={2} />
-                      </button>
-                    ) : null}
-                  </span>
-                </li>
-              ))}
+                      {status.label}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-1">
+                      {driver.callHref ? (
+                        <button
+                          type="button"
+                          onClick={() => openCommunicationUrl(driver.callHref!)}
+                          className="grid h-7 w-7 place-items-center rounded-full border border-[#2563EB]/35 text-[#2563EB] transition hover:bg-[#EFF6FF]"
+                          aria-label={`Call ${driver.name}`}
+                        >
+                          <Phone className="h-3 w-3" strokeWidth={2} />
+                        </button>
+                      ) : null}
+                      {driver.messageHref ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openCommunicationUrl(driver.messageHref!)
+                          }
+                          className="grid h-7 w-7 place-items-center rounded-full border border-[#2563EB]/35 text-[#2563EB] transition hover:bg-[#EFF6FF]"
+                          aria-label={`Message ${driver.name}`}
+                        >
+                          <MessageSquare className="h-3 w-3" strokeWidth={2} />
+                        </button>
+                      ) : null}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </Panel>
 
         {/* Row 4: FMCSA News strip */}
-        <section className="rounded-[14px] border border-[#E8ECF1] bg-white px-4 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_20px_rgba(15,23,42,0.03)] sm:px-5 md:col-span-2 xl:col-span-12">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <h2 className="text-[13px] font-semibold tracking-[-0.01em] text-[#111827]">
+        <section
+          className={`rounded-[12px] border border-[#E5E7EB] bg-white px-4 py-2.5 md:col-span-2 xl:col-span-12 ${CARD_SHADOW}`}
+        >
+          <div className="mb-1.5 flex items-center justify-between gap-3">
+            <h2 className="flex items-center gap-1.5 text-[14px] font-semibold tracking-[-0.01em] text-[#111827]">
+              <Building2
+                className="h-3.5 w-3.5 text-[#64748B]"
+                strokeWidth={2}
+                aria-hidden
+              />
               FMCSA News Center
             </h2>
             <Link
@@ -698,12 +782,12 @@ export default function ExecutiveDashboardClient({
                 <p className="text-[11px] font-medium text-[#94A3B8]">
                   {item.dateLabel}
                 </p>
-                <p className="mt-1 line-clamp-2 text-[13px] font-semibold leading-5 text-[#111827]">
+                <p className="mt-0.5 line-clamp-1 text-[13px] font-semibold leading-5 text-[#111827]">
                   {item.headline}
                 </p>
                 <Link
                   href={item.affectMeHref}
-                  className="mt-1.5 inline-flex text-[12px] font-semibold text-[#2563EB] hover:text-[#1D4ED8]"
+                  className="mt-0.5 inline-flex text-[12px] font-semibold text-[#2563EB] hover:text-[#1D4ED8]"
                 >
                   Does this affect me? →
                 </Link>

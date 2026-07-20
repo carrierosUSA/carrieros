@@ -173,7 +173,7 @@ export default function Sidebar() {
     <aside
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`group/sidebar relative z-30 flex w-full shrink-0 flex-col overflow-hidden border-b border-[#DDE2EA] bg-white py-4 shadow-[0_8px_26px_rgba(15,23,42,0.045)] transition-[width,padding] duration-300 ease-out lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r lg:py-5 ${
+      className={`group/sidebar relative z-30 flex w-full shrink-0 flex-col overflow-hidden border-b border-[#E5E7EB] bg-white py-4 shadow-[0_8px_26px_rgba(15,23,42,0.045)] transition-[width,padding] duration-300 ease-out lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r lg:py-5 ${
         expanded ? "lg:w-[220px] lg:px-3" : "lg:w-[72px] lg:px-2"
       }`}
     >

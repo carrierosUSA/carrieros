@@ -92,6 +92,8 @@ export type HomeDriverRow = {
   location: string;
   statusLabel: string;
   statusTone: HomeStatTone;
+  /** Presentational avatar URL when available (display only). */
+  photoUrl?: string;
   callHref?: string;
   messageHref?: string;
   assignHref: string;
@@ -621,6 +623,7 @@ export async function buildHomeCommandCenter(
       location: driver.location || "—",
       statusLabel,
       statusTone,
+      photoUrl: driver.photoUrl,
       callHref: buildTelUrl(driver.phone),
       messageHref: buildSmsUrl(driver.phone),
       assignHref: `/loads?assign=1&driver=${driver.id}`,
