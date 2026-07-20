@@ -115,6 +115,12 @@ Log: prompt, workspace, tools requested/executed, records accessed, drafts, reco
 |---------|------|
 | Identity (one Alph) | `lib/alph/identity.ts` |
 | Modes | `lib/alph/modes.ts` |
+| Autopilot (Assist / Approve / Autopilot) | `lib/alph/autopilot/` |
+| Command pipeline | `lib/alph/command/` |
+| OCR providers | `lib/alph/ocr/` |
+| Document inbox (RC→load, POD→invoice) | `lib/alph/document-inbox/` |
+| Payroll prep | `lib/alph/payroll/` |
+| Communication composer | `lib/alph/communications/` |
 | Context builder | `lib/alph/context/` |
 | Tool registry + gateway | `lib/alph/tools/` |
 | Conversation | `lib/alph/conversation/` |
@@ -131,10 +137,11 @@ Log: prompt, workspace, tools requested/executed, records accessed, drafts, reco
 ## Phased roadmap
 
 1. ✅ Architecture + context + tools (read) + conversation + audit + approval model + streaming foundation
-2. Wire durable Postgres conversation/audit when IAM/DB land
-3. Provider adapters + streaming HTTP
-4. High-risk write tools **only after** approval confirm API is complete
-5. Background analysis + safe caching + usage metering dashboards
+2. ✅ Autopilot settings + Document Inbox + RC→load + POD→invoice + action history (Phase A)
+3. Wire durable Postgres conversation/audit when IAM/DB land
+4. Live provider adapters (OpenAI / Anthropic / OCR / Twilio / SendGrid) — see [`17-alph-autopilot-phase-b.md`](./17-alph-autopilot-phase-b.md)
+5. High-risk write tools **only after** approval confirm API is complete
+6. Background analysis + safe caching + usage metering dashboards
 
 ---
 

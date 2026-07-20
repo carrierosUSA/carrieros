@@ -1,4 +1,10 @@
+import { anthropicAlphProvider } from "@/lib/alph/providers/anthropic";
 import { mockAlphProvider } from "@/lib/alph/providers/mock";
+import { openaiAlphProvider } from "@/lib/alph/providers/openai";
+import {
+  resolveAlphProviderConfig,
+  resolveAlphProviderSetup,
+} from "@/lib/alph/providers/env";
 import type {
   AlphModelProvider,
   AlphProviderConfig,
@@ -7,6 +13,8 @@ import type {
 
 const providers: Partial<Record<AlphProviderId, AlphModelProvider>> = {
   mock: mockAlphProvider,
+  openai: openaiAlphProvider,
+  anthropic: anthropicAlphProvider,
 };
 
 export function registerAlphProvider(provider: AlphModelProvider): void {
@@ -23,12 +31,18 @@ export function getAlphProvider(id: AlphProviderId): AlphModelProvider {
 }
 
 export function resolveAlphProvider(
-  config: AlphProviderConfig = { primary: "mock", fallback: "mock" },
+  config?: AlphProviderConfig,
 ): AlphModelProvider {
-  const primary = providers[config.primary];
-  if (primary) return primary;
-  if (config.fallback) {
-    const fallback = providers[config.fallback];
+  const resolved = config ?? resolveAlphProviderConfig();
+  const setup = resolveAlphProviderSetup();
+  // Prefer env-resolved active provider; never silently claim a live vendor.
+  const primaryId = config?.primary ?? setup.active;
+  const primary = providers[primaryId];
+  if (primary && (primaryId === "mock" || setup.configured || primaryId === setup.active)) {
+    return primary;
+  }
+  if (resolved.fallback) {
+    const fallback = providers[resolved.fallback];
     if (fallback) return fallback;
   }
   return mockAlphProvider;
@@ -43,3 +57,12 @@ export type {
   AlphProviderRequest,
 } from "@/lib/alph/providers/types";
 export { mockAlphProvider } from "@/lib/alph/providers/mock";
+export {
+  resolveAlphProviderConfig,
+  resolveAlphProviderSetup,
+  resolveAlphOcrSetup,
+  type AlphProviderSetupState,
+  type AlphOcrSetupState,
+} from "@/lib/alph/providers/env";
+export { openaiAlphProvider } from "@/lib/alph/providers/openai";
+export { anthropicAlphProvider } from "@/lib/alph/providers/anthropic";

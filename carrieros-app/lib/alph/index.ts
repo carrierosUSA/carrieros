@@ -83,3 +83,35 @@ export {
   type AlphStreamEvent,
 } from "@/lib/alph/streaming";
 export { runAlphFoundationSelfCheck } from "@/lib/alph/selfcheck";
+
+/** Autopilot foundation (Phase A) */
+export {
+  AUTOPILOT_MODES,
+  AUTOPILOT_MODE_LABELS,
+  actionAllowedAtAutopilotMode,
+  getAlphAutopilotSettings,
+  parseAutopilotMode,
+  saveAlphAutopilotSettings,
+  type AutopilotMode,
+} from "@/lib/alph/autopilot";
+export {
+  buildAlphCommandPreview,
+  requestAlphCommandApproval,
+  understandAlphCommand,
+} from "@/lib/alph/command";
+export {
+  runAlphOcrExtract,
+  resolveAlphOcrProvider,
+  type AlphOcrExtractResult,
+  type AlphOcrProviderId,
+} from "@/lib/alph/ocr";
+export {
+  listInbox,
+  uploadToDocumentInbox,
+  type DocumentInboxItem,
+} from "@/lib/alph/document-inbox";
+export { preparePayrollStatement } from "@/lib/alph/payroll";
+export {
+  createAlphComposerDraft,
+  sendAlphComposerDraft,
+} from "@/lib/alph/communications";

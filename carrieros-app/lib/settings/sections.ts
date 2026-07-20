@@ -103,8 +103,8 @@ export const SETTINGS_NAV: SettingsNavItem[] = [
   },
   {
     id: "ai-policy",
-    label: "AI Safety Policy",
-    description: "Company prefs — full policy in Advanced",
+    label: "Alph Autopilot",
+    description: "Assist / Approve / Autopilot + AI safety",
     group: "platform",
   },
   {

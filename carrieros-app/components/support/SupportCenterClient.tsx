@@ -18,6 +18,7 @@ import {
   subscribeSupportStore,
   type SupportIssue,
 } from "@/lib/support";
+import { toAlphSupportRecommendation } from "@/lib/alph/support/recommendations";
 import { CARRIEROS_COLORS } from "@/lib/design-system/colors";
 
 function severityTone(severity: SupportIssue["severity"]) {
@@ -285,6 +286,7 @@ function IssueDetail({
 }) {
   const tone = severityTone(issue.severity);
   const open = !["resolved", "closed"].includes(issue.status);
+  const alphRec = toAlphSupportRecommendation(issue);
 
   return (
     <article className="rounded-[16px] border border-[#EAEAEA] bg-white p-5 shadow-sm">
@@ -303,6 +305,16 @@ function IssueDetail({
         >
           {SEVERITY_LABELS[issue.severity]}
         </span>
+      </div>
+
+      <div className="mt-4 grid gap-2 rounded-[14px] bg-[#F8FAFC] px-4 py-3 sm:grid-cols-2">
+        <Info label="What" value={alphRec.what} />
+        <Info label="Why it matters" value={alphRec.why} />
+        <Info label="What to do next" value={alphRec.action} />
+        <Info
+          label={`${alphRec.letAlphHandle.label} · ${(alphRec.confidence * 100).toFixed(0)}%`}
+          value={alphRec.letAlphHandle.reason}
+        />
       </div>
 
       <dl className="mt-4 grid gap-3 sm:grid-cols-2">

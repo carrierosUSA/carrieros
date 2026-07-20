@@ -259,6 +259,7 @@ export const FLEET_WORKSPACE_MORE: NavLink[] = [
 ];
 
 export const DOCUMENTS_WORKSPACE_LINKS: NavLink[] = [
+  { name: "AI Inbox", href: "/documents/inbox" },
   { name: "Rate Confirmations", href: "/documents?category=rate_confirmation" },
   { name: "POD", href: "/documents?category=pod" },
   { name: "Invoices", href: "/documents?category=invoice" },

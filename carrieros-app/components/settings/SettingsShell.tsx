@@ -6,6 +6,7 @@ import FadeIn from "@/components/ui/FadeIn";
 import SettingsNav from "@/components/settings/SettingsNav";
 import SettingsSkeleton from "@/components/settings/SettingsSkeleton";
 import AiSafetySettingsPanel from "@/components/ai-safety/AiSafetySettingsPanel";
+import AutopilotSettingsPanel from "@/components/alph/AutopilotSettingsPanel";
 import ApiKeysPanel from "@/components/settings/panels/ApiKeysPanel";
 import AuditLogsPanel from "@/components/settings/panels/AuditLogsPanel";
 import AutomationPanel from "@/components/settings/panels/AutomationPanel";
@@ -269,7 +270,12 @@ function SettingsActivePanel({
     case "automation":
       return <AutomationPanel settings={settings} />;
     case "ai-policy":
-      return <AiSafetySettingsPanel />;
+      return (
+        <div className="space-y-8">
+          <AutopilotSettingsPanel />
+          <AiSafetySettingsPanel />
+        </div>
+      );
     case "api-keys":
       return (
         <ApiKeysPanel

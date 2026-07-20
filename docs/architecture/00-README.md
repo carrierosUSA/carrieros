@@ -74,6 +74,7 @@ Tradeoff order (Foundation): safer → trustworthy → simpler → maintainable 
 | [14-scalability-roadmap.md](./14-scalability-roadmap.md) | Scale tiers and when to add complexity |
 | [15-security-compliance.md](./15-security-compliance.md) | Encryption, privacy, constitution alignment (summary) |
 | [16-alph-architecture.md](./16-alph-architecture.md) | **Alph AI architecture** — one assistant, context, tools, approval, audit |
+| [17-alph-autopilot-phase-b.md](./17-alph-autopilot-phase-b.md) | **Alph Autopilot Phase B** — dispatch, broader OCR, payroll send, IFTA/tax, marketing, live providers (next sprint) |
 | [security/](./security/00-README.md) | **Enterprise Security Architecture (authoritative assessment)** — threats, auth, AuthZ, API/secrets, headers, Alph, roadmap |
 
 **Enterprise Design System (UI):** [`../design-system/00-README.md`](../design-system/00-README.md) — permanent visual/interaction language (documentation only; aligns with `carrieros-app` tokens). Complements [02-frontend.md](./02-frontend.md); does not outrank `/constitution`.

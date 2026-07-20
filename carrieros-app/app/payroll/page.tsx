@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AlphPayrollPrepPanel from "@/components/alph/AlphPayrollPrepPanel";
 import DetailSlideOver, { DetailGrid, DetailSection } from "@/components/premium/DetailSlideOver";
 import OperationalPageShell from "@/components/premium/OperationalPageShell";
 import OperationalTable from "@/components/premium/OperationalTable";
@@ -48,6 +49,8 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
         </Link>
       }
     >
+      <AlphPayrollPrepPanel />
+
       <div className="rounded-[14px] bg-[#EFF6FF] px-4 py-3 ring-1 ring-[#BFDBFE]">
         <p className="text-[14px] font-semibold text-[#2563EB]">
           Part of Accounting & Finance
