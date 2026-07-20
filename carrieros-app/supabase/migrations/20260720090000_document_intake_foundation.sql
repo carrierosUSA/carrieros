@@ -5,7 +5,7 @@ create extension if not exists pgcrypto;
 
 create or replace function public.current_company_id()
 returns uuid language sql stable as $$
-  select nullif(auth.jwt() ->> 'company_id', '')::uuid
+  select nullif(auth.jwt() -> 'app_metadata' ->> 'company_id', '')::uuid
 $$;
 
 create table public.documents (
@@ -17,67 +17,85 @@ create table public.documents (
   status text not null default 'processing' check (status in ('processing','needs_review','ready','failed','duplicate','unsupported','archived')),
   current_version_id uuid, storage_provider text not null default 'supabase',
   created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
-  unique (company_id, checksum_sha256)
+  unique (company_id, checksum_sha256), unique (company_id, id)
 );
 
 create table public.document_versions (
   id uuid primary key default gen_random_uuid(), company_id uuid not null,
-  document_id uuid not null references public.documents(id) on delete cascade,
+  document_id uuid not null,
   version_number integer not null check (version_number > 0), storage_bucket text not null,
   storage_path text not null, filename text not null, mime_type text not null,
   size_bytes bigint not null check (size_bytes > 0), checksum_sha256 text not null,
   created_by uuid not null, created_at timestamptz not null default now(),
-  unique (document_id, version_number), unique (storage_bucket, storage_path)
+  unique (document_id, version_number), unique (storage_bucket, storage_path),
+  unique (company_id, id),
+  constraint document_versions_document_company_fk
+    foreign key (company_id, document_id) references public.documents(company_id, id) on delete cascade
 );
 alter table public.documents add constraint documents_current_version_fk
-  foreign key (current_version_id) references public.document_versions(id);
+  foreign key (company_id, current_version_id) references public.document_versions(company_id, id);
 
 create table public.document_ocr_results (
   id uuid primary key default gen_random_uuid(), company_id uuid not null,
-  document_id uuid not null references public.documents(id) on delete cascade,
-  document_version_id uuid not null references public.document_versions(id) on delete cascade,
+  document_id uuid not null, document_version_id uuid not null,
   provider text not null, model_id text not null, prompt_version text not null,
   status text not null check (status in ('processing','completed','needs_review','failed')),
   classified_type text not null default 'unknown', overall_confidence numeric(5,4) not null default 0 check (overall_confidence between 0 and 1),
   raw_text text not null default '', fields jsonb not null default '[]'::jsonb,
-  error_code text, error_message text, created_at timestamptz not null default now(), completed_at timestamptz
+  error_code text, error_message text, created_at timestamptz not null default now(), completed_at timestamptz,
+  unique (company_id, id),
+  constraint document_ocr_document_company_fk
+    foreign key (company_id, document_id) references public.documents(company_id, id) on delete cascade,
+  constraint document_ocr_version_company_fk
+    foreign key (company_id, document_version_id) references public.document_versions(company_id, id) on delete cascade
 );
 
 create table public.document_ocr_fields (
   id uuid primary key default gen_random_uuid(), company_id uuid not null,
-  ocr_result_id uuid not null references public.document_ocr_results(id) on delete cascade,
+  ocr_result_id uuid not null,
   field_key text not null, label text not null, value_text text not null default '',
   confidence numeric(5,4) not null check (confidence between 0 and 1),
   is_verified boolean not null default false, verified_by uuid, verified_at timestamptz,
-  unique (ocr_result_id, field_key)
+  unique (ocr_result_id, field_key),
+  constraint document_ocr_fields_result_company_fk
+    foreign key (company_id, ocr_result_id) references public.document_ocr_results(company_id, id) on delete cascade
 );
 
 create table public.document_proposed_actions (
   id uuid primary key default gen_random_uuid(), company_id uuid not null,
-  document_id uuid not null references public.documents(id) on delete cascade,
-  ocr_result_id uuid references public.document_ocr_results(id), action_kind text not null,
+  document_id uuid not null, ocr_result_id uuid, action_kind text not null,
   summary text not null, payload jsonb not null default '{}'::jsonb,
   confidence numeric(5,4) not null check (confidence between 0 and 1),
   status text not null default 'pending' check (status in ('pending','approved','rejected','executed','superseded')),
   requires_approval boolean not null default true, created_by uuid not null,
-  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+  unique (company_id, id),
+  constraint document_actions_document_company_fk
+    foreign key (company_id, document_id) references public.documents(company_id, id) on delete cascade,
+  constraint document_actions_ocr_company_fk
+    foreign key (company_id, ocr_result_id) references public.document_ocr_results(company_id, id)
 );
 
 create table public.document_approvals (
   id uuid primary key default gen_random_uuid(), company_id uuid not null,
-  proposed_action_id uuid not null references public.document_proposed_actions(id),
+  proposed_action_id uuid not null,
   decision text not null check (decision in ('approved','rejected')),
   decided_by uuid not null, decision_note text, decided_at timestamptz not null default now(),
-  unique (proposed_action_id)
+  unique (proposed_action_id),
+  constraint document_approvals_action_company_fk
+    foreign key (company_id, proposed_action_id) references public.document_proposed_actions(company_id, id)
 );
 
 create table public.document_audit_history (
   id uuid primary key default gen_random_uuid(), company_id uuid not null,
-  document_id uuid references public.documents(id) on delete set null,
-  proposed_action_id uuid references public.document_proposed_actions(id) on delete set null,
+  document_id uuid, proposed_action_id uuid,
   actor_user_id uuid not null, event_type text not null, detail text not null,
   before_state jsonb, after_state jsonb, request_id text,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  constraint document_audit_document_company_fk
+    foreign key (company_id, document_id) references public.documents(company_id, id) on delete set null (document_id),
+  constraint document_audit_action_company_fk
+    foreign key (company_id, proposed_action_id) references public.document_proposed_actions(company_id, id) on delete set null (proposed_action_id)
 );
 
 create index documents_company_status_idx on public.documents(company_id, status, created_at desc);
@@ -107,7 +125,12 @@ create policy document_approvals_authorized_insert on public.document_approvals
 for insert with check (
   company_id = public.current_company_id()
   and auth.uid() = decided_by
-  and coalesce(auth.jwt() ->> 'role', '') in ('owner','accounting','super_admin')
+  and coalesce(auth.jwt() -> 'app_metadata' ->> 'business_role', '') in ('owner','accounting','super_admin')
+  and exists (
+    select 1 from public.document_proposed_actions action
+    where action.id = document_approvals.proposed_action_id
+      and action.company_id = document_approvals.company_id
+  )
 );
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import {
   canExecuteCriticalAlphAction,
   clearAlphApprovalsForTests,
@@ -396,6 +397,57 @@ export async function runAlphFoundationSelfCheck(): Promise<AlphSelfCheckResult>
   checks.push({
     name: "document_upload_rejects_unsupported_mime",
     pass: unsupportedRejected,
+  });
+
+  const migrationSql = readFileSync(
+    "supabase/migrations/20260720090000_document_intake_foundation.sql",
+    "utf8",
+  );
+  const rollbackSql = readFileSync(
+    "supabase/rollback/20260720090000_document_intake_foundation_rollback.sql",
+    "utf8",
+  );
+  const gitignore = readFileSync(".gitignore", "utf8");
+
+  checks.push({
+    name: "document_rls_uses_verified_app_metadata_claims",
+    pass:
+      migrationSql.includes("auth.jwt() -> 'app_metadata' ->> 'company_id'") &&
+      migrationSql.includes(
+        "auth.jwt() -> 'app_metadata' ->> 'business_role'",
+      ) &&
+      !migrationSql.includes("auth.jwt() ->> 'company_id'") &&
+      !migrationSql.includes("auth.jwt() ->> 'role'"),
+  });
+  checks.push({
+    name: "document_approval_roles_are_restricted",
+    pass:
+      migrationSql.includes("('owner','accounting','super_admin')") &&
+      !migrationSql.includes("'dispatcher'"),
+  });
+  checks.push({
+    name: "document_approval_is_company_bound",
+    pass:
+      migrationSql.includes("document_approvals_action_company_fk") &&
+      migrationSql.includes("action.id = document_approvals.proposed_action_id") &&
+      migrationSql.includes("action.company_id = document_approvals.company_id"),
+  });
+  checks.push({
+    name: "document_relations_use_company_aware_foreign_keys",
+    pass:
+      migrationSql.includes("document_versions_document_company_fk") &&
+      migrationSql.includes("document_ocr_document_company_fk") &&
+      migrationSql.includes("document_ocr_version_company_fk") &&
+      migrationSql.includes("document_ocr_fields_result_company_fk") &&
+      migrationSql.includes("document_actions_document_company_fk") &&
+      migrationSql.includes("document_audit_document_company_fk"),
+  });
+  checks.push({
+    name: "document_rollback_refuses_data_or_file_loss",
+    pass:
+      rollbackSql.includes("Rollback refused: public.documents contains records.") &&
+      rollbackSql.includes("Rollback refused: company-documents contains stored files.") &&
+      gitignore.includes("/supabase/.temp/"),
   });
 
   const ok = checks.every((c) => c.pass);
