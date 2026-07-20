@@ -65,7 +65,7 @@ export default function CustomRoleForm({
           <input
             value={ssoGroupHint}
             onChange={(e) => setSsoGroupHint(e.target.value)}
-            placeholder="e.g. carrieros-night-ops"
+            placeholder="e.g. transpo-night-ops"
             className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-[14px] text-[#111827] outline-none ring-[#2563EB] placeholder:text-[#9CA3AF] focus:ring-2"
           />
         </label>

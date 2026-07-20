@@ -130,7 +130,7 @@ function seedConnections(): Record<
     credentials: {
       mode: "api_key",
       apiKeyMasked: "sam••••••••7k2p",
-      connectedAccountLabel: "CarrierOS Fleet",
+      connectedAccountLabel: "Transpo.ai Fleet",
     },
     health: {
       lastSyncAt: minsAgo(4),
@@ -180,7 +180,7 @@ function seedConnections(): Record<
     credentials: {
       mode: "api_key",
       apiKeyMasked: "AC••••••••91b2",
-      connectedAccountLabel: "CarrierOS SMS",
+      connectedAccountLabel: "Transpo.ai SMS",
     },
     health: {
       lastSyncAt: minsAgo(35),

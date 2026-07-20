@@ -152,7 +152,7 @@ function seedApiLogs(): ApiLogEntry[] {
       path: "/api/v1/loads?status=in_transit",
       status: 200,
       latencyMs: 48,
-      source: "CarrierOS Web",
+      source: "Transpo.ai Web",
       userId: "alpha-owner",
     },
     {
@@ -171,7 +171,7 @@ function seedApiLogs(): ApiLogEntry[] {
       path: "/api/v1/invoices/INV-2094/send",
       status: 201,
       latencyMs: 186,
-      source: "CarrierOS Web",
+      source: "Transpo.ai Web",
       userId: "u-finance-1",
     },
     {
@@ -199,7 +199,7 @@ function seedApiLogs(): ApiLogEntry[] {
       path: "/api/v1/loads/LD-4821/assign",
       status: 200,
       latencyMs: 71,
-      source: "CarrierOS Web",
+      source: "Transpo.ai Web",
       userId: "alpha-owner",
     },
     {
@@ -218,7 +218,7 @@ function seedApiLogs(): ApiLogEntry[] {
       path: "/api/v1/fleet/trucks/TRK-17/maintenance",
       status: 200,
       latencyMs: 55,
-      source: "CarrierOS Web",
+      source: "Transpo.ai Web",
       userId: "alpha-owner",
     },
     {
@@ -238,7 +238,7 @@ function seedApiLogs(): ApiLogEntry[] {
       path: "/api/v1/analytics/revenue",
       status: 200,
       latencyMs: 228,
-      source: "CarrierOS Web",
+      source: "Transpo.ai Web",
       userId: "u-finance-1",
     },
     {
@@ -248,7 +248,7 @@ function seedApiLogs(): ApiLogEntry[] {
       path: "/api/v1/sessions/sess-old-1",
       status: 204,
       latencyMs: 22,
-      source: "CarrierOS Web",
+      source: "Transpo.ai Web",
       userId: "alpha-owner",
     },
     {

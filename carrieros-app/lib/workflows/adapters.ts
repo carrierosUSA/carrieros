@@ -86,7 +86,7 @@ const adapters: Record<WorkflowActionType, AdapterFn> = {
 
   email_broker: (action, payload) => {
     const broker = str(payload.brokerName, "broker");
-    const subject = action.params?.subject || "CarrierOS update";
+    const subject = action.params?.subject || "Transpo.ai update";
     return {
       ok: true,
       message: `Email logged to ${broker}: “${subject}” (stub).`,
@@ -110,7 +110,7 @@ const adapters: Record<WorkflowActionType, AdapterFn> = {
   notify_driver: (action, payload) => {
     const driver = str(payload.driverName, "driver");
     const message =
-      action.params?.message || "You have a new message from CarrierOS.";
+      action.params?.message || "You have a new message from Transpo.ai.";
     pushInAppNotification({
       category: "driver",
       type: "workflow.notify_driver",
@@ -136,7 +136,7 @@ const adapters: Record<WorkflowActionType, AdapterFn> = {
 
   send_sms: (action, payload) => {
     const to = action.params?.to || str(payload.driverName, "recipient");
-    const message = action.params?.message || "CarrierOS SMS stub";
+    const message = action.params?.message || "Transpo.ai SMS stub";
     return { ok: true, message: `SMS stub to ${to}: “${message}”` };
   },
 

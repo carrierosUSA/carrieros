@@ -144,7 +144,7 @@ export function detectSeedIssues(tenantId: string): SupportIssue[] {
       title: "Invoice email failed to send",
       summary: "SMTP lane degraded; invoice email to broker bounced.",
       humanMessage:
-        "CarrierOS could not send an invoice email. Alph can retry delivery safely.",
+        "Transpo.ai could not send an invoice email. Alph can retry delivery safely.",
       category: "system",
       severity: "medium",
       status: "auto_repairing",

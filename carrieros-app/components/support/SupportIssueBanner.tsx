@@ -5,6 +5,7 @@ import { useSyncExternalStore } from "react";
 import {
   activeIssueBanner,
   getSupportStore,
+  getSupportStoreServerSnapshot,
   subscribeSupportStore,
   ISSUE_STATUS_LABELS,
 } from "@/lib/support";
@@ -13,7 +14,7 @@ export default function SupportIssueBanner() {
   const store = useSyncExternalStore(
     subscribeSupportStore,
     getSupportStore,
-    getSupportStore,
+    getSupportStoreServerSnapshot,
   );
   const issue = activeIssueBanner(store.issues);
 

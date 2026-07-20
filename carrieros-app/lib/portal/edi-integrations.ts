@@ -43,7 +43,7 @@ export const PORTAL_EDI_INTEGRATIONS: PortalEdiIntegration[] = [
   },
   {
     id: "api-webhook",
-    name: "CarrierOS Webhooks",
+    name: "Transpo.ai Webhooks",
     channel: "api_webhook",
     status: "connected",
     description: "HTTPS callbacks for load, document, and invoice events.",

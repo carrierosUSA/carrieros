@@ -449,7 +449,7 @@ export const ALPH_INTENT_CATALOG: AlphIntentDefinition[] = [
     label: "Issue status",
     examples: [
       "Has my issue been resolved?",
-      "What did CarrierOS change?",
+      "What did Transpo.ai change?",
       "Can I reopen my issue?",
     ],
     keywords: ["issue resolved", "reopen", "what did carrieros change", "ticket"],

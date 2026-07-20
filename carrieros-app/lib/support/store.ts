@@ -55,6 +55,8 @@ function createDefaultStore(): SupportStoreSnapshot {
 }
 
 let memory: SupportStoreSnapshot | null = null;
+/** Deterministic SSR/hydration snapshot — never reads localStorage. */
+let serverSnapshot: SupportStoreSnapshot | null = null;
 const listeners = new Set<() => void>();
 
 function emit() {
@@ -94,6 +96,19 @@ export function subscribeSupportStore(listener: () => void) {
 
 export function getSupportStore(): SupportStoreSnapshot {
   return load();
+}
+
+/**
+ * Snapshot for SSR and the first client hydration render.
+ * Must stay identical across server/client and must not touch localStorage.
+ * Live client state (including persisted demo status changes) is applied
+ * via getSupportStore after hydration.
+ */
+export function getSupportStoreServerSnapshot(): SupportStoreSnapshot {
+  if (!serverSnapshot) {
+    serverSnapshot = createDefaultStore();
+  }
+  return serverSnapshot;
 }
 
 export function getOpenCarrierIssues(): SupportIssue[] {

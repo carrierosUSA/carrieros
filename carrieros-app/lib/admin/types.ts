@@ -182,4 +182,4 @@ export const ADMIN_TABS: { id: AdminTabId; label: string; group: string }[] = [
 ];
 
 export const DEFAULT_MAINTENANCE_MESSAGE =
-  "CarrierOS is undergoing scheduled maintenance. Dispatch and read-only views remain available. Writes may be delayed.";
+  "Transpo.ai is undergoing scheduled maintenance. Dispatch and read-only views remain available. Writes may be delayed.";

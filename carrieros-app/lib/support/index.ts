@@ -40,6 +40,7 @@ export {
 export {
   subscribeSupportStore,
   getSupportStore,
+  getSupportStoreServerSnapshot,
   getOpenCarrierIssues,
   markSetupStep,
   attemptAutoResolve,

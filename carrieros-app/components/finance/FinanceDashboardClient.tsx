@@ -344,7 +344,7 @@ export default function FinanceDashboardClient({
 
   function handleExportExcel() {
     downloadFinanceExcelCsv(
-      "carrieros-finance-export.csv",
+      "transpo-finance-export.csv",
       ["Type", "Reference", "Party", "Amount", "Status", "Date"],
       [
         ...revenue.map((r) => [

@@ -45,7 +45,7 @@ export const ELD_FALLBACK_OPTIONS: EldFallbackOption[] = [
   {
     kind: "scheduled_email",
     title: "Scheduled Email Import",
-    description: "Record a recurring email report you forward into CarrierOS.",
+    description: "Record a recurring email report you forward into Transpo.ai.",
     accept: ".eml,.txt,.pdf",
     iftaRelevant: false,
     tip: "Save the sample email once — ops can match the schedule later.",

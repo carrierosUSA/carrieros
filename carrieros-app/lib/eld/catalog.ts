@@ -170,7 +170,7 @@ export const ELD_CATALOG: EldCatalogProvider[] = [
       "trailer_information",
     ],
     unavailableReason:
-      "CarrierOS is reviewing Orbcomm API docs and carrier demand before scheduling development.",
+      "Transpo.ai is reviewing Orbcomm API docs and carrier demand before scheduling development.",
     lastVerificationDate: "2026-06-15",
     contactEmail: "partners@orbcomm.com",
     apiDifficulty: 3,
@@ -339,7 +339,7 @@ export const ELD_CATALOG: EldCatalogProvider[] = [
       "engine_hours",
     ],
     unavailableReason:
-      "Not yet in the CarrierOS roadmap. Submitting a request helps us prioritize.",
+      "Not yet in the Transpo.ai roadmap. Submitting a request helps us prioritize.",
     lastVerificationDate: "2026-04-02",
     contactEmail: "sales@horizontelematics.example",
     apiDifficulty: 4,
@@ -368,12 +368,12 @@ export const ELD_CATALOG: EldCatalogProvider[] = [
     id: "atlas_fleet",
     name: "Atlas Fleet ELD",
     initials: "AF",
-    description: "Growing ELD with developer beta — under CarrierOS review.",
+    description: "Growing ELD with developer beta — under Transpo.ai review.",
     status: "under_review",
     supportCategory: "requested_by_carriers",
     dataTypes: CORE_HOS.concat(["fuel_data", "fault_codes"]),
     unavailableReason:
-      "Atlas Fleet opened a developer beta. CarrierOS is validating scopes and rate limits.",
+      "Atlas Fleet opened a developer beta. Transpo.ai is validating scopes and rate limits.",
     lastVerificationDate: "2026-07-12",
     contactEmail: "developers@atlasfleet.example",
     apiDifficulty: 3,

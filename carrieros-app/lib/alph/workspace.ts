@@ -194,7 +194,7 @@ export function buildWorkspaceBriefing(
       reason:
         index === 0
           ? "Highest impact on today’s operations."
-          : "Detected from live CarrierOS signals.",
+          : "Detected from live Transpo.ai signals.",
       actionLabel: "Open",
       href: item.href ?? "/",
     }));
