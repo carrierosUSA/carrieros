@@ -1,6 +1,6 @@
 /**
- * POD → match load → validate delivery → mark docs complete →
- * prepare invoice → approval → invoice ready via existing DocumentService.
+ * POD → match load → read-only proposal → approval →
+ * capture POD, update load, and prepare invoice via existing services.
  */
 
 import { appendAlphAudit } from "@/lib/alph/audit/store";
@@ -78,32 +78,12 @@ export async function preparePodInvoiceDraft(
     return upsertDocumentInboxItem(item);
   }
 
-  const docs = getDocumentService();
-  await docs.captureLoadDocument(item.tenantId, {
-    loadId: load.id,
-    type: "final_pod",
-    fileName: item.originalFileName,
-  });
-
-  // Mark delivered if still in transit / picked up (human will approve invoice separately).
-  if (
-    load.status === "in_transit" ||
-    load.status === "picked_up" ||
-    load.status === "dispatched"
-  ) {
-    await getLoadService().updateLoad(item.tenantId, load.id, {
-      status: "delivered",
-    });
-  }
-
-  const invoiceDraft = await docs.generateInvoiceDraft(item.tenantId, load.id);
-  item.invoiceDraftId = invoiceDraft.id;
   item.status = "draft_ready";
   pushAudit(
     item,
     item.uploadedByUserId,
     "draft_created",
-    `POD captured · invoice draft ${invoiceDraft.invoiceNumber} · $${invoiceDraft.amount}`,
+    `Read-only POD proposal prepared for load ${load.reference}; no business records changed.`,
   );
 
   return upsertDocumentInboxItem(item);
@@ -114,8 +94,8 @@ export function requestPodInvoiceApproval(input: {
   userId: string;
 }): { item: DocumentInboxItem; approvalId: string } {
   const item = input.item;
-  if (!item.invoiceDraftId || !item.matchedLoadId) {
-    throw new Error("Invoice draft or load match missing.");
+  if (!item.matchedLoadId) {
+    throw new Error("Load match missing.");
   }
 
   const approval = createAlphApprovalRequest({
@@ -128,16 +108,14 @@ export function requestPodInvoiceApproval(input: {
     recordsAffected: [
       { type: "document_inbox", id: item.id, label: item.fileName },
       { type: "load", id: item.matchedLoadId },
-      { type: "invoice_draft", id: item.invoiceDraftId },
     ],
-    financialImpact: "Invoice marked ready / packet prepared for send",
-    operationalImpact: "Documents marked complete for billing",
+    financialImpact: "Proposed invoice draft and billing packet preparation",
+    operationalImpact: "Proposed POD capture and delivered-status update",
     permissionRequired: "button.finance.create",
     preview: {
       workflow: "pod_to_invoice",
       inboxItemId: item.id,
       loadId: item.matchedLoadId,
-      invoiceDraftId: item.invoiceDraftId,
       isDemoExtraction: item.extraction?.isDemoExtraction ?? true,
       confidence: item.overallConfidence,
       issues: item.issues.map((i) => i.message),
@@ -203,8 +181,8 @@ export async function approvePodInvoiceAndPrepare(input: {
       error: "Inbox item not found.",
     };
   }
-  if (!item.approvalId || !item.matchedLoadId || !item.invoiceDraftId) {
-    return { item, error: "Missing approval, load, or invoice draft." };
+  if (!item.approvalId || !item.matchedLoadId) {
+    return { item, error: "Missing approval or load match." };
   }
 
   const decided = decideAlphApproval({
@@ -226,11 +204,33 @@ export async function approvePodInvoiceAndPrepare(input: {
 
   try {
     const docs = getDocumentService();
-    // Ensure draft is ready status via existing service.
+    const load = await getLoadService().getLoad(
+      input.tenantId,
+      item.matchedLoadId,
+    );
+    if (!load) throw new Error("Matched load not found for this tenant.");
+
+    await docs.captureLoadDocument(input.tenantId, {
+      loadId: load.id,
+      type: "final_pod",
+      fileName: item.originalFileName,
+    });
+
+    if (
+      load.status === "in_transit" ||
+      load.status === "picked_up" ||
+      load.status === "dispatched"
+    ) {
+      await getLoadService().updateLoad(input.tenantId, load.id, {
+        status: "delivered",
+      });
+    }
+
     const invoice = await docs.generateInvoiceDraft(
       input.tenantId,
       item.matchedLoadId,
     );
+    item.invoiceDraftId = invoice.id;
 
     if (input.preparePacket !== false) {
       try {

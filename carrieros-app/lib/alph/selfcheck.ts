@@ -24,6 +24,18 @@ import { ALPH_IDENTITY } from "@/lib/alph/identity";
 import { ensureAlphToolsRegistered, executeAlphTool, listAlphTools } from "@/lib/alph/tools";
 import { clearAlphToolRegistryForTests } from "@/lib/alph/tools/registry";
 import { runAlphTurn } from "@/lib/alph/orchestrator";
+import {
+  approvePodInvoiceAndPrepare,
+  clearDocumentInboxForTests,
+  requestInboxApproval,
+  uploadToDocumentInbox,
+} from "@/lib/alph/document-inbox";
+import {
+  invoiceDraftStore,
+  loadDocumentStore,
+  packetStore,
+} from "@/lib/data/document-store";
+import { getLoadService } from "@/lib/services/loads";
 
 export type AlphSelfCheckResult = {
   ok: boolean;
@@ -39,6 +51,7 @@ export async function runAlphFoundationSelfCheck(): Promise<AlphSelfCheckResult>
   clearAlphApprovalsForTests();
   clearAlphConversationsForTests();
   clearAlphToolRegistryForTests();
+  clearDocumentInboxForTests();
   ensureAlphToolsRegistered();
 
   const checks: AlphSelfCheckResult["checks"] = [];
@@ -277,6 +290,81 @@ export async function runAlphFoundationSelfCheck(): Promise<AlphSelfCheckResult>
   checks.push({
     name: "execution_marked_after_approve",
     pass: executed?.executed === true,
+  });
+
+  const podLoadId = "load-24003";
+  const podLoadBefore = await getLoadService().getLoad(ctx.tenantId, podLoadId);
+  const podStatusBefore = podLoadBefore?.status;
+  const podDocumentsBefore = loadDocumentStore.length;
+  const podInvoicesBefore = invoiceDraftStore.length;
+  const podPacketsBefore = packetStore.length;
+
+  const podProposal = await uploadToDocumentInbox({
+    tenantId: ctx.tenantId,
+    companyId: ctx.companyId,
+    userId: ctx.userId,
+    fileName: "LD-24003-pod-selfcheck.pdf",
+    mimeType: "application/pdf",
+    byteLength: 1024,
+    contentFingerprint: `alph-selfcheck-pod-${ctx.requestId}`,
+  });
+  const podLoadAfterUpload = await getLoadService().getLoad(
+    ctx.tenantId,
+    podLoadId,
+  );
+  checks.push({
+    name: "pod_upload_is_read_only_proposal",
+    pass:
+      podProposal.status === "draft_ready" &&
+      podProposal.invoiceDraftId === undefined &&
+      podLoadAfterUpload?.status === podStatusBefore &&
+      loadDocumentStore.length === podDocumentsBefore &&
+      invoiceDraftStore.length === podInvoicesBefore &&
+      packetStore.length === podPacketsBefore,
+  });
+
+  const podApproval = requestInboxApproval({
+    itemId: podProposal.id,
+    tenantId: ctx.tenantId,
+    companyId: ctx.companyId,
+    userId: ctx.userId,
+  });
+  const podLoadAfterRequest = await getLoadService().getLoad(
+    ctx.tenantId,
+    podLoadId,
+  );
+  checks.push({
+    name: "pod_approval_request_is_read_only",
+    pass:
+      Boolean(podApproval.approvalId) &&
+      podLoadAfterRequest?.status === podStatusBefore &&
+      loadDocumentStore.length === podDocumentsBefore &&
+      invoiceDraftStore.length === podInvoicesBefore &&
+      packetStore.length === podPacketsBefore,
+  });
+
+  const podExecution = await approvePodInvoiceAndPrepare({
+    itemId: podProposal.id,
+    tenantId: ctx.tenantId,
+    companyId: ctx.companyId,
+    userId: ctx.userId,
+    role: ctx.role,
+  });
+  const podLoadAfterApproval = await getLoadService().getLoad(
+    ctx.tenantId,
+    podLoadId,
+  );
+  checks.push({
+    name: "pod_records_change_only_after_explicit_approval",
+    pass:
+      !podExecution.error &&
+      podExecution.item.status === "completed" &&
+      Boolean(podExecution.invoiceId) &&
+      podLoadAfterApproval?.status === "invoiced" &&
+      loadDocumentStore.length === podDocumentsBefore + 1 &&
+      invoiceDraftStore.length === podInvoicesBefore + 1 &&
+      packetStore.length >= podPacketsBefore,
+    detail: podExecution.error ?? `status=${podLoadAfterApproval?.status}`,
   });
 
   const ok = checks.every((c) => c.pass);

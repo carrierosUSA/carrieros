@@ -15,29 +15,19 @@ import {
 import { getAlphProviderStatusAction } from "@/app/actions/alph-autopilot";
 
 export default function AutopilotSettingsPanel() {
-  const [settings, setSettings] = useState<AlphAutopilotSettings | null>(null);
+  const [settings, setSettings] = useState<AlphAutopilotSettings>(
+    getAlphAutopilotSettings,
+  );
   const [savedFlash, setSavedFlash] = useState(false);
   const [providerNote, setProviderNote] = useState<string>("");
 
   useEffect(() => {
-    setSettings(getAlphAutopilotSettings());
     void getAlphProviderStatusAction().then((status) => {
       setProviderNote(
         `${status.model.message} · ${status.ocr.message}`,
       );
     });
   }, []);
-
-  if (!settings) {
-    return (
-      <SettingsPanelFrame
-        title="Alph Autopilot"
-        description="Loading company Autopilot preferences…"
-      >
-        <div className="h-24 animate-pulse rounded-[16px] bg-[#F1F5F9]" />
-      </SettingsPanelFrame>
-    );
-  }
 
   function persist(patch: Partial<AlphAutopilotSettings>) {
     const next = saveAlphAutopilotSettings(patch);
