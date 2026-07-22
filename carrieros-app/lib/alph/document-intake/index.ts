@@ -7,6 +7,28 @@ export function getDocumentExtractionAdapter(): DocumentExtractionAdapter {
   return new OpenAiDocumentExtractionAdapter();
 }
 
-export { SupabaseDocumentIntakeRepository } from "@/lib/alph/document-intake/supabase-repository";
-export { validateDocumentFile } from "@/lib/alph/document-intake/validation";
-export type { DocumentExtraction, DocumentExtractionAdapter, DocumentIntakeRepository, DocumentUpload, PersistedDocument } from "@/lib/alph/document-intake/types";
+export {
+  RecoverableDocumentIntakeError,
+  SupabaseDocumentIntakeRepository,
+} from "@/lib/alph/document-intake/supabase-repository";
+export {
+  classifyDocumentIntakeState,
+  documentConfirmationRequestId,
+  isDocumentConfirmationFinal,
+} from "@/lib/alph/document-intake/consistency";
+export {
+  getDocumentMaxBytes,
+  validateDocumentBytes,
+  validateDocumentFile,
+} from "@/lib/alph/document-intake/validation";
+export type {
+  DocumentExtraction,
+  DocumentExtractionAdapter,
+  DocumentExtractionRetrySource,
+  DocumentIntakeRepository,
+  DocumentPickupNumberReview,
+  DocumentReviewCorrection,
+  DocumentUpload,
+  PersistedDocument,
+  PersistedDocumentReview,
+} from "@/lib/alph/document-intake/types";

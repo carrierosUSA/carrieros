@@ -23,6 +23,7 @@ type DocumentQuickActionsProps = {
   onDelete: () => void;
   onRestore: () => void;
   onVersionHistory: () => void;
+  unavailableActions?: Partial<Record<DocumentPermissionAction, string>>;
 };
 
 function ActionButton({
@@ -69,6 +70,7 @@ export default function DocumentQuickActions({
   onDelete,
   onRestore,
   onVersionHistory,
+  unavailableActions,
 }: DocumentQuickActionsProps) {
   const { can, cannotReason } = usePermissions();
   const enterpriseDelete = can("button.documents.delete");
@@ -98,71 +100,71 @@ export default function DocumentQuickActions({
       <ActionButton
         label="Upload"
         primary
-        disabled={!upload.allowed}
-        title={upload.reason ?? "Upload a new version"}
+        disabled={!upload.allowed || Boolean(unavailableActions?.upload)}
+        title={unavailableActions?.upload ?? upload.reason ?? "Upload a new version"}
         onClick={onUpload}
       />
       <ActionButton
         label="Download"
-        disabled={!download.allowed}
-        title={download.reason ?? "Download file"}
+        disabled={!download.allowed || Boolean(unavailableActions?.download)}
+        title={unavailableActions?.download ?? download.reason ?? "Download file"}
         onClick={onDownload}
       />
       <ActionButton
         label="Preview"
-        disabled={!preview.allowed}
-        title={preview.reason ?? "Preview document"}
+        disabled={!preview.allowed || Boolean(unavailableActions?.preview)}
+        title={unavailableActions?.preview ?? preview.reason ?? "Preview document"}
         onClick={onPreview}
       />
       <ActionButton
         label="Share"
-        disabled={!share.allowed}
-        title={share.reason ?? "Copy share link"}
+        disabled={!share.allowed || Boolean(unavailableActions?.share)}
+        title={unavailableActions?.share ?? share.reason ?? "Copy share link"}
         onClick={onShare}
       />
       <ActionButton
         label="Rename"
-        disabled={!rename.allowed}
-        title={rename.reason ?? "Rename document"}
+        disabled={!rename.allowed || Boolean(unavailableActions?.rename)}
+        title={unavailableActions?.rename ?? rename.reason ?? "Rename document"}
         onClick={onRename}
       />
       <ActionButton
         label="Move"
-        disabled={!move.allowed}
-        title={move.reason ?? "Change category"}
+        disabled={!move.allowed || Boolean(unavailableActions?.move)}
+        title={unavailableActions?.move ?? move.reason ?? "Change category"}
         onClick={onMove}
       />
       <ActionButton
         label="Merge PDFs"
-        disabled={!merge.allowed}
-        title={merge.reason}
+        disabled={!merge.allowed || Boolean(unavailableActions?.merge)}
+        title={unavailableActions?.merge ?? merge.reason}
         onClick={onMerge}
       />
       <ActionButton
         label="Print"
-        disabled={!print.allowed}
-        title={print.reason ?? "Print document"}
+        disabled={!print.allowed || Boolean(unavailableActions?.print)}
+        title={unavailableActions?.print ?? print.reason ?? "Print document"}
         onClick={onPrint}
       />
       {document.status === "deleted" ? (
         <ActionButton
           label="Restore"
-          disabled={!restore.allowed}
-          title={restore.reason ?? "Restore from trash"}
+          disabled={!restore.allowed || Boolean(unavailableActions?.restore)}
+          title={unavailableActions?.restore ?? restore.reason ?? "Restore from trash"}
           onClick={onRestore}
         />
       ) : (
         <ActionButton
           label="Delete"
-          disabled={!deleteAllowed}
-          title={deleteReason}
+          disabled={!deleteAllowed || Boolean(unavailableActions?.delete)}
+          title={unavailableActions?.delete ?? deleteReason}
           onClick={onDelete}
         />
       )}
       <ActionButton
         label="Version History"
-        disabled={!versions.allowed}
-        title={versions.reason ?? "View versions"}
+        disabled={!versions.allowed || Boolean(unavailableActions?.view_versions)}
+        title={unavailableActions?.view_versions ?? versions.reason ?? "View versions"}
         onClick={onVersionHistory}
       />
     </div>

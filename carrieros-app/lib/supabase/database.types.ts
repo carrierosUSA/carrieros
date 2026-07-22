@@ -10,6 +10,7 @@ export type Database = {
       document_versions: Table<Row>;
       document_ocr_results: Table<Row>;
       document_ocr_fields: Table<Row>;
+      document_pickup_numbers: Table<Row>;
       document_proposed_actions: Table<Row>;
       document_approvals: Table<Row>;
       document_audit_history: Table<Row>;

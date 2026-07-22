@@ -3,14 +3,15 @@ import { Suspense } from "react";
 import DocumentCenterClient from "@/components/documents/center/DocumentCenterClient";
 import DocumentDashboardSkeleton from "@/components/documents/center/DocumentDashboardSkeleton";
 import OperationalPageShell from "@/components/premium/OperationalPageShell";
-import { getCurrentSession } from "@/lib/auth/session";
-import { listCarrierDocuments } from "@/lib/data/carrier-document-store";
-import { getActiveTenantId } from "@/lib/data/tenant";
+import { SupabaseDocumentIntakeRepository } from "@/lib/alph/document-intake";
+import { requireDocumentAuth } from "@/lib/auth/supabase-server";
 
-export default function DocumentsPage() {
-  const tenantId = getActiveTenantId();
-  const session = getCurrentSession();
-  const documents = listCarrierDocuments(tenantId);
+export default async function DocumentsPage() {
+  const auth = await requireDocumentAuth();
+  const records = await new SupabaseDocumentIntakeRepository().listDocuments({
+    companyId: auth.companyId,
+    accessToken: auth.accessToken,
+  });
 
   return (
     <OperationalPageShell
@@ -28,8 +29,8 @@ export default function DocumentsPage() {
     >
       <Suspense fallback={<DocumentDashboardSkeleton />}>
         <DocumentCenterClient
-          initialDocuments={documents}
-          role={session.role}
+          initialRecords={records}
+          role={auth.businessRole}
         />
       </Suspense>
     </OperationalPageShell>

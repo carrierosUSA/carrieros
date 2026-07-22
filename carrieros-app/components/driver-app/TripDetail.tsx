@@ -14,6 +14,7 @@ import { useAiSafety } from "@/components/ai-safety/AiSafetyProvider";
 import { useDriverApp } from "@/components/driver-app/DriverAppProvider";
 import StatusStrip from "@/components/driver-app/StatusStrip";
 import RejectReasonModal from "@/components/driver-mobile/RejectReasonModal";
+import PickupNumbersPanel from "@/components/driver-mobile/PickupNumbersPanel";
 import {
   DmCard,
   DmPrimaryButton,
@@ -83,6 +84,16 @@ export default function TripDetail({ tripId }: { tripId: string }) {
           </div>
           <StatusChip label={formatStatus(load.status)} tone={statusTone(load.status)} />
         </div>
+        <p className="text-[13px] font-semibold text-[var(--dm-muted)]">
+          Pickup · {load.originCity}, {load.originState} · {load.pickupDate}
+          {load.pickupAt
+            ? ` · ${new Date(load.pickupAt).toLocaleTimeString([], {
+                hour: "numeric",
+                minute: "2-digit",
+              })}`
+            : ""}
+        </p>
+        <PickupNumbersPanel pickupNumbers={load.pickupNumbers} />
         <div className="flex flex-wrap gap-2 text-[14px] text-[var(--dm-muted)]">
           <span>{load.miles} mi</span>
           <span>·</span>

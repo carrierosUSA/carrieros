@@ -17,7 +17,6 @@ import {
 } from "@/lib/documents/document-board";
 import { DOCUMENT_ROLE_BADGE_COPY } from "@/lib/documents/document-permissions";
 import {
-  DOCUMENT_CATEGORIES,
   DOCUMENT_CATEGORY_LABELS,
   type CarrierDocument,
 } from "@/lib/types/documents";
@@ -42,55 +41,14 @@ export default function DocumentDetailShell({
   document: initial,
   role,
 }: DocumentDetailShellProps) {
-  const [document, setDocument] = useState(initial);
+  const document = initial;
   const [tab, setTab] = useState<DocumentDetailTab>("overview");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [renaming, setRenaming] = useState(false);
-  const [renameValue, setRenameValue] = useState(initial.filename);
 
   function showToast(message: string) {
     setToast(message);
     window.setTimeout(() => setToast(null), 2400);
-  }
-
-  function appendAudit(
-    action: CarrierDocument["auditLog"][number]["action"],
-    detail?: string,
-  ) {
-    const entry = {
-      id: `audit-${Date.now()}`,
-      action,
-      actorName: "Alpha Owner",
-      actorRole: role,
-      occurredAt: new Date().toISOString(),
-      detail,
-    };
-    const timelineEvent = {
-      id: `tl-${Date.now()}`,
-      documentId: document.id,
-      type:
-        action === "soft_deleted"
-          ? ("deleted" as const)
-          : action === "restored"
-            ? ("restored" as const)
-            : action === "renamed"
-              ? ("renamed" as const)
-              : action === "shared"
-                ? ("shared" as const)
-                : action === "downloaded"
-                  ? ("downloaded" as const)
-                  : ("uploaded" as const),
-      label: detail ?? action.replace("_", " "),
-      occurredAt: entry.occurredAt,
-      actorName: entry.actorName,
-    };
-
-    setDocument((prev) => ({
-      ...prev,
-      auditLog: [entry, ...prev.auditLog],
-      timeline: [timelineEvent, ...prev.timeline],
-    }));
   }
 
   const linkRows = useMemo(() => {
@@ -159,47 +117,9 @@ export default function DocumentDetailShell({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              {renaming ? (
-                <form
-                  className="flex flex-wrap items-center gap-2"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    const next = renameValue.trim();
-                    if (!next) return;
-                    setDocument((prev) => ({ ...prev, filename: next }));
-                    appendAudit("renamed", `Renamed to ${next}`);
-                    setRenaming(false);
-                    showToast("Document renamed");
-                  }}
-                >
-                  <input
-                    value={renameValue}
-                    onChange={(event) => setRenameValue(event.target.value)}
-                    className="h-10 min-w-[220px] rounded-xl bg-[#F8FAFC] px-3 text-[16px] font-semibold text-slate-950 ring-1 ring-[#EAEAEA] focus:outline-none focus:ring-2 focus:ring-[#93C5FD]"
-                    autoFocus
-                  />
-                  <button
-                    type="submit"
-                    className="inline-flex h-9 items-center rounded-full bg-[#2563EB] px-4 text-[13px] font-semibold text-white"
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRenaming(false);
-                      setRenameValue(document.filename);
-                    }}
-                    className="inline-flex h-9 items-center rounded-full px-3 text-[13px] font-medium text-slate-500"
-                  >
-                    Cancel
-                  </button>
-                </form>
-              ) : (
-                <h1 className="text-[24px] font-bold tracking-tight text-slate-950">
-                  {document.filename}
-                </h1>
-              )}
+              <h1 className="text-[24px] font-bold tracking-tight text-slate-950">
+                {document.filename}
+              </h1>
               <DocumentStatusBadge status={document.status} />
             </div>
             <p className="mt-1 text-[14px] text-slate-500">
@@ -217,67 +137,62 @@ export default function DocumentDetailShell({
           <DocumentQuickActions
             document={document}
             role={role}
-            onUpload={() => showToast("Choose a file from Document Center upload")}
+            unavailableActions={{
+              upload: "Not available yet — upload new versions from Document Center.",
+              ...(document.previewUrl
+                ? {}
+                : {
+                    download:
+                      "Not available yet — the private file URL is unavailable.",
+                  }),
+              rename: "Not available yet — persisted rename is required.",
+              move: "Not available yet — persisted category changes are required.",
+              merge: "Not available yet — persisted PDF merge is required.",
+              delete: "Not available yet — persisted deletion is required.",
+              restore: "Not available yet — persisted restoration is required.",
+            }}
+            onUpload={() => showToast("Not available yet")}
             onDownload={() => {
-              appendAudit("downloaded");
-              const blob = new Blob(
-                [`Mock download for ${document.filename}\n\n${document.ocrText ?? ""}`],
-                { type: "text/plain" },
-              );
-              const url = URL.createObjectURL(blob);
+              if (!document.previewUrl) {
+                showToast("Private download is not available yet");
+                return;
+              }
               const anchor = window.document.createElement("a");
-              anchor.href = url;
-              anchor.download = document.filename.replace(/\.[^.]+$/, "") + ".txt";
+              anchor.href = document.previewUrl;
+              anchor.rel = "noopener noreferrer";
+              anchor.target = "_blank";
               anchor.click();
-              URL.revokeObjectURL(url);
-              showToast("Download started");
+              showToast("Private file opened");
             }}
             onPreview={() => setPreviewOpen(true)}
             onShare={async () => {
               const url = `${window.location.origin}/documents/${document.id}`;
               try {
                 await navigator.clipboard.writeText(url);
-                appendAudit("shared", "Copied share link");
-                showToast("Share link copied");
+                showToast("Authenticated document link copied");
               } catch {
                 showToast("Could not copy link");
               }
             }}
-            onRename={() => {
-              setRenameValue(document.filename);
-              setRenaming(true);
-            }}
-            onMove={() => {
-              const currentIndex = DOCUMENT_CATEGORIES.indexOf(document.category);
-              const nextCategory =
-                DOCUMENT_CATEGORIES[(currentIndex + 1) % DOCUMENT_CATEGORIES.length];
-              setDocument((prev) => ({ ...prev, category: nextCategory }));
-              appendAudit(
-                "moved",
-                `Moved to ${DOCUMENT_CATEGORY_LABELS[nextCategory]}`,
-              );
-              showToast(`Moved to ${DOCUMENT_CATEGORY_LABELS[nextCategory]}`);
-            }}
-            onMerge={() => showToast("Select two or more PDFs to merge")}
+            onRename={() => showToast("Not available yet")}
+            onMove={() => showToast("Not available yet")}
+            onMerge={() => showToast("Not available yet")}
             onPrint={() => {
               window.print();
               showToast("Print dialog opened");
             }}
-            onDelete={() => {
-              setDocument((prev) => ({ ...prev, status: "deleted" }));
-              appendAudit("soft_deleted", "Moved to trash (recoverable)");
-              showToast("Moved to trash");
-            }}
-            onRestore={() => {
-              setDocument((prev) => ({
-                ...prev,
-                status: prev.links.loadId || prev.links.driverId ? "linked" : "pending_review",
-              }));
-              appendAudit("restored", "Restored from trash");
-              showToast("Document restored");
-            }}
+            onDelete={() => showToast("Not available yet")}
+            onRestore={() => showToast("Not available yet")}
             onVersionHistory={() => setTab("versions")}
           />
+          <p className="mt-3 text-[12px] leading-5 text-slate-500">
+            Document metadata is read-only here. Rename, move, merge, delete,
+            restore, and version upload are not available until authenticated
+            persisted server actions exist.
+            {!document.previewUrl
+              ? " Private download is not available yet."
+              : ""}
+          </p>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
@@ -380,7 +295,7 @@ export default function DocumentDetailShell({
         {tab === "ocr" ? (
           <div className="space-y-3">
             <p className="text-[13px] text-slate-500">
-              OCR text and extracted fields (mock Alph pipeline — swap for real OCR later).
+              OCR text and extracted fields persisted by the authenticated Alph AI workflow.
             </p>
             {document.ocrText ? (
               <p className="rounded-[14px] bg-[#F8FAFC] px-4 py-3 text-[14px] leading-relaxed text-slate-700 ring-1 ring-[#EAEAEA]">

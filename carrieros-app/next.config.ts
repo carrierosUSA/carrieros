@@ -17,6 +17,14 @@ const securityHeaderList = [
 ];
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // The repository validator remains authoritative at 15 MB. This small
+    // transport margin accounts for multipart metadata without widening the
+    // accepted document size.
+    serverActions: {
+      bodySizeLimit: "16mb",
+    },
+  },
   // Pin Turbopack to this app — parent monorepo lockfile otherwise wins and
   // can corrupt/miss `.next/dev` manifests when builds share the tree.
   turbopack: {

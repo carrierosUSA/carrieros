@@ -10,7 +10,7 @@ type DocumentUploadZoneProps = {
 };
 
 const ACCEPT =
-  ".pdf,.png,.jpg,.jpeg,.webp,.heic,application/pdf,image/png,image/jpeg,image/webp";
+  ".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg";
 
 export default function DocumentUploadZone({
   disabled,
@@ -98,7 +98,7 @@ export default function DocumentUploadZone({
               title={
                 disabled
                   ? disabledReason
-                  : "Mobile upload QR is mocked — choose files on this device"
+                  : "Choose files from this device"
               }
               onClick={() => inputRef.current?.click()}
               className="inline-flex h-10 items-center rounded-full bg-[#F8FAFC] px-4 text-[13px] font-semibold text-slate-700 ring-1 ring-[#EAEAEA] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
@@ -122,7 +122,7 @@ export default function DocumentUploadZone({
         <input
           ref={cameraRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png"
           capture="environment"
           className="hidden"
           onChange={(event) => {

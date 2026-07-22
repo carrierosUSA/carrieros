@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import {
+  confirmDocumentCenterReviewAction,
+  retryDocumentCenterExtractionAction,
+  uploadDocumentCenterAction,
+} from "@/app/actions/document-center";
 import DocumentAlphOcrReview from "@/components/documents/center/DocumentAlphOcrReview";
 import DocumentCard from "@/components/documents/center/DocumentCard";
 import DocumentDashboardStats from "@/components/documents/center/DocumentDashboardStats";
@@ -11,18 +16,17 @@ import DocumentPreviewModal from "@/components/documents/center/DocumentPreviewM
 import DocumentSearchBar from "@/components/documents/center/DocumentSearchBar";
 import DocumentUploadZone from "@/components/documents/center/DocumentUploadZone";
 import FadeIn from "@/components/ui/FadeIn";
+import type {
+  DocumentReviewCorrection,
+  DocumentPickupNumberReview,
+  PersistedDocumentReview,
+} from "@/lib/alph/document-intake";
 import type { CarrierOSRole } from "@/lib/auth/session";
 import {
   buildDocumentDashboardStats,
   countDocumentsByCategory,
   filterDocuments,
 } from "@/lib/documents/document-board";
-import {
-  applyOcrLinksToDocument,
-  extractDocumentWithAlph,
-  type DocumentOcrResult,
-  type DocumentOcrStatus,
-} from "@/lib/documents/document-ocr";
 import { checkDocumentPermission } from "@/lib/documents/document-permissions";
 import { CARRIEROS_COLORS } from "@/lib/design-system/colors";
 import type {
@@ -30,12 +34,13 @@ import type {
   DocumentCategory,
 } from "@/lib/types/documents";
 import { DOCUMENT_CATEGORIES } from "@/lib/types/documents";
-import { DEMO_TENANT_ID } from "@/lib/data/tenant";
 
 type DocumentCenterClientProps = {
-  initialDocuments: CarrierDocument[];
+  initialRecords: PersistedDocumentReview[];
   role: CarrierOSRole;
 };
+
+type DocumentOcrStatus = "idle" | "processing" | "ready" | "error";
 
 function parseCategoryParam(
   value: string | null,
@@ -61,13 +66,13 @@ function parseStatusParam(
 }
 
 export default function DocumentCenterClient({
-  initialDocuments,
+  initialRecords,
   role,
 }: DocumentCenterClientProps) {
   const searchParams = useSearchParams();
   const uploadRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
-  const [documents, setDocuments] = useState(initialDocuments);
+  const [records, setRecords] = useState(initialRecords);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<DocumentCategory | "all">(() =>
     parseCategoryParam(searchParams?.get("category") ?? null),
@@ -77,15 +82,19 @@ export default function DocumentCenterClient({
   >(() => parseStatusParam(searchParams?.get("status") ?? null));
   const [previewDoc, setPreviewDoc] = useState<CarrierDocument | null>(null);
   const [ocrStatus, setOcrStatus] = useState<DocumentOcrStatus>("idle");
-  const [ocrResult, setOcrResult] = useState<DocumentOcrResult | null>(null);
+  const [reviewRecord, setReviewRecord] =
+    useState<PersistedDocumentReview | null>(null);
   const [ocrError, setOcrError] = useState<string | undefined>();
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const [, startTransition] = useTransition();
+  const [confirming, startConfirmTransition] = useTransition();
+  const [retrying, startRetryTransition] = useTransition();
+
+  const documents = useMemo(
+    () => records.map((record) => record.document),
+    [records],
+  );
 
   useEffect(() => {
-    setCategory(parseCategoryParam(searchParams?.get("category") ?? null));
-    setStatusFilter(parseStatusParam(searchParams?.get("status") ?? null));
     const focus = searchParams?.get("focus");
     if (focus === "upload") {
       uploadRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -121,142 +130,126 @@ export default function DocumentCenterClient({
     window.setTimeout(() => setToast(null), 2400);
   }
 
+  function upsertRecord(record: PersistedDocumentReview) {
+    setRecords((current) => [
+      record,
+      ...current.filter((item) => item.document.id !== record.document.id),
+    ]);
+  }
+
   async function handleFilesSelected(files: File[]) {
     if (!uploadPermission.allowed) {
       showToast(uploadPermission.reason ?? "Upload not allowed");
       return;
     }
 
-    const file = files[0];
-    if (!file) return;
-
-    setPendingFile(file);
+    if (!files.length) return;
     setOcrStatus("processing");
-    setOcrResult(null);
+    setReviewRecord(null);
     setOcrError(undefined);
 
-    try {
-      const result = await extractDocumentWithAlph(file);
-      setOcrResult(result);
+    let firstReview: PersistedDocumentReview | null = null;
+    let lastError: string | undefined;
+    for (const file of files) {
+      const formData = new FormData();
+      formData.set("file", file);
+      try {
+        const result = await uploadDocumentCenterAction(formData);
+        if (result.record) upsertRecord(result.record);
+        if (result.ok) {
+          if (
+            !firstReview &&
+            result.record.ocrResultId &&
+            result.record.proposedActionId &&
+            result.record.approvalStatus !== "approved"
+          ) {
+            firstReview = result.record;
+          }
+          showToast(result.message);
+        } else {
+          lastError = result.error;
+        }
+      } catch {
+        lastError =
+          "The authenticated upload request failed safely. No business records changed.";
+      }
+    }
+
+    if (firstReview) {
+      setReviewRecord(firstReview);
       setOcrStatus("ready");
       if (files.length > 1) {
-        showToast(`Queued ${files.length} files — reviewing first file with Alph`);
+        showToast(
+          `${files.length} files processed. Review the first pending document.`,
+        );
       }
-    } catch (error) {
+    } else if (lastError) {
       setOcrStatus("error");
-      setOcrError(error instanceof Error ? error.message : "OCR failed");
+      setOcrError(lastError);
+    } else {
+      setOcrStatus("idle");
     }
   }
 
-  function handleApplyOcr() {
-    if (!ocrResult || !pendingFile) return;
+  function handleApplyOcr(
+    corrections: DocumentReviewCorrection[],
+    pickupNumbers: DocumentPickupNumberReview[],
+  ) {
+    if (
+      !reviewRecord?.ocrResultId ||
+      !reviewRecord.proposedActionId
+    ) {
+      setOcrStatus("error");
+      setOcrError("The persisted review identifiers are missing.");
+      return;
+    }
 
-    const now = new Date().toISOString();
-    const id = `cdoc-upload-${Date.now()}`;
-
-    const draft: CarrierDocument = {
-      tenantId: DEMO_TENANT_ID,
-      id,
-      category: ocrResult.category,
-      filename: pendingFile.name,
-      mimeType: pendingFile.type || "application/pdf",
-      sizeBytes: pendingFile.size,
-      uploadedAt: now,
-      uploadedBy: "Alpha Owner",
-      status: "pending_review",
-      extractedFields: [],
-      tags: [],
-      links: {},
-      versions: [
-        {
-          id: `${id}-v1`,
-          version: 1,
-          filename: pendingFile.name,
-          sizeBytes: pendingFile.size,
-          uploadedAt: now,
-          uploadedBy: "Alpha Owner",
-        },
-      ],
-      auditLog: [
-        {
-          id: `${id}-a1`,
-          action: "uploaded",
-          actorName: "Alpha Owner",
-          actorRole: role,
-          occurredAt: now,
-        },
-      ],
-      timeline: [
-        {
-          id: `${id}-t1`,
-          documentId: id,
-          type: "uploaded",
-          label: "Document uploaded",
-          occurredAt: now,
-          actorName: "Alpha Owner",
-        },
-      ],
-      storageProvider: "local",
-      encrypted: true,
-    };
-
-    const linked = applyOcrLinksToDocument(draft, ocrResult);
-    const withAudit: CarrierDocument = {
-      ...linked,
-      auditLog: [
-        {
-          id: `${id}-a2`,
-          action: "ocr_applied",
-          actorName: "Alph AI",
-          actorRole: "system",
-          occurredAt: now,
-        },
-        {
-          id: `${id}-a3`,
-          action: "linked",
-          actorName: "Alpha Owner",
-          actorRole: role,
-          occurredAt: now,
-          detail: "Links confirmed after Alph review",
-        },
-        ...linked.auditLog,
-      ],
-      timeline: [
-        {
-          id: `${id}-t2`,
-          documentId: id,
-          type: "ocr_reviewed",
-          label: "Alph OCR confirmed",
-          occurredAt: now,
-          actorName: "Alpha Owner",
-        },
-        {
-          id: `${id}-t3`,
-          documentId: id,
-          type: "linked",
-          label: "Entity links applied",
-          occurredAt: now,
-          actorName: "Alpha Owner",
-        },
-        ...linked.timeline,
-      ],
-    };
-
-    startTransition(() => {
-      setDocuments((prev) => [withAudit, ...prev]);
+    startConfirmTransition(async () => {
+      const result = await confirmDocumentCenterReviewAction({
+        documentId: reviewRecord.document.id,
+        ocrResultId: reviewRecord.ocrResultId!,
+        proposedActionId: reviewRecord.proposedActionId!,
+        corrections,
+        pickupNumbers,
+      });
+      if (!result.ok) {
+        setOcrError(result.error);
+        showToast(result.error);
+        return;
+      }
+      upsertRecord(result.record);
+      setReviewRecord(null);
+      setOcrStatus("idle");
+      setOcrError(undefined);
+      showToast("Authenticated review approved. Document metadata is ready.");
     });
+  }
 
-    setOcrStatus("idle");
-    setOcrResult(null);
-    setPendingFile(null);
-    showToast("Document linked and added to Document Center");
+  function handleRetryExtraction() {
+    if (!reviewRecord) return;
+    setOcrError(undefined);
+    startRetryTransition(async () => {
+      const result = await retryDocumentCenterExtractionAction({
+        documentId: reviewRecord.document.id,
+      });
+      if (!result.ok) {
+        setOcrError(result.error);
+        showToast(result.error);
+        return;
+      }
+      upsertRecord(result.record);
+      setReviewRecord(result.record);
+      setOcrStatus("ready");
+      setOcrError(undefined);
+      showToast(result.message);
+    });
   }
 
   function dismissOcr() {
     setOcrStatus("idle");
-    setOcrResult(null);
-    setPendingFile(null);
+    setReviewRecord(null);
     setOcrError(undefined);
+    showToast("Review closed. The document remains stored in Pending review.");
   }
 
   const statusChips: Array<{
@@ -344,9 +337,12 @@ export default function DocumentCenterClient({
 
       <DocumentAlphOcrReview
         status={ocrStatus}
-        result={ocrResult}
+        record={reviewRecord}
         errorMessage={ocrError}
+        confirming={confirming}
+        retrying={retrying}
         onApply={handleApplyOcr}
+        onRetry={handleRetryExtraction}
         onDismiss={dismissOcr}
       />
 
@@ -415,6 +411,28 @@ export default function DocumentCenterClient({
               key={document.id}
               document={document}
               onPreview={setPreviewDoc}
+              onReview={
+                document.status === "pending_review"
+                  ? () => {
+                      const record = records.find(
+                        (item) => item.document.id === document.id,
+                      );
+                      if (record) {
+                        setReviewRecord(record);
+                        setOcrStatus("ready");
+                        setOcrError(undefined);
+                        uploadRef.current?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                      } else {
+                        showToast(
+                          "This stored document does not yet have a reviewable extraction.",
+                        );
+                      }
+                    }
+                  : undefined
+              }
             />
           ))}
         </div>

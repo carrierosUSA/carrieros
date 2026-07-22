@@ -6,6 +6,7 @@ import { requireRole } from "@/lib/auth/session";
 import {
   type LoadStatus,
 } from "@/lib/types";
+import type { PickupNumber } from "@/lib/types/pickup-number";
 import {
   parseCreateLoadInput,
   parseUpdateLoadInput,
@@ -72,6 +73,7 @@ export type ReassignDriverResult = {
   driverPhone: string;
   truckNumber?: string;
   trailerNumber?: string;
+  pickupNumbers?: PickupNumber[];
 };
 
 export type ReassignTruckResult = {
@@ -118,6 +120,7 @@ export async function reassignDriverAction(
     driverPhone: driver.phone,
     truckNumber: truck?.unitNumber,
     trailerNumber: trailer?.unitNumber,
+    pickupNumbers: load?.pickupNumbers,
   };
 }
 

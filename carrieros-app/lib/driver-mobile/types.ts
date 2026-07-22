@@ -1,4 +1,5 @@
 import type { LoadStatus } from "@/lib/types";
+import type { PickupNumber } from "@/lib/types/pickup-number";
 
 export type DriverMobileTab =
   | "home"
@@ -104,6 +105,7 @@ export type DriverMobileLoad = {
   detentionActive: boolean;
   missingDocs: string[];
   offered?: boolean;
+  pickupNumbers?: PickupNumber[];
 };
 
 export type DriverTask = {

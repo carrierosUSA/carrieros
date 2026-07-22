@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useDriverMobile } from "@/components/driver-mobile/DriverMobileProvider";
 import LiveTrackingCard from "@/components/driver-mobile/LiveTrackingCard";
+import PickupNumbersPanel from "@/components/driver-mobile/PickupNumbersPanel";
 import {
   DmCard,
   DmPrimaryButton,
@@ -65,6 +66,11 @@ export default function HomeDashboard() {
               </div>
               <StatusChip label={formatStatus(load.status)} tone={statusTone(load.status)} />
             </div>
+
+            <p className="text-[13px] font-semibold text-[var(--dm-muted)]">
+              Pickup · {load.originCity}, {load.originState} · {load.pickupDate}
+            </p>
+            <PickupNumbersPanel pickupNumbers={load.pickupNumbers} compact />
 
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-[var(--dm-elevated)] p-3">

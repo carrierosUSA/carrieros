@@ -1,0 +1,49 @@
+SANITIZED TEST FIXTURE — NOT A REAL LOAD
+
+Broker: EXAMPLE LOGISTICS LLC
+CARRIER RATE CONFIRMATION
+Confirmation Number: RC-SAMPLE-001
+
+ORIGIN / PICKUP
+Sample Origin Foods
+100 Example Way
+Austin, TX
+Appointment Date: 07/22/2026
+Appointment Time: 08:00
+Pickup #: PU-SAMPLE-1001
+PO Number: PO-SAMPLE-2002
+
+SECOND PICKUP
+Sample Crossdock
+300 Fixture Road
+Round Rock, TX
+Reference Number: REF-SAMPLE-4004
+Order Number: ORD-SAMPLE-5005
+
+GENERAL PICKUP IDENTIFIERS
+Release Number: REL-SAMPLE-3003
+Confirmation Number for pickup: CONF-SAMPLE-6006
+
+DESTINATION / DELIVERY
+Sample Destination Market
+200 Test Avenue
+Tulsa, OK
+Appointment Date: 07/23/2026
+Appointment Time: 14:30
+
+Commodity: Packaged dry goods
+Weight: 38,000 lb
+Equipment: 53 ft dry van
+
+SANITIZED TEST FIXTURE — PAGE TWO
+
+RATE SUMMARY
+Linehaul: USD 2,450.00
+Total Carrier Rate: USD 2,450.00
+
+IMPORTANT INSTRUCTIONS
+Appointment required.
+Retain signed paperwork.
+Contact the broker before any accessorial charge.
+
+All names, locations, identifiers, and amounts above are fictional test data.

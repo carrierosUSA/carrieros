@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import SendPrepPanel from "@/components/documents/SendPrepPanel";
+import { requireDocumentAuth } from "@/lib/auth/supabase-server";
 import { getBrokerById } from "@/lib/data/brokers";
 import { getCustomerById } from "@/lib/data/customers";
-import { getActiveTenantId } from "@/lib/data/tenant";
 import { getDocumentService } from "@/lib/services/documents";
 import { formatLoadLane } from "@/lib/services/loads/load-helpers";
 import { getLoadService } from "@/lib/services/loads";
@@ -14,14 +14,14 @@ type SendPacketPageProps = {
 
 export default async function SendPacketPage({ params }: SendPacketPageProps) {
   const { loadId } = await params;
-  const tenantId = getActiveTenantId();
-  const load = await getLoadService().getLoad(tenantId, loadId);
+  const auth = await requireDocumentAuth();
+  const load = await getLoadService().getLoad(auth.companyId, loadId);
 
   if (!load) {
     notFound();
   }
 
-  const summary = await getDocumentService().getPacketSummary(tenantId, load.id);
+  const summary = await getDocumentService().getPacketSummary(auth.companyId, load.id);
   const broker = load.brokerId ? getBrokerById(load.brokerId) : undefined;
   const customer = getCustomerById(load.customerId);
   const billTo = broker?.name ?? customer?.name ?? "Direct customer";

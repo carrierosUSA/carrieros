@@ -16,8 +16,6 @@ export default function DocumentPreviewModal({
     return null;
   }
 
-  const isImage = document.mimeType.startsWith("image/");
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <button
@@ -50,23 +48,16 @@ export default function DocumentPreviewModal({
             <p className="text-[15px] font-medium text-slate-500">
               No file available — upload to preview.
             </p>
-          ) : isImage ? (
-            <div className="flex h-full min-h-[320px] w-full items-center justify-center rounded-[16px] bg-gradient-to-br from-[#E2E8F0] to-[#F8FAFC] ring-1 ring-[#EAEAEA]">
-              <div className="text-center">
-                <p className="text-[14px] font-semibold text-slate-700">Image preview</p>
-                <p className="mt-1 text-[13px] text-slate-500">{document.filename}</p>
-              </div>
-            </div>
+          ) : document.previewUrl ? (
+            <iframe
+              title={`Preview ${document.filename}`}
+              src={document.previewUrl}
+              className="h-[70vh] min-h-[420px] w-full rounded-[16px] bg-white ring-1 ring-[#EAEAEA]"
+            />
           ) : (
-            <div className="flex h-full min-h-[320px] w-full flex-col items-center justify-center rounded-[16px] bg-white ring-1 ring-[#EAEAEA]">
-              <div className="mb-3 flex h-16 w-12 items-center justify-center rounded-md bg-[#FEF2F2] text-[13px] font-bold text-[#DC2626] ring-1 ring-[#FECACA]">
-                PDF
-              </div>
-              <p className="text-[14px] font-semibold text-slate-800">PDF preview frame</p>
-              <p className="mt-1 max-w-sm text-center text-[13px] text-slate-500">
-                Mock storage — real PDF rendering plugs in when cloud storage is connected.
-              </p>
-            </div>
+            <p className="text-[15px] font-medium text-slate-500">
+              The private preview link is unavailable. Refresh and try again.
+            </p>
           )}
         </div>
       </div>

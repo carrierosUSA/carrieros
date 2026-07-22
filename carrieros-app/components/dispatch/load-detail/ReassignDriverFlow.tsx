@@ -9,6 +9,8 @@ import ReassignModalShell, {
   ReassignPicker,
   ReassignSuccess,
 } from "@/components/dispatch/load-detail/ReassignModalShell";
+import PickupNumbersDisplay from "@/components/loads/PickupNumbersDisplay";
+import { orderedPickupNumbers } from "@/lib/loads/pickup-numbers";
 
 export type ReassignDriverOption = {
   id: string;
@@ -43,6 +45,12 @@ function buildEmailBody(
   pickupLabel: string,
   deliveryLabel: string,
 ): string {
+  const pickupNumberLines = orderedPickupNumbers(result.pickupNumbers).map(
+    (entry) =>
+      `PICKUP NUMBER: ${entry.value}${
+        entry.pickupStopLabel ? ` (${entry.pickupStopLabel})` : ""
+      }`,
+  );
   return [
     "Hello,",
     "",
@@ -54,6 +62,7 @@ function buildEmailBody(
     `Truck: ${result.truckNumber ?? "—"}`,
     `Trailer: ${result.trailerNumber ?? "—"}`,
     `Pickup: ${pickupLabel}`,
+    ...pickupNumberLines,
     `Delivery: ${deliveryLabel}`,
     "",
     "Thank you.",
@@ -161,16 +170,33 @@ export default function ReassignDriverFlow({
       ) : null}
 
       {step === "success" && result ? (
-        <ReassignSuccess
-          message={
-            isAssign
-              ? "✅ Driver assigned successfully."
-              : "✅ Driver reassigned successfully."
-          }
-          prompt="Would you like to notify the broker?"
-          onEmail={() => setStep("email")}
-          onSkip={closeAndRefresh}
-        />
+        <>
+          <div className="border-b border-[#F1F5F9] px-4 py-3">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+              Driver dispatch summary
+            </p>
+            <p className="mt-1 text-[12px] font-semibold text-slate-900">
+              Load #{formatLoadNumber(loadReference)}
+            </p>
+            <p className="mt-1 text-[11px] text-slate-600">
+              Pickup: {pickupLabel}
+            </p>
+            <PickupNumbersDisplay
+              pickupNumbers={result.pickupNumbers}
+              className="mt-2"
+            />
+          </div>
+          <ReassignSuccess
+            message={
+              isAssign
+                ? "✅ Driver assigned successfully."
+                : "✅ Driver reassigned successfully."
+            }
+            prompt="Would you like to notify the broker?"
+            onEmail={() => setStep("email")}
+            onSkip={closeAndRefresh}
+          />
+        </>
       ) : null}
 
       {step === "email" && result ? (

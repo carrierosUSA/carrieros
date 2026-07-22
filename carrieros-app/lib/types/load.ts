@@ -1,4 +1,5 @@
 import type { ComplianceStatus, TenantEntity } from "@/lib/types/base";
+import type { PickupNumber } from "@/lib/types/pickup-number";
 
 export type LoadStatus =
   | "pending"
@@ -55,6 +56,7 @@ export interface Load extends TenantEntity {
   loadNumber?: string;
   brokerLoadId?: string;
   poNumber?: string;
+  pickupNumbers?: PickupNumber[];
   commodity?: string;
   weight?: number;
   pieces?: number;

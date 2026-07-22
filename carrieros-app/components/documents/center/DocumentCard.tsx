@@ -14,6 +14,7 @@ import { CARRIEROS_COLORS } from "@/lib/design-system/colors";
 type DocumentCardProps = {
   document: CarrierDocument;
   onPreview?: (document: CarrierDocument) => void;
+  onReview?: () => void;
 };
 
 function categoryIcon(category: CarrierDocument["category"]): string {
@@ -27,7 +28,11 @@ function categoryIcon(category: CarrierDocument["category"]): string {
   return "DC";
 }
 
-export default function DocumentCard({ document, onPreview }: DocumentCardProps) {
+export default function DocumentCard({
+  document,
+  onPreview,
+  onReview,
+}: DocumentCardProps) {
   const isImage = document.mimeType.startsWith("image/");
   const callout =
     document.status === "missing"
@@ -107,6 +112,15 @@ export default function DocumentCard({ document, onPreview }: DocumentCardProps)
       ) : null}
 
       <div className="mt-4 flex gap-2">
+        {onReview ? (
+          <button
+            type="button"
+            onClick={onReview}
+            className="inline-flex h-8 flex-1 items-center justify-center rounded-lg bg-[#0F172A] text-[12px] font-semibold text-white transition hover:bg-[#1E293B]"
+          >
+            Review
+          </button>
+        ) : null}
         <Link
           href={`/documents/${document.id}`}
           className="inline-flex h-8 flex-1 items-center justify-center rounded-lg bg-[#2563EB] text-[12px] font-semibold text-white transition hover:bg-[#1D4ED8]"

@@ -6,6 +6,8 @@ import type {
   DriverMobileState,
   DriverMessageThread,
 } from "@/lib/driver-mobile/types";
+import { orderedPickupNumbers } from "@/lib/loads/pickup-numbers";
+import type { PickupNumber } from "@/lib/types/pickup-number";
 
 export const DEMO_DRIVER_ID = "onkar-singh";
 export const DISPATCH_PHONE = "210-555-0100";
@@ -37,6 +39,7 @@ function toMobileLoad(
     notes?: string;
     novaSummary?: string;
     complianceStatus?: string;
+    pickupNumbers?: PickupNumber[];
   },
   opts?: { offered?: boolean; missingDocs?: string[] },
 ): DriverMobileLoad {
@@ -77,6 +80,7 @@ function toMobileLoad(
       opts?.missingDocs ??
       (load.complianceStatus === "attention" ? ["POD"] : []),
     offered: opts?.offered,
+    pickupNumbers: orderedPickupNumbers(load.pickupNumbers),
   };
 }
 

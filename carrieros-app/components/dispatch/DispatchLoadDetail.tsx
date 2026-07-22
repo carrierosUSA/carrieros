@@ -15,6 +15,7 @@ import LoadDetailKeyboardShortcuts from "@/components/dispatch/load-detail/LoadD
 import LoadDetailQuickActionsBridge from "@/components/dispatch/load-detail/LoadDetailQuickActionsBridge";
 import LoadDetailQuickTasksProvider from "@/components/dispatch/load-detail/LoadDetailQuickTasksProvider";
 import KeyboardShortcutHints from "@/components/keyboard/KeyboardShortcutHints";
+import PickupNumbersDisplay from "@/components/loads/PickupNumbersDisplay";
 import LoadDetailCommunicationShell from "@/components/dispatch/load-detail/communication/LoadDetailCommunicationShell";
 import LoadDetailDriverCard from "@/components/dispatch/load-detail/LoadDetailDriverCard";
 import LoadDetailLiveTracking from "@/components/dispatch/load-detail/LoadDetailLiveTracking";
@@ -275,6 +276,10 @@ export default function DispatchLoadDetail({
                 {formatHeaderStop(load.deliveryDate, load.destination.scheduledAt)}
               </span>
             </div>
+            <PickupNumbersDisplay
+              pickupNumbers={load.pickupNumbers}
+              className="mt-2 max-w-3xl"
+            />
           </div>
           <LoadDetailHeaderActions loadId={load.id} />
         </div>

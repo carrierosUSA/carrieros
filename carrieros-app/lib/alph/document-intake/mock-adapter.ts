@@ -8,6 +8,6 @@ export class MockDocumentExtractionAdapter implements DocumentExtractionAdapter 
     const text = new TextDecoder().decode(input.bytes).slice(0, 20_000);
     const lower = text.toLowerCase();
     const category = lower.includes("rate confirmation") ? "rate_confirmation" : lower.includes("proof of delivery") ? "pod" : lower.includes("bill of lading") ? "bol" : lower.includes("lumper") ? "lumper_receipt" : lower.includes("fuel") ? "fuel_receipt" : lower.includes("invoice") ? "invoice" : "miscellaneous";
-    return { category, rawText: text, fields: [], overallConfidence: category === "miscellaneous" ? 0.2 : 0.8, provider: "mock", modelId: "content-fixture", promptVersion: "mock-v1" };
+    return { category, rawText: text, fields: [], pickupNumbers: [], overallConfidence: category === "miscellaneous" ? 0.2 : 0.8, provider: "mock", modelId: "content-fixture", promptVersion: "mock-v1" };
   }
 }

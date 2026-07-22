@@ -16,6 +16,7 @@ import {
 import { useDriverApp } from "@/components/driver-app/DriverAppProvider";
 import StatusStrip from "@/components/driver-app/StatusStrip";
 import LiveTrackingCard from "@/components/driver-mobile/LiveTrackingCard";
+import PickupNumbersPanel from "@/components/driver-mobile/PickupNumbersPanel";
 import {
   DmCard,
   DmPrimaryButton,
@@ -54,6 +55,11 @@ export default function HomeView() {
               </div>
               <StatusChip label={formatStatus(load.status)} tone={statusTone(load.status)} />
             </div>
+
+            <p className="text-[13px] font-semibold text-[var(--dm-muted)]">
+              Pickup · {load.originCity}, {load.originState} · {load.pickupDate}
+            </p>
+            <PickupNumbersPanel pickupNumbers={load.pickupNumbers} compact />
 
             <div className="grid grid-cols-2 gap-3">
               <Metric

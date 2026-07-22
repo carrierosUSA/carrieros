@@ -11,21 +11,24 @@ import {
   uploadToDocumentInbox,
   type DocumentInboxItem,
 } from "@/lib/alph/document-inbox";
+import { SupabaseDocumentIntakeRepository } from "@/lib/alph/document-intake";
 import { resolveAlphOcrSetup, resolveAlphProviderSetup } from "@/lib/alph/providers/env";
-import { getCurrentSession } from "@/lib/auth/session";
-import { getActiveTenantId } from "@/lib/data/tenant";
+import {
+  canApproveDocument,
+} from "@/lib/auth/supabase-claims";
+import { requireDocumentAuth } from "@/lib/auth/supabase-server";
 import { can } from "@/lib/permissions/check";
 import type { DocumentCategory } from "@/lib/types/documents";
 import type { DocumentInboxWorkflow } from "@/lib/alph/document-inbox/types";
 
-function sessionContext() {
-  const session = getCurrentSession();
+async function sessionContext() {
+  const auth = await requireDocumentAuth();
   return {
-    session,
-    tenantId: getActiveTenantId(),
-    companyId: session.companyId,
-    userId: session.userId,
-    role: session.role,
+    auth,
+    tenantId: auth.companyId,
+    companyId: auth.companyId,
+    userId: auth.userId,
+    role: auth.businessRole,
   };
 }
 
@@ -33,6 +36,7 @@ export async function getDocumentInboxSetupAction(): Promise<{
   ocr: ReturnType<typeof resolveAlphOcrSetup>;
   model: ReturnType<typeof resolveAlphProviderSetup>;
 }> {
+  await sessionContext();
   return {
     ocr: resolveAlphOcrSetup(),
     model: resolveAlphProviderSetup(),
@@ -40,7 +44,7 @@ export async function getDocumentInboxSetupAction(): Promise<{
 }
 
 export async function listDocumentInboxAction(): Promise<DocumentInboxItem[]> {
-  const { tenantId, companyId } = sessionContext();
+  const { tenantId, companyId } = await sessionContext();
   return listInbox({ tenantId, companyId, limit: 80 });
 }
 
@@ -52,10 +56,10 @@ export async function uploadDocumentInboxAction(input: {
   categoryHint?: DocumentCategory;
   workflowHint?: DocumentInboxWorkflow;
 }): Promise<DocumentInboxItem | { error: string }> {
-  const { session, tenantId, companyId, userId } = sessionContext();
+  const { auth, tenantId, companyId, userId } = await sessionContext();
   if (
     !can(
-      { userId: session.userId, role: session.role },
+      { userId: auth.userId, role: auth.businessRole },
       "button.documents.upload",
     )
   ) {
@@ -76,7 +80,7 @@ export async function uploadDocumentInboxAction(input: {
 }
 
 export async function requestDocumentInboxApprovalAction(itemId: string) {
-  const { tenantId, companyId, userId } = sessionContext();
+  const { tenantId, companyId, userId } = await sessionContext();
   return requestInboxApproval({ itemId, tenantId, companyId, userId });
 }
 
@@ -84,7 +88,7 @@ export async function approveDocumentInboxAction(input: {
   itemId: string;
   note?: string;
 }): Promise<{ ok: boolean; item?: DocumentInboxItem; error?: string; loadId?: string; invoiceId?: string }> {
-  const { tenantId, companyId, userId, role } = sessionContext();
+  const { tenantId, companyId, userId, role } = await sessionContext();
   const items = listInbox({ tenantId, companyId });
   const item = items.find((i) => i.id === input.itemId);
   if (!item) return { ok: false, error: "Inbox item not found." };
@@ -130,7 +134,7 @@ export async function rejectDocumentInboxAction(input: {
   itemId: string;
   note?: string;
 }): Promise<{ ok: boolean; item?: DocumentInboxItem | null; error?: string }> {
-  const { tenantId, companyId, userId, role } = sessionContext();
+  const { tenantId, companyId, userId, role } = await sessionContext();
   const items = listInbox({ tenantId, companyId });
   const item = items.find((i) => i.id === input.itemId);
   if (!item) return { ok: false, error: "Inbox item not found." };
@@ -168,7 +172,7 @@ export async function requestDocumentInboxMissingInfoAction(input: {
   itemId: string;
   message: string;
 }) {
-  const { tenantId, companyId, userId } = sessionContext();
+  const { tenantId, companyId, userId } = await sessionContext();
   return requestMissingInfo({
     itemId: input.itemId,
     tenantId,
@@ -176,4 +180,26 @@ export async function requestDocumentInboxMissingInfoAction(input: {
     userId,
     message: input.message,
   });
+}
+
+export async function recordPersistedDocumentApprovalAction(input: {
+  proposedActionId: string;
+  decision: "approved" | "rejected";
+  note?: string;
+}): Promise<{ ok: true; approvalId: string } | { ok: false; error: string }> {
+  const { auth } = await sessionContext();
+  if (!canApproveDocument(auth)) {
+    return { ok: false, error: "Your role cannot approve document actions." };
+  }
+
+  const repository = new SupabaseDocumentIntakeRepository();
+  const approvalId = await repository.recordApproval({
+    proposedActionId: input.proposedActionId,
+    companyId: auth.companyId,
+    userId: auth.userId,
+    accessToken: auth.accessToken,
+    decision: input.decision,
+    note: input.note,
+  });
+  return { ok: true, approvalId };
 }

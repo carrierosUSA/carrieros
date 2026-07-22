@@ -1,17 +1,17 @@
 import Link from "next/link";
 import DocumentHealthDashboardClient from "@/components/documents/DocumentHealthDashboardClient";
 import OperationalPageShell from "@/components/premium/OperationalPageShell";
+import { requireDocumentAuth } from "@/lib/auth/supabase-server";
 import { getBrokerById } from "@/lib/data/brokers";
 import { getDriverById } from "@/lib/data/drivers";
-import { getActiveTenantId } from "@/lib/data/tenant";
 import { buildDocumentHealthAnalytics } from "@/lib/documents/document-health-analytics";
 import { computeDocumentHealthForLoads } from "@/lib/documents/document-health";
 import { getPendingRequests } from "@/lib/documents/document-health-store";
 import { getLoadService } from "@/lib/services/loads";
 
 export default async function DocumentHealthPage() {
-  const tenantId = getActiveTenantId();
-  const loads = await getLoadService().listLoads(tenantId);
+  const auth = await requireDocumentAuth();
+  const loads = await getLoadService().listLoads(auth.companyId);
   const snapshots = computeDocumentHealthForLoads(loads);
 
   const driverNames: Record<string, string> = {};

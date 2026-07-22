@@ -2,15 +2,13 @@ import Link from "next/link";
 import DocumentInboxClient from "@/components/documents/inbox/DocumentInboxClient";
 import OperationalPageShell from "@/components/premium/OperationalPageShell";
 import { listDocumentInboxItems } from "@/lib/alph/document-inbox";
-import { getCurrentSession } from "@/lib/auth/session";
-import { getActiveTenantId } from "@/lib/data/tenant";
+import { requireDocumentAuth } from "@/lib/auth/supabase-server";
 
-export default function DocumentInboxPage() {
-  const session = getCurrentSession();
-  const tenantId = getActiveTenantId();
+export default async function DocumentInboxPage() {
+  const auth = await requireDocumentAuth();
   const items = listDocumentInboxItems({
-    tenantId,
-    companyId: session.companyId,
+    tenantId: auth.companyId,
+    companyId: auth.companyId,
     limit: 80,
   });
 

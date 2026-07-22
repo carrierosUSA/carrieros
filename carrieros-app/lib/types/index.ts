@@ -200,6 +200,11 @@ export type {
   LoadTimelineEvent,
 } from "@/lib/types/load";
 export type {
+  PickupNumber,
+  PickupNumberInput,
+  PickupNumberSource,
+} from "@/lib/types/pickup-number";
+export type {
   PublicTrackingView,
   PublicLoadSummary,
   TrackingNovaEvent,

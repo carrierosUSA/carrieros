@@ -1,4 +1,5 @@
 import type { TenantEntity } from "@/lib/types/base";
+import type { PickupNumber } from "@/lib/types/pickup-number";
 
 export const DOCUMENT_CATEGORIES = [
   "rate_confirmation",
@@ -51,7 +52,12 @@ export type CarrierDocumentStatus =
   | "expiring"
   | "deleted";
 
-export type DocumentStorageProvider = "local" | "s3" | "gcs" | "azure";
+export type DocumentStorageProvider =
+  | "local"
+  | "supabase"
+  | "s3"
+  | "gcs"
+  | "azure";
 
 export type DocumentExtractedFieldKey =
   | "loadNumber"
@@ -61,11 +67,15 @@ export type DocumentExtractedFieldKey =
   | "truck"
   | "trailer"
   | "pickup"
+  | "pickupCityState"
   | "pickupAddress"
   | "pickupDate"
+  | "pickupTime"
   | "delivery"
+  | "deliveryCityState"
   | "deliveryAddress"
   | "deliveryDate"
+  | "deliveryTime"
   | "rate"
   | "miles"
   | "equipmentType"
@@ -79,6 +89,7 @@ export type DocumentExtractedFieldKey =
   | "temperature"
   | "detention"
   | "lumper"
+  | "instructions"
   | "date"
   | "time";
 
@@ -162,6 +173,7 @@ export interface CarrierDocument extends TenantEntity {
   status: CarrierDocumentStatus;
   ocrText?: string;
   extractedFields: DocumentExtractedField[];
+  pickupNumbers?: PickupNumber[];
   tags: string[];
   links: DocumentEntityLinks;
   versions: DocumentVersion[];
