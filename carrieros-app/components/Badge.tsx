@@ -1,13 +1,18 @@
-type InputProps = {
-  placeholder: string;
+const badgeStyles = {
+  success: "bg-emerald-100 text-emerald-800",
+} as const;
+
+type BadgeProps = {
+  text: string;
+  type: keyof typeof badgeStyles;
 };
 
-export default function Input({ placeholder }: InputProps) {
+export default function Badge({ text, type }: BadgeProps) {
   return (
-    <input
-      type="text"
-      placeholder={placeholder}
-      className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-900"
-    />
+    <span
+      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${badgeStyles[type]}`}
+    >
+      {text}
+    </span>
   );
 }
