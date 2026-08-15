@@ -8,12 +8,12 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test:document-intake": "npx --yes tsx --test lib/alph/document-intake/__tests__/*.test.ts"
+    "test:document-intake": "node --import tsx --test lib/alph/document-intake/__tests__/*.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.7",
-    "next": "16.2.9",
+    "next": "16.3.1",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -23,8 +23,9 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.9",
+    "eslint-config-next": "16.3.1",
     "tailwindcss": "^4",
+    "tsx": "4.20.6",
     "typescript": "^5"
   }
 }

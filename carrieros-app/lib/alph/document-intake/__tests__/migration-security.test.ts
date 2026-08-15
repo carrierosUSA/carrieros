@@ -11,10 +11,12 @@ const grants = readFileSync(
   "utf8",
 ).replace(/\s+/g, " ");
 
-test("only the two approved migrations are present", () => {
+test("only reviewed document and load-operation migrations are present", () => {
   assert.deepEqual(readdirSync("supabase/migrations").sort(), [
     "20260720090000_document_intake_foundation.sql",
     "20260720210000_document_intake_role_grants.sql",
+    "20260814110000_document_intake_hardening.sql",
+    "20260814120000_load_operations_foundation.sql",
   ]);
 });
 

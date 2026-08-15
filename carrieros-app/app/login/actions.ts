@@ -14,7 +14,9 @@ function safeNextPath(value: FormDataEntryValue | null): string {
     const destination = new URL(value, base);
     const isDocumentPath =
       destination.pathname === "/documents" ||
-      destination.pathname.startsWith("/documents/");
+      destination.pathname.startsWith("/documents/") ||
+      destination.pathname === "/dispatch" ||
+      destination.pathname.startsWith("/dispatch/");
     if (destination.origin !== base.origin || !isDocumentPath) {
       return "/documents";
     }

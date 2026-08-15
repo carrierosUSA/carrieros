@@ -3,9 +3,13 @@ import type { TenantEntity } from "@/lib/types/base";
 export type LoadStatus =
   | "pending"
   | "dispatched"
+  | "en_route_to_pickup"
+  | "arrived_pickup"
   | "picked_up"
   | "in_transit"
+  | "arrived_delivery"
   | "delivered"
+  | "closed"
   | "cancelled";
 
 export interface LoadStop {

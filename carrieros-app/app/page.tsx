@@ -1,87 +1,14 @@
+import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
-import Button from "@/components/Button";
-import Card from "@/components/Card";
-import Badge from "@/components/Badge";
-import AIPartner from "@/components/AIPartner";
 
 export default function Home() {
-  return (
-    <main className="min-h-screen bg-gray-50 text-gray-950">
-      <Sidebar />
-
-      <section className="ml-72 px-10 py-10">
-        <div className="mb-10">
-          <p className="text-sm font-medium text-blue-900">Welcome back</p>
-          <h1 className="mt-2 text-4xl font-bold tracking-tight">
-            Guru Kirpa Transport Inc.
-          </h1>
-          <p className="mt-3 text-gray-600">Everything looks good today.</p>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Today&apos;s Operations</p>
-                  <h2 className="mt-1 text-2xl font-semibold">Command Center</h2>
-                </div>
-                <Badge text="All Clear" type="success" />
-              </div>
-
-              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <Metric title="Active Loads" value="14" />
-                <Metric title="Drivers" value="2" />
-                <Metric title="Trucks" value="8" />
-                <Metric title="Invoices" value="6" />
-              </div>
-            </Card>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Card>
-                <h3 className="font-semibold">Operations</h3>
-                <p className="mt-2 text-sm text-gray-600">Loads, dispatch, tracking.</p>
-              </Card>
-
-              <Card>
-                <h3 className="font-semibold">Fleet</h3>
-                <p className="mt-2 text-sm text-gray-600">Trucks, trailers, maintenance.</p>
-              </Card>
-
-              <Card>
-                <h3 className="font-semibold">Finance</h3>
-                <p className="mt-2 text-sm text-gray-600">Invoices, payments, payroll.</p>
-              </Card>
-
-              <Card>
-                <h3 className="font-semibold">Documents</h3>
-                <p className="mt-2 text-sm text-gray-600">Rate cons, PODs, permits.</p>
-              </Card>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <AIPartner name="Nova" />
-
-            <Card>
-              <h3 className="font-semibold">Quick Actions</h3>
-              <div className="mt-4 flex flex-col gap-3">
-                <Button title="Ask AI Partner" />
-                <Button title="Create Load" />
-              </div>
-            </Card>
-          </div>
-        </div>
-      </section>
-    </main>
-  );
+  return <main className="min-h-screen bg-[#F5F7FB] text-[#0B1220]"><Sidebar/><section className="ml-72 px-8 py-7 xl:px-10"><div className="mx-auto max-w-[1400px]">
+    <header className="flex flex-wrap items-start justify-between gap-5"><div><p className="text-xs font-semibold uppercase tracking-[.18em] text-[#2563EB]">Carrier command center</p><h1 className="mt-2 text-[34px] font-semibold tracking-[-.04em]">Good day</h1><p className="mt-2 text-sm text-[#64748B]">Verified operations only. No demo loads, revenue, locations, or alerts.</p></div><Link href="/documents" className="rounded-xl bg-[#0F172A] px-4 py-2.5 text-sm font-semibold text-white">Import rate confirmation</Link></header>
+    <section className="mt-6 rounded-[24px] border border-[#DDE5F0] bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,.05)]"><div className="flex items-center justify-between"><div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-[#64748B]">Today&apos;s report</p><h2 className="mt-2 text-xl font-semibold">Live operational summary</h2></div><span className="rounded-full bg-[#FFF7ED] px-3 py-1.5 text-xs font-semibold text-[#D97706]">Waiting for verified data</span></div><div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Metric label="Active loads"/><Metric label="Available trucks"/><Metric label="Revenue"/><Metric label="Invoice alerts"/></div></section>
+    <div className="mt-4 grid gap-4 lg:grid-cols-3"><Panel title="Truck status" text="Truck availability will appear after verified fleet records are connected." state="Integration-ready"/><Panel title="Load status" text="Use Dispatch for authenticated operational loads and the full lifecycle." state="Live foundation" href="/dispatch"/><Panel title="Revenue and payments" text="Financial totals stay blank until authorized accounting records exist." state="No estimates"/></div>
+    <div className="mt-4 grid gap-4 lg:grid-cols-[1.4fr_.6fr]"><Panel title="Driver contact" text="Calling and messaging are coming soon after a verified communication provider is connected." state="Coming soon"/><section className="rounded-[22px] bg-[#0F172A] p-5 text-white"><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-[#60A5FA]">Nova</p><h2 className="mt-2 text-lg font-semibold">Human-controlled AI helper</h2><p className="mt-3 text-xs leading-5 text-[#CBD5E1]">Nova can organize facts and suggest next steps. It cannot dispatch, move equipment, approve money, or invent operational facts.</p><span className="mt-4 inline-flex rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-semibold">Suggestions coming soon</span></section></div>
+    <p className="mt-4 text-xs text-[#64748B]">FMCSA news and Business Health Score will activate only from verified sources and approved scoring rules.</p>
+  </div></section></main>;
 }
-
-function Metric({ title, value }: { title: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-      <p className="text-sm text-gray-500">{title}</p>
-      <p className="mt-2 text-3xl font-bold">{value}</p>
-    </div>
-  );
-}
+function Metric({label}:{label:string}){return <div className="rounded-2xl border border-[#E2E8F0] p-4"><p className="text-xs text-[#64748B]">{label}</p><p className="mt-4 text-2xl font-semibold">—</p></div>;}
+function Panel({title,text,state,href}:{title:string;text:string;state:string;href?:string}){const content=<section className="rounded-[22px] border border-[#DDE5F0] bg-white p-5"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold">{title}</h2><span className="rounded-full bg-[#F1F5F9] px-2.5 py-1 text-[10px] font-semibold text-[#64748B]">{state}</span></div><p className="mt-3 text-xs leading-5 text-[#64748B]">{text}</p></section>;return href?<Link href={href}>{content}</Link>:content;}

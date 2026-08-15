@@ -2,7 +2,6 @@ import "server-only";
 
 import {
   classifyDocumentIntakeState,
-  documentConfirmationRequestId,
   isDocumentConfirmationFinal,
   type DocumentIntakeConsistencyState,
 } from "@/lib/alph/document-intake/consistency";
@@ -133,34 +132,6 @@ function normalizeCorrections(
   return normalized.sort((left, right) =>
     left.fieldKey.localeCompare(right.fieldKey),
   );
-}
-
-function correctionSnapshot(payload: unknown): DocumentReviewCorrection[] | null {
-  const payloadRow = row(payload);
-  if (!payloadRow || !Array.isArray(payloadRow.reviewed_fields)) return null;
-  try {
-    return normalizeCorrections(
-      payloadRow.reviewed_fields.flatMap((entry) => {
-        const item = row(entry);
-        if (!item) return [];
-        return [
-          {
-            fieldKey: textValue(item.field_key) as DocumentExtractedFieldKey,
-            value: textValue(item.value),
-          },
-        ];
-      }),
-    );
-  } catch {
-    return null;
-  }
-}
-
-function correctionsMatch(
-  left: DocumentReviewCorrection[] | null,
-  right: DocumentReviewCorrection[],
-): boolean {
-  return Boolean(left) && JSON.stringify(left) === JSON.stringify(right);
 }
 
 function fieldFromRow(value: DbRow): DocumentExtractedField | null {
@@ -816,6 +787,19 @@ export class SupabaseDocumentIntakeRepository
     };
   }
 
+  async listDocuments(input: { companyId: string; accessToken: string }): Promise<PersistedDocumentReview[]> {
+    const userDb = getSupabaseAuthenticatedUserClient(input.accessToken);
+    const result = await userDb
+      .from("documents")
+      .select("id")
+      .eq("company_id", input.companyId)
+      .order("created_at", { ascending: false })
+      .limit(80);
+    fail(result.error, "Document Center list could not be loaded");
+    const reviews = await Promise.all(rows(result.data).map((entry) => this.getDocument({ documentId: textValue(entry.id), companyId: input.companyId, accessToken: input.accessToken })));
+    return reviews.flatMap((entry) => entry ? [entry] : []);
+  }
+
   async getDocument(input: {
     documentId: string;
     companyId: string;
@@ -960,171 +944,13 @@ export class SupabaseDocumentIntakeRepository
   }): Promise<PersistedDocumentReview> {
     const corrections = normalizeCorrections(input.corrections);
     const userDb = getSupabaseAuthenticatedUserClient(input.accessToken);
-    const [documentResult, ocrResult, proposalResult, fieldsResult] =
-      await Promise.all([
-        userDb
-          .from("documents")
-          .select("id,current_version_id,status")
-          .eq("company_id", input.companyId)
-          .eq("id", input.documentId)
-          .maybeSingle(),
-        userDb
-          .from("document_ocr_results")
-          .select("id,status,document_version_id")
-          .eq("company_id", input.companyId)
-          .eq("document_id", input.documentId)
-          .eq("id", input.ocrResultId)
-          .maybeSingle(),
-        userDb
-          .from("document_proposed_actions")
-          .select("id,status,requires_approval,payload,ocr_result_id")
-          .eq("company_id", input.companyId)
-          .eq("document_id", input.documentId)
-          .eq("id", input.proposedActionId)
-          .maybeSingle(),
-        userDb
-          .from("document_ocr_fields")
-          .select("id,field_key,value_text,is_verified")
-          .eq("company_id", input.companyId)
-          .eq("ocr_result_id", input.ocrResultId),
-      ]);
-    fail(documentResult.error, "Confirmation document lookup failed");
-    fail(ocrResult.error, "Confirmation OCR lookup failed");
-    fail(proposalResult.error, "Confirmation proposal lookup failed");
-    fail(fieldsResult.error, "Confirmation field lookup failed");
-    const document = row(documentResult.data);
-    const ocr = row(ocrResult.data);
-    const proposal = row(proposalResult.data);
-    const fieldRows = rows(fieldsResult.data);
-    if (
-      !document ||
-      !ocr ||
-      !proposal ||
-      textValue(proposal.ocr_result_id) !== input.ocrResultId ||
-      proposal.requires_approval !== true ||
-      textValue(document.current_version_id) !== textValue(ocr.document_version_id)
-    ) {
-      throw new RecoverableDocumentIntakeError(
-        "The document review no longer matches its persisted proposal.",
-        true,
-      );
-    }
-
-    const fieldKeys = new Set(fieldRows.map((entry) => textValue(entry.field_key)));
-    if (corrections.some((entry) => !fieldKeys.has(entry.fieldKey))) {
-      throw new RecoverableDocumentIntakeError(
-        "A reviewed field is not part of the persisted extraction.",
-        true,
-      );
-    }
-    const existingSnapshot = correctionSnapshot(proposal.payload);
-    if (existingSnapshot && !correctionsMatch(existingSnapshot, corrections)) {
-      throw new RecoverableDocumentIntakeError(
-        "A confirmation retry must use the originally approved field values.",
-        true,
-      );
-    }
-
-    const correctionByKey = new Map(
-      corrections.map((entry) => [entry.fieldKey, entry.value]),
-    );
-    for (const field of fieldRows) {
-      const fieldKey = textValue(field.field_key) as DocumentExtractedFieldKey;
-      const updated = await this.db
-        .from("document_ocr_fields")
-        .update({
-          value_text: correctionByKey.get(fieldKey) ?? textValue(field.value_text),
-          is_verified: true,
-          verified_by: input.userId,
-          verified_at: new Date().toISOString(),
-        })
-        .eq("company_id", input.companyId)
-        .eq("ocr_result_id", input.ocrResultId)
-        .eq("id", textValue(field.id))
-        .select("id")
-        .single();
-      fail(updated.error, "Reviewed field persistence failed");
-    }
-
-    const payload = row(proposal.payload) ?? {};
-    const prepared = await this.db
-      .from("document_proposed_actions")
-      .update({
-        payload: {
-          ...payload,
-          reviewed_fields: corrections.map((entry) => ({
-            field_key: entry.fieldKey,
-            value: entry.value,
-          })),
-          confirmation_state: "prepared",
-        },
-      })
-      .eq("company_id", input.companyId)
-      .eq("document_id", input.documentId)
-      .eq("id", input.proposedActionId)
-      .select("id")
-      .single();
-    fail(prepared.error, "Reviewed proposal persistence failed");
-
-    await this.appendAudit({
-      documentId: input.documentId,
-      proposedActionId: input.proposedActionId,
-      companyId: input.companyId,
-      userId: input.userId,
-      eventType: "document_review_prepared",
-      detail:
-        "Authenticated human corrections were persisted before the approval decision.",
-      requestId: `${documentConfirmationRequestId(input.proposedActionId)}:prepared`,
+    const confirmed = await userDb.rpc("confirm_document_review", {
+      p_document_id: input.documentId,
+      p_ocr_result_id: input.ocrResultId,
+      p_proposed_action_id: input.proposedActionId,
+      p_corrections: corrections,
     });
-
-    await this.recordApproval({
-      proposedActionId: input.proposedActionId,
-      companyId: input.companyId,
-      userId: input.userId,
-      accessToken: input.accessToken,
-      decision: "approved",
-    });
-
-    const ocrUpdated = await this.db
-      .from("document_ocr_results")
-      .update({ status: "completed" })
-      .eq("company_id", input.companyId)
-      .eq("document_id", input.documentId)
-      .eq("id", input.ocrResultId)
-      .select("id")
-      .single();
-    fail(ocrUpdated.error, "Confirmed OCR state update failed");
-
-    const proposalUpdated = await this.db
-      .from("document_proposed_actions")
-      .update({ status: "approved" })
-      .eq("company_id", input.companyId)
-      .eq("document_id", input.documentId)
-      .eq("id", input.proposedActionId)
-      .select("id")
-      .single();
-    fail(proposalUpdated.error, "Confirmed proposal state update failed");
-
-    await this.appendAudit({
-      documentId: input.documentId,
-      proposedActionId: input.proposedActionId,
-      companyId: input.companyId,
-      userId: input.userId,
-      eventType: "document_review_confirmed",
-      detail:
-        "Authenticated human approved the document-only proposal. No operational or financial record was changed.",
-      requestId: documentConfirmationRequestId(input.proposedActionId),
-    });
-
-    const documentUpdated = await this.db
-      .from("documents")
-      .update({ status: "ready" })
-      .eq("company_id", input.companyId)
-      .eq("id", input.documentId)
-      .select("id")
-      .single();
-    fail(documentUpdated.error, "Confirmed document state update failed");
-
+    fail(confirmed.error, "Atomic document confirmation failed");
     const review = await this.getDocument({
       documentId: input.documentId,
       companyId: input.companyId,
@@ -1138,4 +964,5 @@ export class SupabaseDocumentIntakeRepository
     }
     return review;
   }
+
 }

@@ -12,7 +12,9 @@ function isProtectedDocumentPath(pathname: string): boolean {
   return (
     pathname === "/documents" ||
     pathname.startsWith("/documents/") ||
-    pathname.startsWith("/api/documents/")
+    pathname.startsWith("/api/documents/") ||
+    pathname === "/dispatch" ||
+    pathname.startsWith("/dispatch/")
   );
 }
 

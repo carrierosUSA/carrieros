@@ -10,11 +10,11 @@ export default function Brand() {
 
       <div>
         <h1 className="text-lg font-bold text-gray-900">
-          CarrierOS
+          Transpo.ai
         </h1>
 
         <p className="text-xs tracking-wide text-gray-500">
-          Transportation Operating System
+          Carrier Operating System
         </p>
       </div>
     </div>
