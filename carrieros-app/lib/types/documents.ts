@@ -26,6 +26,8 @@ export const DOCUMENT_EXTRACTED_FIELD_KEYS = [
   "loadNumber",
   "broker",
   "brokerLoadId",
+  "pickupNumber",
+  "deliveryNumber",
   "driver",
   "truck",
   "trailer",

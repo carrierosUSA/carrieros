@@ -14,6 +14,28 @@ const priority = (value: unknown): DispatchPriority => value === "red" || value 
 function stopLabel(value: Row | undefined): string | undefined { return value ? [text(value.city), text(value.state)].filter(Boolean).join(", ") || undefined : undefined; }
 
 export class LoadOperationsRepository {
+  async findBySourceDocuments(input: {
+    companyId: string;
+    accessToken: string;
+    documentIds: string[];
+  }): Promise<Map<string, string>> {
+    if (!input.documentIds.length) return new Map();
+    const db = getSupabaseAuthenticatedUserClient(input.accessToken);
+    const result = await db
+      .from("loads")
+      .select("id,source_document_id")
+      .eq("company_id", input.companyId)
+      .in("source_document_id", input.documentIds);
+    if (result.error) throw new Error("Load-document links are not available.");
+    return new Map(
+      rows(result.data).flatMap((entry) => {
+        const documentId = text(entry.source_document_id);
+        const loadId = text(entry.id);
+        return documentId && loadId ? [[documentId, loadId] as const] : [];
+      }),
+    );
+  }
+
   async listBoard(input: { companyId: string; accessToken: string }): Promise<DispatchBoardLoad[]> {
     const db = getSupabaseAuthenticatedUserClient(input.accessToken);
     const loadsResult = await db.from("loads").select("*").eq("company_id", input.companyId).order("updated_at", { ascending: false }).limit(250);

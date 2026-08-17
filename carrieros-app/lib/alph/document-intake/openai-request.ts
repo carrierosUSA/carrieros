@@ -23,6 +23,7 @@ Rate Confirmation guidance:
 - Common titles include Carrier Rate Confirmation, Rate Confirmation, Load Tender, Load Confirmation, and Dispatch Sheet.
 - The broker may be labeled broker, customer, logistics company, or arranged by. Do not use the carrier name unless explicitly identified as the broker.
 - Use loadNumber for the primary load, confirmation, RC, trip, order, or reference number identifying the shipment.
+- Use pickupNumber and deliveryNumber only for explicit pickup/PU and delivery/drop reference numbers. Never copy the primary load number into them unless the document explicitly does so.
 - Use rate only for an explicitly stated total agreed rate or carrier pay. Do not add line items.
 - Keep facility, city/state, address, appointment date, and appointment time in separate canonical fields.
 - Inspect every page. For multi-stop documents, use the first origin and final destination; preserve other explicit stop constraints in instructions.

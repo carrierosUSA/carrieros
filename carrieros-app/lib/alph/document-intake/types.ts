@@ -70,6 +70,7 @@ export type PersistedDocumentReview = {
   status: "processing" | "needs_review" | "ready" | "failed" | "archived";
   approvalStatus: "pending" | "approved" | "rejected";
   fields: DocumentExtractedField[];
+  operationalLoadId?: string;
   createdAt: string;
 };
 

@@ -31,6 +31,10 @@ export type Database = {
         Args: { p_document_id: string; p_ocr_result_id: string; p_proposed_action_id: string; p_corrections: Json };
         Returns: string;
       };
+      create_load_from_confirmed_rate_confirmation: {
+        Args: { p_document_id: string };
+        Returns: string;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

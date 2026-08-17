@@ -260,7 +260,7 @@ export class SupabaseDocumentIntakeRepository
     storagePath: string;
     companyId: string;
   }): Promise<DocumentIntakeConsistencyState> {
-    const [documentResult, ocrResult, proposalResult, approvalResult, auditResult] =
+    const [documentResult, ocrResult, proposalResult, auditResult] =
       await Promise.all([
         this.db
           .from("documents")
@@ -282,14 +282,8 @@ export class SupabaseDocumentIntakeRepository
           .select("id,status,requires_approval,ocr_result_id")
           .eq("company_id", input.companyId)
           .eq("document_id", input.documentId)
+          .eq("action_kind", "confirm_document_review")
           .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-        this.db
-          .from("document_approvals")
-          .select("decision,proposed_action_id")
-          .eq("company_id", input.companyId)
-          .order("decided_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
         this.db
@@ -301,12 +295,21 @@ export class SupabaseDocumentIntakeRepository
     fail(documentResult.error, "Existing document state lookup failed");
     fail(ocrResult.error, "Existing OCR state lookup failed");
     fail(proposalResult.error, "Existing proposal state lookup failed");
-    fail(approvalResult.error, "Existing approval state lookup failed");
     fail(auditResult.error, "Existing audit state lookup failed");
 
     const document = row(documentResult.data);
     const ocr = row(ocrResult.data);
     const proposal = row(proposalResult.data);
+    const proposalId = textValue(proposal?.id);
+    const approvalResult = proposalId
+      ? await this.db
+          .from("document_approvals")
+          .select("decision,proposed_action_id")
+          .eq("company_id", input.companyId)
+          .eq("proposed_action_id", proposalId)
+          .maybeSingle()
+      : { data: null, error: null };
+    fail(approvalResult.error, "Existing approval state lookup failed");
     const approval = row(approvalResult.data);
     const audits = rows(auditResult.data);
     const storageExists = await this.storageObjectExists(input.storagePath);
@@ -329,7 +332,7 @@ export class SupabaseDocumentIntakeRepository
       proposedActionStatus: textValue(proposal?.status) || undefined,
       requiresApproval: proposal?.requires_approval === true,
       approvalDecision:
-        textValue(approval?.proposed_action_id) === textValue(proposal?.id)
+        textValue(approval?.proposed_action_id) === proposalId
           ? textValue(approval?.decision) || undefined
           : undefined,
       allFieldsVerified,
@@ -865,6 +868,7 @@ export class SupabaseDocumentIntakeRepository
           .eq("company_id", input.companyId)
           .eq("document_id", input.documentId)
           .eq("ocr_result_id", ocrResultId)
+          .eq("action_kind", "confirm_document_review")
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle()
