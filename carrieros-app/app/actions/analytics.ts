@@ -1,0 +1,4 @@
+"use server";
+import{requireDocumentAuth}from"@/lib/auth/supabase-server";import type{BusinessRole}from"@/lib/auth/roles";import{VerifiedAnalyticsRepository,type VerifiedAnalytics}from"@/lib/analytics/verified-analytics";
+const READ=new Set<BusinessRole>(["super_admin","owner","dispatcher","accounting","safety"]),FINANCE=new Set<BusinessRole>(["super_admin","owner","accounting"]);
+export async function getVerifiedAnalyticsAction():Promise<{ok:true;analytics:VerifiedAnalytics}|{ok:false;error:string}>{try{const auth=await requireDocumentAuth();if(!READ.has(auth.businessRole))return{ok:false,error:"Analytics are restricted to authorized operational roles."};const analytics=await new VerifiedAnalyticsRepository().get({companyId:auth.companyId,accessToken:auth.accessToken,financialAccess:FINANCE.has(auth.businessRole)});return{ok:true,analytics}}catch{return{ok:false,error:"Verified analytics are not available in this environment."}}}
