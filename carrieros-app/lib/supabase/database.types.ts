@@ -35,6 +35,19 @@ export type Database = {
         Args: { p_document_id: string };
         Returns: string;
       };
+      record_verified_load_update: {
+        Args: {
+          p_load_id: string;
+          p_expected_status: string;
+          p_next_status: string | null;
+          p_location: string | null;
+          p_eta: string | null;
+          p_exception_summary: string | null;
+          p_note: string | null;
+          p_request_id: string;
+        };
+        Returns: string;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

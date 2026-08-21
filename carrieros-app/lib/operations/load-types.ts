@@ -26,3 +26,8 @@ export type LoadDetail = DispatchBoardLoad & {
   specialInstructions?: string; emergencyRequirements?: string;
   stops: LoadStopDetail[]; timeline: LoadTimelineEvent[];
 };
+export type LoadUpdateCapabilities = {
+  canRecordFacts: boolean;
+  allowedNextStatuses: LoadStatus[];
+  closureRequiresDocuments: boolean;
+};

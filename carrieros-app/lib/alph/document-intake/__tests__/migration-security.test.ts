@@ -18,6 +18,7 @@ test("only reviewed document and load-operation migrations are present", () => {
     "20260814110000_document_intake_hardening.sql",
     "20260814120000_load_operations_foundation.sql",
     "20260816190000_rate_confirmation_load_creation.sql",
+    "20260821150000_load_update_workflow.sql",
   ]);
 });
 
