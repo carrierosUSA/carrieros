@@ -34,6 +34,9 @@ export type Database = {
       driver_settlement_events: Table<Row>;
       carrier_company_profiles: Table<Row>;
       carrier_company_profile_events: Table<Row>;
+      fuel_purchase_records: Table<Row>;
+      ifta_mileage_records: Table<Row>;
+      ifta_record_events: Table<Row>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -130,6 +133,11 @@ export type Database = {
       get_verified_company_profile:{Args:Record<PropertyKey,never>;Returns:Row[]};
       list_verified_company_team:{Args:Record<PropertyKey,never>;Returns:Row[]};
       save_verified_company_profile:{Args:{p_legal_name:string;p_dba_name:string|null;p_usdot_number:string|null;p_mc_number:string|null;p_contact_email:string|null;p_contact_phone:string|null;p_timezone:string;p_ai_partner_name:string;p_note:string|null;p_request_id:string};Returns:string};
+      list_ifta_trucks:{Args:Record<PropertyKey,never>;Returns:Row[]};list_verified_fuel_receipts:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      list_ifta_quarter_summary:{Args:{p_year:number;p_quarter:number};Returns:Row[]};list_ifta_quarter_records:{Args:{p_year:number;p_quarter:number};Returns:Row[]};
+      record_verified_fuel_purchase:{Args:{p_asset_id:string;p_purchased_at:string;p_jurisdiction:string;p_gallons:number;p_total_cost_cents:number;p_vendor:string|null;p_odometer_miles:number|null;p_source:string;p_receipt_document_id:string|null;p_note:string|null;p_request_id:string};Returns:string};
+      record_verified_ifta_mileage:{Args:{p_asset_id:string;p_trip_date:string;p_jurisdiction:string;p_total_miles:number;p_taxable_miles:number;p_source:string;p_evidence_document_id:string|null;p_note:string|null;p_request_id:string};Returns:string};
+      void_verified_ifta_record:{Args:{p_record_kind:string;p_record_id:string;p_reason:string;p_request_id:string};Returns:string};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

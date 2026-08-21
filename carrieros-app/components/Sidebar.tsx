@@ -8,6 +8,7 @@ const navItems = [
   { name: "Maintenance", href: "/maintenance" },
   { name: "Finance", href: "/finance" },
   { name: "Payroll", href: "/payroll" },
+  { name: "Fuel & IFTA", href: "/ifta" },
   { name: "Documents", href: "/documents" },
   { name: "Analytics", href: "/analytics" },
   { name: "Nova AI", href: "/nova" },
