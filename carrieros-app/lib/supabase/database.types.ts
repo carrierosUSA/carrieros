@@ -22,6 +22,8 @@ export type Database = {
       load_detention_evidence: Table<Row>;
       load_document_links: Table<Row>;
       load_payments: Table<Row>;
+      fleet_assets: Table<Row>;
+      fleet_asset_events: Table<Row>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -94,6 +96,11 @@ export type Database = {
       };
       record_verified_payment: {
         Args: { p_load_id: string; p_amount_cents: number; p_paid_at: string; p_payment_reference: string; p_note: string | null; p_request_id: string };
+        Returns: string;
+      };
+      list_verified_fleet_assets: { Args: Record<PropertyKey, never>; Returns: Row[] };
+      save_verified_fleet_asset: {
+        Args: { p_asset_id: string | null; p_asset_type: string; p_unit_number: string; p_vin: string; p_year: number | null; p_make: string | null; p_model: string | null; p_status: string; p_annual_inspection_expires_on: string; p_registration_expires_on: string; p_is_reefer: boolean; p_note: string | null; p_request_id: string };
         Returns: string;
       };
     };

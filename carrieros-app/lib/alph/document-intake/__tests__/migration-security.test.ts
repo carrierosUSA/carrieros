@@ -23,6 +23,7 @@ test("only reviewed document and load-operation migrations are present", () => {
     "20260821190000_dispatch_release_gate.sql",
     "20260821210000_verified_load_closure.sql",
     "20260821230000_finance_receivables.sql",
+    "20260822010000_verified_fleet_registry.sql",
   ]);
 });
 
