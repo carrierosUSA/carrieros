@@ -1,7 +1,7 @@
 import "server-only";
 import { getSupabaseAuthenticatedUserClient } from "@/lib/supabase/server";
 import type { LoadStatus } from "@/lib/types/load";
-import type { DispatchBoardLoad, DispatchPriority, LoadDetail, LoadStopDetail, LoadTimelineEvent } from "@/lib/operations/load-types";
+import type { AssignableDriver, DispatchBoardLoad, DispatchPriority, LoadDetail, LoadStopDetail, LoadTimelineEvent } from "@/lib/operations/load-types";
 
 type Row = Record<string, unknown>;
 const row = (value: unknown): Row | null => value && typeof value === "object" ? value as Row : null;
@@ -14,6 +14,17 @@ const priority = (value: unknown): DispatchPriority => value === "red" || value 
 function stopLabel(value: Row | undefined): string | undefined { return value ? [text(value.city), text(value.state)].filter(Boolean).join(", ") || undefined : undefined; }
 
 export class LoadOperationsRepository {
+  async listCompanyDrivers(input: { accessToken: string }): Promise<AssignableDriver[]> {
+    const db = getSupabaseAuthenticatedUserClient(input.accessToken);
+    const result = await db.rpc("list_assignable_company_drivers");
+    if (result.error) throw new Error("Verified driver accounts are not available.");
+    return rows(result.data).flatMap((entry) => {
+      const userId = text(entry.user_id);
+      const displayName = text(entry.display_name);
+      return userId && displayName ? [{ userId, displayName }] : [];
+    });
+  }
+
   async findBySourceDocuments(input: {
     companyId: string;
     accessToken: string;
@@ -76,6 +87,12 @@ export class LoadOperationsRepository {
     const stops = rows(stopsResult.data); const assignment = row(assignmentsResult.data);
     const financial = financialResult.error ? null : row(financialResult.data);
     const board = (await this.listBoard(input)).find((entry) => entry.id === input.loadId); if (!board) return null;
-    return { ...board, brokerContact: optionalText(load.broker_contact), commodity: optionalText(load.commodity), weightLbs: numberValue(load.weight_lbs), equipmentType: optionalText(load.equipment_type), temperatureRequirement: optionalText(load.temperature_requirement), sealNumber: optionalText(load.seal_number), deliveryNumber: optionalText(load.delivery_number), specialInstructions: optionalText(load.special_instructions), emergencyRequirements: optionalText(load.emergency_requirements), rateCents: numberValue(financial?.rate_cents), currency: optionalText(financial?.currency), stops: stops.map((entry): LoadStopDetail => ({ id: text(entry.id), sequence: numberValue(entry.stop_sequence) ?? 0, type: text(entry.stop_type) as LoadStopDetail["type"], facilityName: optionalText(entry.facility_name), address: text(entry.address), city: text(entry.city), state: text(entry.state), appointmentAt: optionalText(entry.appointment_at), appointmentTimezone: optionalText(entry.appointment_timezone), referenceNumber: optionalText(entry.reference_number), arrivedAt: optionalText(entry.arrived_at), checkedInAt: optionalText(entry.checked_in_at), departedAt: optionalText(entry.departed_at) })), timeline: rows(eventsResult.data).map((entry): LoadTimelineEvent => ({ id: text(entry.id), type: text(entry.event_type), status: optionalText(entry.status), location: optionalText(entry.location), eta: optionalText(entry.eta), note: optionalText(entry.factual_note), source: text(entry.source), eventAt: text(entry.event_at) })), driverUserId: optionalText(assignment?.driver_user_id), truckUnit: optionalText(assignment?.truck_unit), trailerUnit: optionalText(assignment?.trailer_unit) };
+    let driverDisplayName: string | undefined;
+    const driverUserId = optionalText(assignment?.driver_user_id);
+    if (driverUserId) {
+      const drivers = await this.listCompanyDrivers({ accessToken: input.accessToken }).catch(() => []);
+      driverDisplayName = drivers.find((driver) => driver.userId === driverUserId)?.displayName;
+    }
+    return { ...board, brokerContact: optionalText(load.broker_contact), commodity: optionalText(load.commodity), weightLbs: numberValue(load.weight_lbs), equipmentType: optionalText(load.equipment_type), temperatureRequirement: optionalText(load.temperature_requirement), sealNumber: optionalText(load.seal_number), deliveryNumber: optionalText(load.delivery_number), specialInstructions: optionalText(load.special_instructions), emergencyRequirements: optionalText(load.emergency_requirements), rateCents: numberValue(financial?.rate_cents), currency: optionalText(financial?.currency), stops: stops.map((entry): LoadStopDetail => ({ id: text(entry.id), sequence: numberValue(entry.stop_sequence) ?? 0, type: text(entry.stop_type) as LoadStopDetail["type"], facilityName: optionalText(entry.facility_name), address: text(entry.address), city: text(entry.city), state: text(entry.state), appointmentAt: optionalText(entry.appointment_at), appointmentTimezone: optionalText(entry.appointment_timezone), referenceNumber: optionalText(entry.reference_number), arrivedAt: optionalText(entry.arrived_at), checkedInAt: optionalText(entry.checked_in_at), departedAt: optionalText(entry.departed_at) })), timeline: rows(eventsResult.data).map((entry): LoadTimelineEvent => ({ id: text(entry.id), type: text(entry.event_type), status: optionalText(entry.status), location: optionalText(entry.location), eta: optionalText(entry.eta), note: optionalText(entry.factual_note), source: text(entry.source), eventAt: text(entry.event_at) })), driverUserId, driverDisplayName, truckUnit: optionalText(assignment?.truck_unit), trailerUnit: optionalText(assignment?.trailer_unit) };
   }
 }

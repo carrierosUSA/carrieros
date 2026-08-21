@@ -48,6 +48,24 @@ export type Database = {
         };
         Returns: string;
       };
+      list_assignable_company_drivers: {
+        Args: Record<PropertyKey, never>;
+        Returns: { user_id: string; display_name: string }[];
+      };
+      assign_verified_load: {
+        Args: {
+          p_load_id: string;
+          p_driver_user_id: string;
+          p_truck_unit: string;
+          p_trailer_unit: string | null;
+          p_equipment_fit_verified: boolean;
+          p_hos_verified: boolean;
+          p_safety_verified: boolean;
+          p_note: string | null;
+          p_request_id: string;
+        };
+        Returns: string;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

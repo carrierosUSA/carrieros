@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
+  assignVerifiedLoadAction,
   getLoadDetailAction,
   updateVerifiedLoadAction,
 } from "@/app/actions/dispatch";
 import Sidebar from "@/components/Sidebar";
 import type {
+  AssignableDriver,
   LoadDetail,
   LoadStopDetail,
   LoadUpdateCapabilities,
@@ -18,6 +20,7 @@ export default function LoadDetailWorkspace({ loadId }: { loadId: string }) {
   const [detail, setDetail] = useState<LoadDetail | null>(null);
   const [capabilities, setCapabilities] =
     useState<LoadUpdateCapabilities | null>(null);
+  const [drivers, setDrivers] = useState<AssignableDriver[]>([]);
   const [state, setState] = useState<
     "loading" | "ready" | "not-found" | "unavailable"
   >("loading");
@@ -32,6 +35,7 @@ export default function LoadDetailWorkspace({ loadId }: { loadId: string }) {
         else {
           setDetail(result.load);
           setCapabilities(result.capabilities);
+          setDrivers(result.drivers);
           setState("ready");
         }
       })
@@ -57,9 +61,15 @@ export default function LoadDetailWorkspace({ loadId }: { loadId: string }) {
             <Detail
               detail={detail}
               capabilities={capabilities}
+              drivers={drivers}
               onSaved={(load, nextCapabilities) => {
                 setDetail(load);
                 setCapabilities(nextCapabilities);
+              }}
+              onAssigned={(load, nextCapabilities, nextDrivers) => {
+                setDetail(load);
+                setCapabilities(nextCapabilities);
+                setDrivers(nextDrivers);
               }}
             />
           )}
@@ -72,11 +82,19 @@ export default function LoadDetailWorkspace({ loadId }: { loadId: string }) {
 function Detail({
   detail,
   capabilities,
+  drivers,
   onSaved,
+  onAssigned,
 }: {
   detail: LoadDetail;
   capabilities: LoadUpdateCapabilities;
+  drivers: AssignableDriver[];
   onSaved: (load: LoadDetail, capabilities: LoadUpdateCapabilities) => void;
+  onAssigned: (
+    load: LoadDetail,
+    capabilities: LoadUpdateCapabilities,
+    drivers: AssignableDriver[],
+  ) => void;
 }) {
   return (
     <>
@@ -109,7 +127,7 @@ function Detail({
         <Card
           label="Driver / truck / trailer"
           value={[
-            detail.driverUserId ? "Assigned driver" : "Unassigned",
+            detail.driverDisplayName || (detail.driverUserId ? "Verified driver" : "Unassigned"),
             detail.truckUnit,
             detail.trailerUnit,
           ]
@@ -190,6 +208,12 @@ function Detail({
         </div>
 
         <aside className="space-y-4">
+          <LoadAssignment
+            detail={detail}
+            capabilities={capabilities}
+            drivers={drivers}
+            onAssigned={onAssigned}
+          />
           <OperationalUpdate
             detail={detail}
             capabilities={capabilities}
@@ -257,6 +281,115 @@ function Detail({
         </aside>
       </div>
     </>
+  );
+}
+
+function LoadAssignment({
+  detail,
+  capabilities,
+  drivers,
+  onAssigned,
+}: {
+  detail: LoadDetail;
+  capabilities: LoadUpdateCapabilities;
+  drivers: AssignableDriver[];
+  onAssigned: (
+    load: LoadDetail,
+    capabilities: LoadUpdateCapabilities,
+    drivers: AssignableDriver[],
+  ) => void;
+}) {
+  const [driverUserId, setDriverUserId] = useState("");
+  const [truckUnit, setTruckUnit] = useState("");
+  const [trailerUnit, setTrailerUnit] = useState("");
+  const [equipmentFitVerified, setEquipmentFitVerified] = useState(false);
+  const [hosVerified, setHosVerified] = useState(false);
+  const [safetyVerified, setSafetyVerified] = useState(false);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+
+  if (detail.driverUserId) {
+    return (
+      <Panel title="Verified assignment">
+        <Fact label="Driver" value={detail.driverDisplayName || "Verified driver account"} />
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <Fact label="Truck" value={detail.truckUnit} />
+          <Fact label="Trailer" value={detail.trailerUnit} />
+        </div>
+        <p className="mt-3 text-[11px] leading-5 text-[#64748B]">
+          Assignment records responsibility only. The driver and carrier retain every movement and safety decision.
+        </p>
+      </Panel>
+    );
+  }
+  if (!capabilities.canAssignLoad) return null;
+
+  async function assign() {
+    setBusy(true);
+    setMessage("");
+    const result = await assignVerifiedLoadAction({
+      loadId: detail.id,
+      driverUserId,
+      truckUnit,
+      trailerUnit,
+      equipmentFitVerified,
+      hosVerified,
+      safetyVerified,
+      note,
+      requestId: crypto.randomUUID(),
+    });
+    if (result.ok) {
+      onAssigned(result.load, result.capabilities, result.drivers);
+    } else {
+      setMessage(result.error);
+    }
+    setBusy(false);
+  }
+
+  return (
+    <Panel title="Approve verified assignment">
+      <p className="text-[11px] leading-5 text-[#64748B]">
+        A human dispatcher must verify the driver, actual equipment, HOS availability, and safety review. Assignment does not dispatch or authorize movement.
+      </p>
+      {drivers.length ? (
+        <div className="mt-4 space-y-3">
+          <Field label="Verified same-company driver">
+            <select value={driverUserId} onChange={(event) => setDriverUserId(event.target.value)} className="w-full rounded-xl border border-[#CBD5E1] bg-white px-3 py-2.5 text-xs">
+              <option value="">Select verified driver</option>
+              {drivers.map((driver) => <option key={driver.userId} value={driver.userId}>{driver.displayName}</option>)}
+            </select>
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Actual truck unit">
+              <input value={truckUnit} onChange={(event) => setTruckUnit(event.target.value)} maxLength={80} className="w-full rounded-xl border border-[#CBD5E1] px-3 py-2.5 text-xs" />
+            </Field>
+            <Field label="Actual trailer unit">
+              <input value={trailerUnit} onChange={(event) => setTrailerUnit(event.target.value)} maxLength={80} className="w-full rounded-xl border border-[#CBD5E1] px-3 py-2.5 text-xs" />
+            </Field>
+          </div>
+          {[
+            ["Equipment fit verified", equipmentFitVerified, setEquipmentFitVerified],
+            ["Available HOS verified", hosVerified, setHosVerified],
+            ["Human safety review complete", safetyVerified, setSafetyVerified],
+          ].map(([label, checked, setter]) => (
+            <label key={String(label)} className="flex items-start gap-2 text-xs text-[#334155]">
+              <input type="checkbox" checked={Boolean(checked)} onChange={(event) => (setter as (value: boolean) => void)(event.target.checked)} className="mt-0.5" />
+              <span>{String(label)}</span>
+            </label>
+          ))}
+          <Field label="Factual assignment note">
+            <textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={2000} rows={2} className="w-full resize-none rounded-xl border border-[#CBD5E1] px-3 py-2.5 text-xs" />
+          </Field>
+          {message && <p className="rounded-xl bg-[#F8FAFC] p-3 text-[11px] leading-5 text-[#475569]">{message}</p>}
+          <button disabled={busy || !driverUserId || !truckUnit.trim() || !equipmentFitVerified || !hosVerified || !safetyVerified} onClick={() => void assign()} className="w-full rounded-xl bg-[#0F172A] px-4 py-2.5 text-xs font-semibold text-white disabled:opacity-50">
+            {busy ? "Saving verified assignment…" : "Approve assignment"}
+          </button>
+        </div>
+      ) : (
+        <Missing text="No verified same-company driver accounts are available. Add and verify a driver account before assignment." />
+      )}
+    </Panel>
   );
 }
 

@@ -21,13 +21,16 @@ export type LoadTimelineEvent = {
   note?: string; source: string; eventAt: string;
 };
 export type LoadDetail = DispatchBoardLoad & {
+  driverDisplayName?: string;
   brokerContact?: string; commodity?: string; weightLbs?: number; equipmentType?: string;
   temperatureRequirement?: string; sealNumber?: string; deliveryNumber?: string;
   specialInstructions?: string; emergencyRequirements?: string;
   stops: LoadStopDetail[]; timeline: LoadTimelineEvent[];
 };
+export type AssignableDriver = { userId: string; displayName: string };
 export type LoadUpdateCapabilities = {
   canRecordFacts: boolean;
+  canAssignLoad: boolean;
   allowedNextStatuses: LoadStatus[];
   closureRequiresDocuments: boolean;
 };

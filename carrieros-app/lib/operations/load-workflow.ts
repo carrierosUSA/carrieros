@@ -18,8 +18,18 @@ const LOAD_UPDATE_ROLES = new Set<BusinessRole>([
   "driver",
 ]);
 
+const LOAD_ASSIGNMENT_ROLES = new Set<BusinessRole>([
+  "super_admin",
+  "owner",
+  "dispatcher",
+]);
+
 export function canRecordLoadFacts(role: BusinessRole): boolean {
   return LOAD_UPDATE_ROLES.has(role);
+}
+
+export function canAssignLoads(role: BusinessRole): boolean {
+  return LOAD_ASSIGNMENT_ROLES.has(role);
 }
 
 export function allowedNextLoadStatuses(
