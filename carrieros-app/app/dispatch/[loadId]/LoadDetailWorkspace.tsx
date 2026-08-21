@@ -284,9 +284,10 @@ function Detail({
           </Panel>
           <Panel title="Nova helper">
             <p className="text-xs leading-5 text-[#64748B]">
-              Suggestions are coming soon. Nova organizes facts; a human approves
-              operational or financial changes.
+              Nova can review authenticated facts and suggest human follow-up.
+              It cannot change this load or authorize movement.
             </p>
+            <Link href={`/nova?loadId=${detail.id}`} className="mt-3 inline-flex rounded-lg border border-[#CBD5E1] px-3 py-2 text-xs font-semibold">Review this load with Nova</Link>
           </Panel>
         </aside>
       </div>

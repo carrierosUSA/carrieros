@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Brand from "@/components/Brand";
 const navItems = [
   { name: "Command Center", href: "/" },
@@ -9,6 +10,7 @@ const navItems = [
   { name: "Payroll", href: "/payroll" },
   { name: "Documents", href: "/documents" },
   { name: "Analytics", href: "/analytics" },
+  { name: "Nova AI", href: "/nova" },
   { name: "Settings", href: "/settings" },
 ];
 export default function Sidebar() {
@@ -30,10 +32,10 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <div className="absolute bottom-6 left-5 right-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+      <Link href="/nova" className="absolute bottom-6 left-5 right-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 hover:border-blue-300">
         <p className="text-sm font-semibold text-blue-900">AI Partner</p>
         <p className="mt-1 text-sm text-blue-700">Ready to help.</p>
-      </div>
+      </Link>
     </aside>
   );
 }
