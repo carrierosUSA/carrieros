@@ -21,6 +21,7 @@ export type Database = {
       load_financials: Table<Row>;
       load_detention_evidence: Table<Row>;
       load_document_links: Table<Row>;
+      load_payments: Table<Row>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -81,6 +82,18 @@ export type Database = {
       };
       close_verified_load: {
         Args: { p_load_id: string; p_expected_status: string; p_exceptions_resolved: boolean; p_note: string | null; p_request_id: string };
+        Returns: string;
+      };
+      list_finance_receivables: {
+        Args: Record<PropertyKey, never>;
+        Returns: Row[];
+      };
+      record_verified_invoice: {
+        Args: { p_load_id: string; p_invoice_number: string; p_issued_at: string; p_payment_terms_days: number; p_request_id: string };
+        Returns: string;
+      };
+      record_verified_payment: {
+        Args: { p_load_id: string; p_amount_cents: number; p_paid_at: string; p_payment_reference: string; p_note: string | null; p_request_id: string };
         Returns: string;
       };
     };
