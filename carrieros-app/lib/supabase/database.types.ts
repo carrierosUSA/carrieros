@@ -26,6 +26,8 @@ export type Database = {
       fleet_asset_events: Table<Row>;
       driver_profiles: Table<Row>;
       driver_profile_events: Table<Row>;
+      maintenance_work_orders: Table<Row>;
+      maintenance_work_order_events: Table<Row>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -111,6 +113,8 @@ export type Database = {
         Args: { p_profile_id:string|null;p_driver_user_id:string;p_cdl_state:string;p_cdl_last_four:string;p_cdl_expires_on:string;p_medical_card_expires_on:string;p_hired_on:string|null;p_status:string;p_note:string|null;p_request_id:string };
         Returns: string;
       };
+      list_verified_maintenance_orders:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      save_verified_maintenance_order:{Args:{p_order_id:string|null;p_asset_id:string;p_category:string;p_severity:string;p_status:string;p_title:string;p_description:string;p_reported_odometer:number|null;p_opened_at:string;p_due_on:string|null;p_completion_note:string|null;p_service_provider:string|null;p_next_service_due_on:string|null;p_next_service_due_odometer:number|null;p_request_id:string};Returns:string};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

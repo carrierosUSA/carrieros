@@ -4,6 +4,7 @@ const navItems = [
   { name: "Dispatch", href: "/dispatch" },
   { name: "Drivers", href: "/drivers" },
   { name: "Fleet", href: "/fleet" },
+  { name: "Maintenance", href: "/maintenance" },
   { name: "Finance", href: "/finance" },
   { name: "Documents", href: "/documents" },
   { name: "Analytics", href: "/analytics" },
