@@ -24,6 +24,8 @@ export type Database = {
       load_payments: Table<Row>;
       fleet_assets: Table<Row>;
       fleet_asset_events: Table<Row>;
+      driver_profiles: Table<Row>;
+      driver_profile_events: Table<Row>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -101,6 +103,12 @@ export type Database = {
       list_verified_fleet_assets: { Args: Record<PropertyKey, never>; Returns: Row[] };
       save_verified_fleet_asset: {
         Args: { p_asset_id: string | null; p_asset_type: string; p_unit_number: string; p_vin: string; p_year: number | null; p_make: string | null; p_model: string | null; p_status: string; p_annual_inspection_expires_on: string; p_registration_expires_on: string; p_is_reefer: boolean; p_note: string | null; p_request_id: string };
+        Returns: string;
+      };
+      list_verified_driver_profiles: { Args: Record<PropertyKey, never>; Returns: Row[] };
+      list_unprofiled_company_drivers: { Args: Record<PropertyKey, never>; Returns: Row[] };
+      save_verified_driver_profile: {
+        Args: { p_profile_id:string|null;p_driver_user_id:string;p_cdl_state:string;p_cdl_last_four:string;p_cdl_expires_on:string;p_medical_card_expires_on:string;p_hired_on:string|null;p_status:string;p_note:string|null;p_request_id:string };
         Returns: string;
       };
     };
