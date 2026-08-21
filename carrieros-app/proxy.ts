@@ -8,13 +8,10 @@ type CookieToSet = {
   options: CookieOptions;
 };
 
-function isProtectedDocumentPath(pathname: string): boolean {
-  return (
-    pathname === "/documents" ||
-    pathname.startsWith("/documents/") ||
-    pathname.startsWith("/api/documents/") ||
-    pathname === "/dispatch" ||
-    pathname.startsWith("/dispatch/")
+function isProtectedAppPath(pathname: string): boolean {
+  if (pathname === "/") return true;
+  return ["/analytics","/dispatch","/documents","/drivers","/finance","/fleet","/maintenance","/nova","/payroll","/settings","/api/documents"].some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
 
@@ -46,7 +43,7 @@ export async function proxy(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (isProtectedDocumentPath(request.nextUrl.pathname)) {
+    if (isProtectedAppPath(request.nextUrl.pathname)) {
       const identity = deriveVerifiedSupabaseIdentity(user);
       if (!identity.ok) {
         const destination = request.nextUrl.clone();
@@ -75,7 +72,7 @@ export async function proxy(request: NextRequest) {
         response = redirectResponse;
       }
     }
-  } else if (isProtectedDocumentPath(request.nextUrl.pathname)) {
+  } else if (isProtectedAppPath(request.nextUrl.pathname)) {
     const destination = request.nextUrl.clone();
     destination.pathname = "/login";
     destination.search = "";

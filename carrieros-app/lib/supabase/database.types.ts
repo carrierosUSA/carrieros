@@ -32,6 +32,8 @@ export type Database = {
       driver_settlements: Table<Row>;
       driver_settlement_loads: Table<Row>;
       driver_settlement_events: Table<Row>;
+      carrier_company_profiles: Table<Row>;
+      carrier_company_profile_events: Table<Row>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -125,6 +127,9 @@ export type Database = {
       save_verified_driver_pay_rate:{Args:{p_driver_user_id:string;p_cents_per_mile:number;p_effective_on:string;p_note:string|null;p_request_id:string};Returns:string};
       approve_verified_driver_settlement:{Args:{p_driver_user_id:string;p_period_start:string;p_period_end:string;p_load_ids:string[];p_extras_cents:number;p_deductions_cents:number;p_adjustment_note:string|null;p_request_id:string};Returns:string};
       record_verified_driver_settlement_payment:{Args:{p_settlement_id:string;p_paid_at:string;p_payment_reference:string;p_request_id:string};Returns:string};
+      get_verified_company_profile:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      list_verified_company_team:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      save_verified_company_profile:{Args:{p_legal_name:string;p_dba_name:string|null;p_usdot_number:string|null;p_mc_number:string|null;p_contact_email:string|null;p_contact_phone:string|null;p_timezone:string;p_ai_partner_name:string;p_note:string|null;p_request_id:string};Returns:string};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

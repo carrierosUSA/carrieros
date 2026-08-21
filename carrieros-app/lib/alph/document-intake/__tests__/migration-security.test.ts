@@ -27,6 +27,7 @@ test("only reviewed document and load-operation migrations are present", () => {
     "20260822030000_verified_driver_compliance.sql",
     "20260822050000_verified_maintenance.sql",
     "20260822070000_verified_driver_payroll.sql",
+    "20260822090000_verified_company_settings.sql",
   ]);
 });
 
