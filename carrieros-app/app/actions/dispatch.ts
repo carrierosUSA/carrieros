@@ -5,13 +5,16 @@ import { requireDocumentAuth } from "@/lib/auth/supabase-server";
 import { LoadOperationsRepository } from "@/lib/operations/load-repository";
 import type {
   AssignableDriver,
+  ClosureDocumentCandidate,
   DispatchBoardLoad,
   LoadDetail,
+  LoadClosureReadiness,
   LoadUpdateCapabilities,
 } from "@/lib/operations/load-types";
 import {
   allowedNextLoadStatuses,
   canAssignLoads,
+  canManageLoadClosure,
   canRecordLoadFacts,
   isLoadStatus,
 } from "@/lib/operations/load-workflow";
@@ -83,7 +86,88 @@ function capabilities(
     canAssignLoad: canAssignLoads(role) && status === "pending" && !hasActiveAssignment,
     allowedNextStatuses: nextStatuses,
     closureRequiresDocuments: status === "delivered",
+    canManageClosure: canManageLoadClosure(role) && (status === "arrived_delivery" || status === "delivered"),
   };
+}
+
+export type ClosureWorkspaceResult =
+  | { ok: true; documents: ClosureDocumentCandidate[]; readiness: LoadClosureReadiness }
+  | { ok: false; error: string };
+
+export async function getClosureWorkspaceAction(loadId: string): Promise<ClosureWorkspaceResult> {
+  if (!UUID_PATTERN.test(loadId)) return { ok: false, error: "The load reference is invalid." };
+  try {
+    const auth = await requireDocumentAuth();
+    if (!canManageLoadClosure(auth.businessRole)) return { ok: false, error: "Your authenticated role cannot manage closure." };
+    const workspace = await new LoadOperationsRepository().getClosureWorkspace({ accessToken: auth.accessToken, loadId });
+    return { ok: true, ...workspace };
+  } catch {
+    return { ok: false, error: "Verified closure documents are not available." };
+  }
+}
+
+export async function linkVerifiedClosureDocumentAction(input: {
+  loadId: string;
+  documentId: string;
+  requestId: string;
+}): Promise<ClosureWorkspaceResult> {
+  if (!UUID_PATTERN.test(input.loadId) || !UUID_PATTERN.test(input.documentId) || !UUID_PATTERN.test(input.requestId)) {
+    return { ok: false, error: "The document-link request is invalid." };
+  }
+  try {
+    const auth = await requireDocumentAuth();
+    if (!canManageLoadClosure(auth.businessRole)) return { ok: false, error: "Your authenticated role cannot link closure documents." };
+    const db = getSupabaseAuthenticatedUserClient(auth.accessToken);
+    const result = await db.rpc("link_verified_closure_document", {
+      p_load_id: input.loadId,
+      p_document_id: input.documentId,
+      p_request_id: input.requestId,
+    });
+    if (result.error) return { ok: false, error: "Only a current human-approved POD or invoice can be linked at delivery." };
+    revalidatePath(`/dispatch/${input.loadId}`);
+    const workspace = await new LoadOperationsRepository().getClosureWorkspace({ accessToken: auth.accessToken, loadId: input.loadId });
+    return { ok: true, ...workspace };
+  } catch {
+    return { ok: false, error: "The verified document could not be linked. No load status changed." };
+  }
+}
+
+export async function closeVerifiedLoadAction(input: {
+  loadId: string;
+  expectedStatus: LoadStatus;
+  exceptionsResolved: boolean;
+  note?: string | null;
+  requestId: string;
+}): Promise<VerifiedLoadUpdateResult> {
+  if (!UUID_PATTERN.test(input.loadId) || !UUID_PATTERN.test(input.requestId) || !isLoadStatus(input.expectedStatus)) {
+    return { ok: false, error: "The closure request is invalid." };
+  }
+  const note = optionalText(input.note, 2_000);
+  if (!input.exceptionsResolved) return { ok: false, error: "Confirm that all exceptions are factually resolved." };
+  try {
+    const auth = await requireDocumentAuth();
+    if (!canManageLoadClosure(auth.businessRole)) return { ok: false, error: "Your authenticated role cannot close loads." };
+    const db = getSupabaseAuthenticatedUserClient(auth.accessToken);
+    const result = await db.rpc("close_verified_load", {
+      p_load_id: input.loadId,
+      p_expected_status: input.expectedStatus,
+      p_exceptions_resolved: input.exceptionsResolved,
+      p_note: note,
+      p_request_id: input.requestId,
+    });
+    if (result.error) {
+      if (result.error.message.includes("POD and invoice")) return { ok: false, error: "Link a current approved POD and invoice before closing." };
+      if (result.error.message.includes("resolution note")) return { ok: false, error: "Add a factual note explaining how the recorded exception was resolved." };
+      return { ok: false, error: "The load could not be closed. Verified requirements may have changed." };
+    }
+    revalidatePath("/dispatch");
+    revalidatePath(`/dispatch/${input.loadId}`);
+    const load = await new LoadOperationsRepository().getDetail({ companyId: auth.companyId, accessToken: auth.accessToken, loadId: input.loadId });
+    if (!load) return { ok: false, error: "The load closed, but its authorized detail could not be reloaded." };
+    return { ok: true, load, capabilities: capabilities(auth.businessRole, load.status, Boolean(load.driverUserId)) };
+  } catch {
+    return { ok: false, error: "The load could not be closed. No unverified change was made." };
+  }
 }
 
 function optionalText(value: unknown, maxLength: number): string | null {

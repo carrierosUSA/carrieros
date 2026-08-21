@@ -4,13 +4,18 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   assignVerifiedLoadAction,
+  closeVerifiedLoadAction,
   getLoadDetailAction,
+  getClosureWorkspaceAction,
+  linkVerifiedClosureDocumentAction,
   updateVerifiedLoadAction,
 } from "@/app/actions/dispatch";
 import Sidebar from "@/components/Sidebar";
 import type {
   AssignableDriver,
+  ClosureDocumentCandidate,
   LoadDetail,
+  LoadClosureReadiness,
   LoadStopDetail,
   LoadUpdateCapabilities,
 } from "@/lib/operations/load-types";
@@ -214,6 +219,11 @@ function Detail({
             drivers={drivers}
             onAssigned={onAssigned}
           />
+          <ClosureWorkspace
+            detail={detail}
+            capabilities={capabilities}
+            onClosed={onSaved}
+          />
           <OperationalUpdate
             detail={detail}
             capabilities={capabilities}
@@ -282,6 +292,107 @@ function Detail({
       </div>
     </>
   );
+}
+
+function ClosureWorkspace({
+  detail,
+  capabilities,
+  onClosed,
+}: {
+  detail: LoadDetail;
+  capabilities: LoadUpdateCapabilities;
+  onClosed: (load: LoadDetail, capabilities: LoadUpdateCapabilities) => void;
+}) {
+  const [documents, setDocuments] = useState<ClosureDocumentCandidate[]>([]);
+  const [readiness, setReadiness] = useState<LoadClosureReadiness>({ hasVerifiedPod: false, hasVerifiedInvoice: false, readyToClose: false });
+  const [documentId, setDocumentId] = useState("");
+  const [exceptionsResolved, setExceptionsResolved] = useState(false);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (!capabilities.canManageClosure) return;
+    let active = true;
+    getClosureWorkspaceAction(detail.id).then((result) => {
+      if (!active) return;
+      if (result.ok) {
+        setDocuments(result.documents);
+        setReadiness(result.readiness);
+      } else setMessage(result.error);
+    });
+    return () => { active = false; };
+  }, [capabilities.canManageClosure, detail.id]);
+
+  if (!capabilities.canManageClosure) return null;
+
+  async function linkDocument() {
+    setBusy(true);
+    setMessage("");
+    const result = await linkVerifiedClosureDocumentAction({ loadId: detail.id, documentId, requestId: crypto.randomUUID() });
+    if (result.ok) {
+      setDocuments(result.documents);
+      setReadiness(result.readiness);
+      setDocumentId("");
+      setMessage("Verified document linked. Load status did not change.");
+    } else setMessage(result.error);
+    setBusy(false);
+  }
+
+  async function closeLoad() {
+    setBusy(true);
+    setMessage("");
+    const result = await closeVerifiedLoadAction({
+      loadId: detail.id,
+      expectedStatus: detail.status,
+      exceptionsResolved,
+      note,
+      requestId: crypto.randomUUID(),
+    });
+    if (result.ok) onClosed(result.load, result.capabilities);
+    else setMessage(result.error);
+    setBusy(false);
+  }
+
+  return (
+    <Panel title="Verified closure">
+      <p className="text-[11px] leading-5 text-[#64748B]">
+        Link only the current human-approved POD and invoice. Linking evidence never closes a load automatically.
+      </p>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <StatusCheck label="Approved POD" ready={readiness.hasVerifiedPod} />
+        <StatusCheck label="Approved invoice" ready={readiness.hasVerifiedInvoice} />
+      </div>
+      <div className="mt-3 space-y-2">
+        <select value={documentId} onChange={(event) => setDocumentId(event.target.value)} className="w-full rounded-xl border border-[#CBD5E1] bg-white px-3 py-2.5 text-xs">
+          <option value="">Select verified document</option>
+          {documents.map((document) => <option key={document.id} value={document.id}>{document.documentType.toUpperCase()} · {document.title}</option>)}
+        </select>
+        <button disabled={busy || !documentId} onClick={() => void linkDocument()} className="w-full rounded-xl border border-[#CBD5E1] px-4 py-2.5 text-xs font-semibold disabled:opacity-50">
+          Link verified document
+        </button>
+      </div>
+      {detail.status === "delivered" && (
+        <div className="mt-4 space-y-3 border-t border-[#E2E8F0] pt-4">
+          <label className="flex items-start gap-2 text-xs text-[#334155]">
+            <input type="checkbox" checked={exceptionsResolved} onChange={(event) => setExceptionsResolved(event.target.checked)} className="mt-0.5" />
+            <span>I verified that all exceptions are resolved.</span>
+          </label>
+          <Field label="Factual closure note">
+            <textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={2000} rows={2} placeholder="Required when an exception was recorded" className="w-full resize-none rounded-xl border border-[#CBD5E1] px-3 py-2.5 text-xs" />
+          </Field>
+          <button disabled={busy || !readiness.readyToClose || !exceptionsResolved} onClick={() => void closeLoad()} className="w-full rounded-xl bg-[#0F172A] px-4 py-2.5 text-xs font-semibold text-white disabled:opacity-50">
+            {busy ? "Verifying closure…" : "Approve final closure"}
+          </button>
+        </div>
+      )}
+      {message && <p className="mt-3 rounded-xl bg-[#F8FAFC] p-3 text-[11px] leading-5 text-[#475569]">{message}</p>}
+    </Panel>
+  );
+}
+
+function StatusCheck({ label, ready }: { label: string; ready: boolean }) {
+  return <div className={`rounded-xl p-2 text-[11px] font-semibold ${ready ? "bg-[#ECFDF5] text-[#047857]" : "bg-[#FFF7ED] text-[#9A3412]"}`}>{ready ? "✓" : "○"} {label}</div>;
 }
 
 function LoadAssignment({

@@ -1,7 +1,7 @@
 import "server-only";
 import { getSupabaseAuthenticatedUserClient } from "@/lib/supabase/server";
 import type { LoadStatus } from "@/lib/types/load";
-import type { AssignableDriver, DispatchBoardLoad, DispatchPriority, LoadDetail, LoadStopDetail, LoadTimelineEvent } from "@/lib/operations/load-types";
+import type { AssignableDriver, ClosureDocumentCandidate, DispatchBoardLoad, DispatchPriority, LoadClosureReadiness, LoadDetail, LoadStopDetail, LoadTimelineEvent } from "@/lib/operations/load-types";
 
 type Row = Record<string, unknown>;
 const row = (value: unknown): Row | null => value && typeof value === "object" ? value as Row : null;
@@ -14,6 +14,30 @@ const priority = (value: unknown): DispatchPriority => value === "red" || value 
 function stopLabel(value: Row | undefined): string | undefined { return value ? [text(value.city), text(value.state)].filter(Boolean).join(", ") || undefined : undefined; }
 
 export class LoadOperationsRepository {
+  async getClosureWorkspace(input: { accessToken: string; loadId: string }): Promise<{ documents: ClosureDocumentCandidate[]; readiness: LoadClosureReadiness }> {
+    const db = getSupabaseAuthenticatedUserClient(input.accessToken);
+    const [documentsResult, readinessResult] = await Promise.all([
+      db.rpc("list_verified_closure_documents", { p_load_id: input.loadId }),
+      db.rpc("get_load_closure_readiness", { p_load_id: input.loadId }),
+    ]);
+    if (documentsResult.error || readinessResult.error) throw new Error("Closure verification is not available.");
+    const documents = rows(documentsResult.data).flatMap((entry): ClosureDocumentCandidate[] => {
+      const id = text(entry.document_id);
+      const documentType = text(entry.document_type);
+      if (!id || (documentType !== "pod" && documentType !== "invoice")) return [];
+      return [{ id, title: text(entry.title) || "Verified document", documentType }];
+    });
+    const readinessRow = rows(readinessResult.data)[0] ?? row(readinessResult.data) ?? {};
+    return {
+      documents,
+      readiness: {
+        hasVerifiedPod: readinessRow.has_verified_pod === true,
+        hasVerifiedInvoice: readinessRow.has_verified_invoice === true,
+        readyToClose: readinessRow.ready_to_close === true,
+      },
+    };
+  }
+
   async listCompanyDrivers(input: { accessToken: string }): Promise<AssignableDriver[]> {
     const db = getSupabaseAuthenticatedUserClient(input.accessToken);
     const result = await db.rpc("list_assignable_company_drivers");

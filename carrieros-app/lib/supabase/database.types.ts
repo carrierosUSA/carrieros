@@ -20,6 +20,7 @@ export type Database = {
       load_notes: Table<Row>;
       load_financials: Table<Row>;
       load_detention_evidence: Table<Row>;
+      load_document_links: Table<Row>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -64,6 +65,22 @@ export type Database = {
           p_note: string | null;
           p_request_id: string;
         };
+        Returns: string;
+      };
+      list_verified_closure_documents: {
+        Args: { p_load_id: string };
+        Returns: { document_id: string; title: string; document_type: string }[];
+      };
+      get_load_closure_readiness: {
+        Args: { p_load_id: string };
+        Returns: { has_verified_pod: boolean; has_verified_invoice: boolean; ready_to_close: boolean }[];
+      };
+      link_verified_closure_document: {
+        Args: { p_load_id: string; p_document_id: string; p_request_id: string };
+        Returns: string;
+      };
+      close_verified_load: {
+        Args: { p_load_id: string; p_expected_status: string; p_exceptions_resolved: boolean; p_note: string | null; p_request_id: string };
         Returns: string;
       };
     };

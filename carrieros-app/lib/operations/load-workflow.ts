@@ -32,6 +32,10 @@ export function canAssignLoads(role: BusinessRole): boolean {
   return LOAD_ASSIGNMENT_ROLES.has(role);
 }
 
+export function canManageLoadClosure(role: BusinessRole): boolean {
+  return LOAD_ASSIGNMENT_ROLES.has(role);
+}
+
 export function allowedNextLoadStatuses(
   role: BusinessRole,
   current: LoadStatus,

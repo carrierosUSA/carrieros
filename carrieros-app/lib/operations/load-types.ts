@@ -28,9 +28,20 @@ export type LoadDetail = DispatchBoardLoad & {
   stops: LoadStopDetail[]; timeline: LoadTimelineEvent[];
 };
 export type AssignableDriver = { userId: string; displayName: string };
+export type ClosureDocumentCandidate = {
+  id: string;
+  title: string;
+  documentType: "pod" | "invoice";
+};
+export type LoadClosureReadiness = {
+  hasVerifiedPod: boolean;
+  hasVerifiedInvoice: boolean;
+  readyToClose: boolean;
+};
 export type LoadUpdateCapabilities = {
   canRecordFacts: boolean;
   canAssignLoad: boolean;
   allowedNextStatuses: LoadStatus[];
   closureRequiresDocuments: boolean;
+  canManageClosure: boolean;
 };
