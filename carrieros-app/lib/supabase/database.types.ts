@@ -28,6 +28,10 @@ export type Database = {
       driver_profile_events: Table<Row>;
       maintenance_work_orders: Table<Row>;
       maintenance_work_order_events: Table<Row>;
+      driver_pay_rates: Table<Row>;
+      driver_settlements: Table<Row>;
+      driver_settlement_loads: Table<Row>;
+      driver_settlement_events: Table<Row>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -115,6 +119,12 @@ export type Database = {
       };
       list_verified_maintenance_orders:{Args:Record<PropertyKey,never>;Returns:Row[]};
       save_verified_maintenance_order:{Args:{p_order_id:string|null;p_asset_id:string;p_category:string;p_severity:string;p_status:string;p_title:string;p_description:string;p_reported_odometer:number|null;p_opened_at:string;p_due_on:string|null;p_completion_note:string|null;p_service_provider:string|null;p_next_service_due_on:string|null;p_next_service_due_odometer:number|null;p_request_id:string};Returns:string};
+      list_verified_driver_pay_rates:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      list_unsettled_payroll_loads:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      list_verified_driver_settlements:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      save_verified_driver_pay_rate:{Args:{p_driver_user_id:string;p_cents_per_mile:number;p_effective_on:string;p_note:string|null;p_request_id:string};Returns:string};
+      approve_verified_driver_settlement:{Args:{p_driver_user_id:string;p_period_start:string;p_period_end:string;p_load_ids:string[];p_extras_cents:number;p_deductions_cents:number;p_adjustment_note:string|null;p_request_id:string};Returns:string};
+      record_verified_driver_settlement_payment:{Args:{p_settlement_id:string;p_paid_at:string;p_payment_reference:string;p_request_id:string};Returns:string};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
