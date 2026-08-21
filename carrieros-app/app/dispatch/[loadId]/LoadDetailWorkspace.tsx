@@ -504,6 +504,11 @@ function OperationalUpdate({
               verified.
             </p>
           )}
+          {detail.status === "pending" && !detail.driverUserId && (
+            <p className="rounded-xl bg-[#FFF7ED] p-3 text-[11px] leading-5 text-[#9A3412]">
+              Dispatch release is locked until a verified driver and equipment assignment is approved.
+            </p>
+          )}
           {message && (
             <p className="rounded-xl bg-[#F8FAFC] p-3 text-[11px] leading-5 text-[#475569]">
               {message}

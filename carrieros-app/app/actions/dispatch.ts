@@ -73,11 +73,15 @@ export type VerifiedLoadAssignmentResult =
 function capabilities(
   role: Parameters<typeof canRecordLoadFacts>[0],
   status: LoadStatus,
+  hasActiveAssignment = false,
 ): LoadUpdateCapabilities {
+  const nextStatuses = allowedNextLoadStatuses(role, status).filter(
+    (nextStatus) => nextStatus !== "dispatched" || hasActiveAssignment,
+  );
   return {
     canRecordFacts: canRecordLoadFacts(role),
-    canAssignLoad: canAssignLoads(role) && status === "pending",
-    allowedNextStatuses: allowedNextLoadStatuses(role, status),
+    canAssignLoad: canAssignLoads(role) && status === "pending" && !hasActiveAssignment,
+    allowedNextStatuses: nextStatuses,
     closureRequiresDocuments: status === "delivered",
   };
 }
@@ -143,7 +147,7 @@ export async function getLoadDetailAction(loadId: string): Promise<LoadDetailRes
       load,
       drivers,
       capabilities: load
-        ? capabilities(auth.businessRole, load.status)
+        ? capabilities(auth.businessRole, load.status, Boolean(load.driverUserId))
         : null,
     };
   } catch {
@@ -215,7 +219,7 @@ export async function assignVerifiedLoadAction(
       repository.listCompanyDrivers({ accessToken: auth.accessToken }),
     ]);
     if (!load) return { ok: false, error: "The assignment was saved, but the authorized load could not be reloaded." };
-    return { ok: true, load, drivers, capabilities: capabilities(auth.businessRole, load.status) };
+    return { ok: true, load, drivers, capabilities: capabilities(auth.businessRole, load.status, Boolean(load.driverUserId)) };
   } catch {
     return { ok: false, error: "The verified assignment could not be saved. No load state changed." };
   }
@@ -284,7 +288,7 @@ export async function updateVerifiedLoadAction(
     return {
       ok: true,
       load,
-      capabilities: capabilities(auth.businessRole, load.status),
+      capabilities: capabilities(auth.businessRole, load.status, Boolean(load.driverUserId)),
     };
   } catch {
     return { ok: false, error: "The verified update could not be saved. No load state changed." };
