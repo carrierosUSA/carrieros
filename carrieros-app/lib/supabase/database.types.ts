@@ -156,6 +156,7 @@ export type Database = {
       list_verified_operating_expenses:{Args:Record<PropertyKey,never>;Returns:Row[]};
       record_verified_operating_expense:{Args:{p_asset_id:string|null;p_category:string;p_incurred_on:string;p_amount_cents:number;p_vendor:string|null;p_source_reference:string|null;p_note:string;p_request_id:string};Returns:string};
       void_verified_operating_expense:{Args:{p_expense_id:string;p_reason:string;p_request_id:string};Returns:string};
+      list_verified_truck_profitability:{Args:{p_start:string;p_end:string};Returns:Row[]};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
