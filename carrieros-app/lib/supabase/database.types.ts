@@ -43,6 +43,8 @@ export type Database = {
       broker_profile_events: Table<Row>;
       operating_expenses: Table<Row>;
       operating_expense_events: Table<Row>;
+      company_compliance_records: Table<Row>;
+      company_compliance_events: Table<Row>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -157,6 +159,10 @@ export type Database = {
       record_verified_operating_expense:{Args:{p_asset_id:string|null;p_category:string;p_incurred_on:string;p_amount_cents:number;p_vendor:string|null;p_source_reference:string|null;p_note:string;p_request_id:string};Returns:string};
       void_verified_operating_expense:{Args:{p_expense_id:string;p_reason:string;p_request_id:string};Returns:string};
       list_verified_truck_profitability:{Args:{p_start:string;p_end:string};Returns:Row[]};
+      list_approved_compliance_documents:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      list_verified_company_compliance:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      save_verified_company_compliance:{Args:{p_record_id:string|null;p_document_id:string|null;p_category:string;p_title:string;p_reference_number:string|null;p_effective_on:string|null;p_expires_on:string|null;p_note:string;p_request_id:string};Returns:string};
+      void_verified_company_compliance:{Args:{p_record_id:string;p_reason:string;p_request_id:string};Returns:string};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

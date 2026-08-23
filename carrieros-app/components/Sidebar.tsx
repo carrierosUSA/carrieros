@@ -8,6 +8,7 @@ const navItems = [
   { name: "Drivers", href: "/drivers" },
   { name: "Fleet", href: "/fleet" },
   { name: "Maintenance", href: "/maintenance" },
+  { name: "Compliance", href: "/compliance" },
   { name: "Finance", href: "/finance" },
   { name: "Expenses", href: "/expenses" },
   { name: "Truck P&L", href: "/profitability" },
