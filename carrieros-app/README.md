@@ -1,6 +1,6 @@
 # Transpo.ai CarrierOS
 
-Authenticated carrier operations workspace built with Next.js 16 and Supabase. The current verified modules cover dispatch, a human-verified Broker Directory, documents, fleet, drivers, maintenance, finance with printable invoices, payroll, analytics, an in-app Alert Center, Fuel & IFTA evidence, company settings, Nova read-only guidance, and an owner-controlled team access queue.
+Authenticated carrier operations workspace built with Next.js 16 and Supabase. The current verified modules cover dispatch, a mobile-first Driver Portal, a human-verified Broker Directory, documents, fleet, drivers, maintenance, finance with printable invoices, payroll, analytics, an in-app Alert Center, Fuel & IFTA evidence, company settings, Nova read-only guidance, and an owner-controlled team access queue.
 
 ## Local development
 
