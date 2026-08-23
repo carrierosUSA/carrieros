@@ -2,6 +2,7 @@ import Link from "next/link";
 import Brand from "@/components/Brand";
 const navItems = [
   { name: "Command Center", href: "/" },
+  { name: "Alert Center", href: "/alerts" },
   { name: "Dispatch", href: "/dispatch" },
   { name: "Drivers", href: "/drivers" },
   { name: "Fleet", href: "/fleet" },

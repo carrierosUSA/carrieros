@@ -1,0 +1,2 @@
+"use server";import{AlertCenterRepository,type AlertCenterData}from"@/lib/alerts/center";import{requireDocumentAuth}from"@/lib/auth/supabase-server";
+export async function getVerifiedAlertsAction():Promise<{ok:true;data:AlertCenterData}|{ok:false;error:string}>{try{const auth=await requireDocumentAuth(),data=await new AlertCenterRepository().get({companyId:auth.companyId,accessToken:auth.accessToken,role:auth.businessRole});return{ok:true,data}}catch{return{ok:false,error:"Authorized alert data is unavailable. No all-clear status was assumed."}}}
