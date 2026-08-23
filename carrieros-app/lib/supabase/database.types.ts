@@ -39,6 +39,8 @@ export type Database = {
       ifta_record_events: Table<Row>;
       team_access_requests: Table<Row>;
       team_access_request_events: Table<Row>;
+      broker_profiles: Table<Row>;
+      broker_profile_events: Table<Row>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -143,6 +145,8 @@ export type Database = {
       list_verified_team_access_requests:{Args:Record<PropertyKey,never>;Returns:Row[]};
       prepare_verified_team_access_request:{Args:{p_request_type:string;p_target_email:string;p_target_user_id:string|null;p_requested_role:string;p_expires_at:string;p_note:string;p_request_id:string};Returns:string};
       revoke_verified_team_access_request:{Args:{p_team_access_request_id:string;p_reason:string;p_request_id:string};Returns:string};
+      list_verified_broker_profiles:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      save_verified_broker_profile:{Args:{p_broker_id:string|null;p_legal_name:string;p_mc_number:string;p_contact_name:string|null;p_contact_email:string|null;p_contact_phone:string|null;p_payment_terms_days:number;p_relationship_status:string;p_note:string;p_request_id:string};Returns:string};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
