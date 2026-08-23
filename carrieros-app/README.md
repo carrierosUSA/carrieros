@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Transpo.ai CarrierOS
 
-## Getting Started
+Authenticated carrier operations workspace built with Next.js 16 and Supabase. The current verified modules cover dispatch, documents, fleet, drivers, maintenance, finance, payroll, analytics, Fuel & IFTA evidence, company settings, Nova read-only guidance, and an owner-controlled team access queue.
 
-First, run the development server:
+## Local development
+
+1. Copy `.env.example` to `.env.local` and replace every placeholder.
+2. Install the locked dependencies with `npm ci`.
+3. Run `npm run dev` and open `http://localhost:3000`.
+
+The app fails closed when Supabase coordinates or authenticated `company_id` / `business_role` app metadata are missing.
+
+## Validation
+
+Run individual checks during development:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run test:document-intake
+npm run typecheck
+npm run lint
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Before a release, load the intended deployment environment and run:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run verify:release
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+That command validates required configuration without printing credentials, rejects known public-secret aliases and non-production OCR, then runs the security suite, TypeScript, ESLint, the production build, and a production-dependency vulnerability audit.
 
-## Learn More
+## Database safety
 
-To learn more about Next.js, take a look at the following resources:
+SQL files under `supabase/migrations` are reviewed migration artifacts; adding them to git does not apply them. Corresponding guarded rollback files are under `supabase/rollback`. Applying a migration, merging a pull request, deploying, sending an invitation, or changing a real user role remains a separate human-approved operation.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The team access queue prepares auditable seven-day invitation or role-change requests only. It never sends email, creates accounts, or changes permissions.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Operational boundary
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Transpo.ai never fabricates equipment, location, driver-hours, authority, insurance, cargo, document, tracking, tax, or payment facts. Nova is read-only. Drivers and carriers retain safety, movement, equipment, dispatch-release, and financial approval authority.

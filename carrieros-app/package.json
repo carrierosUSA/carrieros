@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test:document-intake": "node --import tsx --test lib/alph/document-intake/__tests__/*.test.ts"
+    "test:document-intake": "node --import tsx --test lib/alph/document-intake/__tests__/*.test.ts",
+    "preflight:release": "node scripts/release-preflight.mjs",
+    "verify:release": "npm run preflight:release && npm run test:document-intake && npm run typecheck && npm run lint && npm run build && npm audit --omit=dev --audit-level=high"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
