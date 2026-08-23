@@ -21,7 +21,8 @@ const groups = [
     { name: "Fuel & IFTA", href: "/ifta" },
   ] },
   { label: "Network", items: [
-    { name: "Brokers", href: "/brokers" }, { name: "Service Providers", href: "/providers" },
+    { name: "Brokers", href: "/brokers" }, { name: "Shippers & Facilities", href: "/facilities" },
+    { name: "Service Providers", href: "/providers" },
   ] },
   { label: "Intelligence", items: [
     { name: "Analytics", href: "/analytics" }, { name: "Nova AI", href: "/nova" },

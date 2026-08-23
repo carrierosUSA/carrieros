@@ -51,6 +51,8 @@ export type Database = {
       service_provider_events: Table<Row>;
       inventory_items: Table<Row>;
       inventory_item_events: Table<Row>;
+      facility_profiles: Table<Row>;
+      facility_profile_events: Table<Row>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -178,6 +180,8 @@ export type Database = {
       list_verified_inventory_items:{Args:Record<PropertyKey,never>;Returns:Row[]};
       save_verified_inventory_item:{Args:{p_item_id:string|null;p_item_name:string;p_sku:string|null;p_category:string;p_unit_of_measure:string;p_initial_quantity:number;p_reorder_level:number;p_storage_location:string|null;p_status:string;p_note:string;p_request_id:string};Returns:string};
       adjust_verified_inventory_stock:{Args:{p_item_id:string;p_quantity_change:number;p_note:string;p_request_id:string};Returns:string};
+      list_verified_facilities:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      save_verified_facility:{Args:{p_facility_id:string|null;p_facility_name:string;p_facility_type:string;p_address_line:string;p_city:string;p_state:string;p_postal_code:string|null;p_contact_name:string|null;p_phone:string|null;p_email:string|null;p_appointment_note:string|null;p_check_in_note:string|null;p_parking_note:string|null;p_lumper_note:string|null;p_temperature_note:string|null;p_status:string;p_note:string;p_request_id:string};Returns:string};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
