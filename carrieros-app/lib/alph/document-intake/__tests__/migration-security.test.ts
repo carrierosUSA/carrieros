@@ -29,6 +29,7 @@ test("only reviewed document and load-operation migrations are present", () => {
     "20260822070000_verified_driver_payroll.sql",
     "20260822090000_verified_company_settings.sql",
     "20260822110000_verified_fuel_ifta_ledger.sql",
+    "20260822130000_verified_team_access.sql",
   ]);
 });
 

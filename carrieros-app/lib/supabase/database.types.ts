@@ -37,6 +37,8 @@ export type Database = {
       fuel_purchase_records: Table<Row>;
       ifta_mileage_records: Table<Row>;
       ifta_record_events: Table<Row>;
+      team_access_requests: Table<Row>;
+      team_access_request_events: Table<Row>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -138,6 +140,9 @@ export type Database = {
       record_verified_fuel_purchase:{Args:{p_asset_id:string;p_purchased_at:string;p_jurisdiction:string;p_gallons:number;p_total_cost_cents:number;p_vendor:string|null;p_odometer_miles:number|null;p_source:string;p_receipt_document_id:string|null;p_note:string|null;p_request_id:string};Returns:string};
       record_verified_ifta_mileage:{Args:{p_asset_id:string;p_trip_date:string;p_jurisdiction:string;p_total_miles:number;p_taxable_miles:number;p_source:string;p_evidence_document_id:string|null;p_note:string|null;p_request_id:string};Returns:string};
       void_verified_ifta_record:{Args:{p_record_kind:string;p_record_id:string;p_reason:string;p_request_id:string};Returns:string};
+      list_verified_team_access_requests:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      prepare_verified_team_access_request:{Args:{p_request_type:string;p_target_email:string;p_target_user_id:string|null;p_requested_role:string;p_expires_at:string;p_note:string;p_request_id:string};Returns:string};
+      revoke_verified_team_access_request:{Args:{p_team_access_request_id:string;p_reason:string;p_request_id:string};Returns:string};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
