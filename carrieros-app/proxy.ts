@@ -10,7 +10,7 @@ type CookieToSet = {
 
 function isProtectedAppPath(pathname: string): boolean {
   if (pathname === "/") return true;
-  return ["/alerts","/analytics","/brokers","/claims","/compliance","/dispatch","/documents","/driver","/drivers","/expenses","/facilities","/finance","/fleet","/ifta","/inventory","/lanes","/maintenance","/nova","/payroll","/profitability","/providers","/settings","/api/documents"].some(
+  return ["/alerts","/analytics","/brokers","/claims","/compliance","/dispatch","/documents","/driver","/drivers","/expenses","/facilities","/finance","/fleet","/ifta","/inventory","/lanes","/maintenance","/nova","/payroll","/profitability","/providers","/settings","/year-end","/api/documents"].some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }

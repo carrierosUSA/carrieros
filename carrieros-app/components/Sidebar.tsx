@@ -19,6 +19,7 @@ const groups = [
     { name: "Finance", href: "/finance" }, { name: "Expenses", href: "/expenses" },
     { name: "Truck P&L", href: "/profitability" }, { name: "Payroll", href: "/payroll" },
     { name: "Fuel & IFTA", href: "/ifta" },
+    { name: "Year-End Records", href: "/year-end" },
   ] },
   { label: "Network", items: [
     { name: "Brokers", href: "/brokers" }, { name: "Shippers & Facilities", href: "/facilities" },
