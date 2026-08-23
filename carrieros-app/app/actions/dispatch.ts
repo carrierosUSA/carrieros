@@ -10,6 +10,7 @@ import type {
   LoadDetail,
   LoadClosureReadiness,
   LoadUpdateCapabilities,
+  LinkableBroker,
 } from "@/lib/operations/load-types";
 import {
   allowedNextLoadStatuses,
@@ -30,6 +31,7 @@ type LoadDetailResult =
       load: LoadDetail | null;
       capabilities: LoadUpdateCapabilities | null;
       drivers: AssignableDriver[];
+      brokers: LinkableBroker[];
     }
   | { ok: false; error: string };
 
@@ -223,13 +225,12 @@ export async function getLoadDetailAction(loadId: string): Promise<LoadDetailRes
       accessToken: auth.accessToken,
       loadId,
     });
-    const drivers = load && canAssignLoads(auth.businessRole)
-      ? await new LoadOperationsRepository().listCompanyDrivers({ accessToken: auth.accessToken })
-      : [];
+    const drivers = load && canAssignLoads(auth.businessRole)?await new LoadOperationsRepository().listCompanyDrivers({ accessToken: auth.accessToken }):[];const db=getSupabaseAuthenticatedUserClient(auth.accessToken),brokerResult=canAssignLoads(auth.businessRole)?await db.rpc("list_linkable_verified_brokers"):({data:[],error:null}),brokers:LinkableBroker[]=brokerResult.error?[]:(Array.isArray(brokerResult.data)?brokerResult.data:[]).flatMap(v=>{if(!v||typeof v!=="object")return[];const r=v as Record<string,unknown>,id=typeof r.id==="string"?r.id:"",status=r.relationship_status;return id&&(status==="active"||status==="review_required"||status==="do_not_use")?[{id,legalName:typeof r.legal_name==="string"?r.legal_name:"Verified broker",mcNumber:typeof r.mc_number==="string"?r.mc_number:"",relationshipStatus:status}]:[]});
     return {
       ok: true,
       load,
       drivers,
+      brokers,
       capabilities: load
         ? capabilities(auth.businessRole, load.status, Boolean(load.driverUserId))
         : null,
@@ -238,6 +239,8 @@ export async function getLoadDetailAction(loadId: string): Promise<LoadDetailRes
     return { ok: false, error: "Authorized load detail is not available." };
   }
 }
+
+export async function linkVerifiedBrokerToLoadAction(input:{loadId:string;brokerProfileId:string;note:string;requestId:string}):Promise<{ok:true;load:LoadDetail}|{ok:false;error:string}>{if(!UUID_PATTERN.test(input.loadId)||!UUID_PATTERN.test(input.brokerProfileId)||!UUID_PATTERN.test(input.requestId)||input.note.trim().length<3)return{ok:false,error:"Select a verified broker and enter the factual confirmation note."};try{const auth=await requireDocumentAuth();if(!canAssignLoads(auth.businessRole))return{ok:false,error:"Your authenticated role cannot verify load brokers."};const db=getSupabaseAuthenticatedUserClient(auth.accessToken),result=await db.rpc("link_verified_broker_to_load",{p_load_id:input.loadId,p_broker_profile_id:input.brokerProfileId,p_note:input.note.trim().slice(0,2000),p_request_id:input.requestId});if(result.error)return{ok:false,error:"Only a pending load and same-company broker record can be linked."};revalidatePath(`/dispatch/${input.loadId}`);const load=await new LoadOperationsRepository().getDetail({companyId:auth.companyId,accessToken:auth.accessToken,loadId:input.loadId});return load?{ok:true,load}:{ok:false,error:"Broker linked but authorized load reload failed."}}catch{return{ok:false,error:"Broker was not linked. No dispatch status changed."}}}
 
 function safeAssignmentError(message: string): string {
   if (message.includes("already has an active assignment")) {

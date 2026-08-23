@@ -21,6 +21,7 @@ export type LoadTimelineEvent = {
   note?: string; source: string; eventAt: string;
 };
 export type LoadDetail = DispatchBoardLoad & {
+  brokerProfileId?: string; brokerRelationshipStatus?: "active" | "review_required" | "do_not_use";
   driverDisplayName?: string;
   brokerContact?: string; commodity?: string; weightLbs?: number; equipmentType?: string;
   temperatureRequirement?: string; sealNumber?: string; deliveryNumber?: string;
@@ -28,6 +29,7 @@ export type LoadDetail = DispatchBoardLoad & {
   stops: LoadStopDetail[]; timeline: LoadTimelineEvent[];
 };
 export type AssignableDriver = { userId: string; displayName: string };
+export type LinkableBroker = { id:string; legalName:string; mcNumber:string; relationshipStatus:"active"|"review_required"|"do_not_use" };
 export type ClosureDocumentCandidate = {
   id: string;
   title: string;

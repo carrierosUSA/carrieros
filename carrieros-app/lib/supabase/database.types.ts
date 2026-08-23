@@ -147,6 +147,8 @@ export type Database = {
       revoke_verified_team_access_request:{Args:{p_team_access_request_id:string;p_reason:string;p_request_id:string};Returns:string};
       list_verified_broker_profiles:{Args:Record<PropertyKey,never>;Returns:Row[]};
       save_verified_broker_profile:{Args:{p_broker_id:string|null;p_legal_name:string;p_mc_number:string;p_contact_name:string|null;p_contact_email:string|null;p_contact_phone:string|null;p_payment_terms_days:number;p_relationship_status:string;p_note:string;p_request_id:string};Returns:string};
+      list_linkable_verified_brokers:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      link_verified_broker_to_load:{Args:{p_load_id:string;p_broker_profile_id:string;p_note:string;p_request_id:string};Returns:string};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

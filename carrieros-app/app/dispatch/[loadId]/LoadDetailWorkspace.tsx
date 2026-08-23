@@ -8,6 +8,7 @@ import {
   getLoadDetailAction,
   getClosureWorkspaceAction,
   linkVerifiedClosureDocumentAction,
+  linkVerifiedBrokerToLoadAction,
   updateVerifiedLoadAction,
 } from "@/app/actions/dispatch";
 import Sidebar from "@/components/Sidebar";
@@ -18,6 +19,7 @@ import type {
   LoadClosureReadiness,
   LoadStopDetail,
   LoadUpdateCapabilities,
+  LinkableBroker,
 } from "@/lib/operations/load-types";
 import type { LoadStatus } from "@/lib/types/load";
 
@@ -26,6 +28,7 @@ export default function LoadDetailWorkspace({ loadId }: { loadId: string }) {
   const [capabilities, setCapabilities] =
     useState<LoadUpdateCapabilities | null>(null);
   const [drivers, setDrivers] = useState<AssignableDriver[]>([]);
+  const [brokers,setBrokers]=useState<LinkableBroker[]>([]);
   const [state, setState] = useState<
     "loading" | "ready" | "not-found" | "unavailable"
   >("loading");
@@ -41,6 +44,7 @@ export default function LoadDetailWorkspace({ loadId }: { loadId: string }) {
           setDetail(result.load);
           setCapabilities(result.capabilities);
           setDrivers(result.drivers);
+          setBrokers(result.brokers);
           setState("ready");
         }
       })
@@ -67,6 +71,7 @@ export default function LoadDetailWorkspace({ loadId }: { loadId: string }) {
               detail={detail}
               capabilities={capabilities}
               drivers={drivers}
+              brokers={brokers}
               onSaved={(load, nextCapabilities) => {
                 setDetail(load);
                 setCapabilities(nextCapabilities);
@@ -88,12 +93,14 @@ function Detail({
   detail,
   capabilities,
   drivers,
+  brokers,
   onSaved,
   onAssigned,
 }: {
   detail: LoadDetail;
   capabilities: LoadUpdateCapabilities;
   drivers: AssignableDriver[];
+  brokers: LinkableBroker[];
   onSaved: (load: LoadDetail, capabilities: LoadUpdateCapabilities) => void;
   onAssigned: (
     load: LoadDetail,
@@ -213,6 +220,7 @@ function Detail({
         </div>
 
         <aside className="space-y-4">
+          <BrokerVerification detail={detail} brokers={brokers} onLinked={(load)=>onSaved(load,capabilities)}/>
           <LoadAssignment
             detail={detail}
             capabilities={capabilities}
@@ -294,6 +302,8 @@ function Detail({
     </>
   );
 }
+
+function BrokerVerification({detail,brokers,onLinked}:{detail:LoadDetail;brokers:LinkableBroker[];onLinked:(load:LoadDetail)=>void}){const[brokerId,setBrokerId]=useState(detail.brokerProfileId||""),[note,setNote]=useState(""),[busy,setBusy]=useState(false),[message,setMessage]=useState("");async function link(){setBusy(true);const r=await linkVerifiedBrokerToLoadAction({loadId:detail.id,brokerProfileId:brokerId,note,requestId:crypto.randomUUID()});if(r.ok){onLinked(r.load);setMessage("Verified broker linked. No dispatch or movement was authorized.")}else setMessage(r.error);setBusy(false)}return <Panel title="Broker verification"><p className="text-[11px] text-[#64748B]">Dispatch release requires a linked broker whose current internal status is active.</p><select disabled={detail.status!=="pending"} value={brokerId} onChange={e=>setBrokerId(e.target.value)} className="mt-3 w-full rounded-xl border bg-white px-3 py-2.5 text-xs"><option value="">Select verified broker</option>{brokers.map(b=><option key={b.id} value={b.id}>{b.legalName} · MC {b.mcNumber} · {b.relationshipStatus.replaceAll("_"," ")}</option>)}</select><textarea disabled={detail.status!=="pending"} value={note} onChange={e=>setNote(e.target.value)} placeholder="How identity and instructions were independently verified" className="mt-2 w-full rounded-xl border px-3 py-2.5 text-xs"/><button disabled={busy||detail.status!=="pending"||!brokerId||note.trim().length<3} onClick={()=>void link()} className="mt-2 w-full rounded-xl bg-[#0F172A] px-3 py-2.5 text-xs font-semibold text-white disabled:opacity-40">{busy?"Linking…":"Confirm verified broker link"}</button>{detail.brokerRelationshipStatus&&<p className={`mt-2 rounded-xl p-2 text-[11px] font-semibold ${detail.brokerRelationshipStatus==="active"?"bg-[#ECFDF5] text-[#047857]":"bg-[#FEF2F2] text-[#B91C1C]"}`}>Linked status: {detail.brokerRelationshipStatus.replaceAll("_"," ")}</p>}{message&&<p className="mt-2 text-[11px] text-[#64748B]">{message}</p>}</Panel>}
 
 function ClosureWorkspace({
   detail,

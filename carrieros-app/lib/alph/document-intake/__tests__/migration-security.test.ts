@@ -31,6 +31,7 @@ test("only reviewed document and load-operation migrations are present", () => {
     "20260822110000_verified_fuel_ifta_ledger.sql",
     "20260822130000_verified_team_access.sql",
     "20260822150000_verified_broker_directory.sql",
+    "20260822170000_broker_load_verification_gate.sql",
   ]);
 });
 

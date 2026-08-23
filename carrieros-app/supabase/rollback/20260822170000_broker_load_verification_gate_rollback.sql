@@ -1,0 +1,1 @@
+begin;revoke execute on function public.link_verified_broker_to_load(uuid,uuid,text,text),public.list_linkable_verified_brokers()from authenticated;drop function if exists public.link_verified_broker_to_load(uuid,uuid,text,text);drop function if exists public.list_linkable_verified_brokers();commit;
