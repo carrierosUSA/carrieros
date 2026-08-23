@@ -5,6 +5,7 @@ import { requireDocumentAuth } from "@/lib/auth/supabase-server";
 import type { BusinessRole } from "@/lib/auth/roles";
 import { ReceivablesRepository, type Receivable } from "@/lib/finance/receivables";
 import { getSupabaseAuthenticatedUserClient } from "@/lib/supabase/server";
+import{CompanySettingsRepository}from"@/lib/settings/company";import{LoadOperationsRepository}from"@/lib/operations/load-repository";import type{VerifiedInvoicePrint}from"@/lib/finance/invoice-print";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const FINANCE_ROLES = new Set<BusinessRole>(["super_admin", "owner", "accounting"]);
@@ -24,6 +25,7 @@ export async function getReceivablesAction(): Promise<Result> {
     return { ok: false, error: "Finance is restricted to authenticated owners and accounting users." };
   }
 }
+export async function getVerifiedInvoicePrintAction(loadId:string):Promise<{ok:true;invoice:VerifiedInvoicePrint}|{ok:false;error:string}>{if(!UUID_PATTERN.test(loadId))return{ok:false,error:"Invalid load reference."};try{const auth=await authorized(),receivables=await new ReceivablesRepository().list(auth.accessToken),row=receivables.find(v=>v.loadId===loadId);if(!row?.invoiceNumber||!row.invoiceIssuedAt)return{ok:false,error:"A human-verified issued invoice record is required."};const[settings,load]=await Promise.all([new CompanySettingsRepository().workspace(auth.accessToken,false),new LoadOperationsRepository().getDetail({companyId:auth.companyId,accessToken:auth.accessToken,loadId})]);if(!load)return{ok:false,error:"Authorized load facts are unavailable."};return{ok:true,invoice:{invoiceNumber:row.invoiceNumber,issuedAt:row.invoiceIssuedAt,dueAt:row.expectedPaymentAt,currency:row.currency,rateCents:row.rateCents,paidCents:row.paidCents,companyLegalName:settings.profile?.legalName,companyDbaName:settings.profile?.dbaName,companyEmail:settings.profile?.contactEmail,companyPhone:settings.profile?.contactPhone,usdotNumber:settings.profile?.usdotNumber,mcNumber:settings.profile?.mcNumber,loadNumber:row.loadNumber,brokerName:row.brokerName,brokerContact:load.brokerContact,origin:load.origin,destination:load.destination,pickupNumber:load.pickupNumber,deliveryNumber:load.deliveryNumber,stops:load.stops.map(s=>({sequence:s.sequence,type:s.type,facilityName:s.facilityName,address:s.address,city:s.city,state:s.state,appointmentAt:s.appointmentAt}))}}}catch{return{ok:false,error:"Verified invoice print data is unavailable."}}}
 
 export async function recordVerifiedInvoiceAction(input: {
   loadId: string; invoiceNumber: string; issuedAt: string; paymentTermsDays: number; requestId: string;
