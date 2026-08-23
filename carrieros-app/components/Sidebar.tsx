@@ -11,6 +11,7 @@ const navItems = [
   { name: "Compliance", href: "/compliance" },
   { name: "Incidents & Claims", href: "/claims" },
   { name: "Service Providers", href: "/providers" },
+  { name: "Inventory", href: "/inventory" },
   { name: "Finance", href: "/finance" },
   { name: "Expenses", href: "/expenses" },
   { name: "Truck P&L", href: "/profitability" },

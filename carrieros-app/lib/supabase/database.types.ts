@@ -49,6 +49,8 @@ export type Database = {
       incident_claim_events: Table<Row>;
       service_provider_profiles: Table<Row>;
       service_provider_events: Table<Row>;
+      inventory_items: Table<Row>;
+      inventory_item_events: Table<Row>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -173,6 +175,9 @@ export type Database = {
       void_verified_incident_claim:{Args:{p_incident_id:string;p_reason:string;p_request_id:string};Returns:string};
       list_verified_service_providers:{Args:Record<PropertyKey,never>;Returns:Row[]};
       save_verified_service_provider:{Args:{p_provider_id:string|null;p_provider_name:string;p_category:string;p_phone:string|null;p_email:string|null;p_website:string|null;p_address_line:string|null;p_city:string|null;p_state:string|null;p_postal_code:string|null;p_service_area:string|null;p_availability_note:string|null;p_status:string;p_note:string;p_request_id:string};Returns:string};
+      list_verified_inventory_items:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      save_verified_inventory_item:{Args:{p_item_id:string|null;p_item_name:string;p_sku:string|null;p_category:string;p_unit_of_measure:string;p_initial_quantity:number;p_reorder_level:number;p_storage_location:string|null;p_status:string;p_note:string;p_request_id:string};Returns:string};
+      adjust_verified_inventory_stock:{Args:{p_item_id:string;p_quantity_change:number;p_note:string;p_request_id:string};Returns:string};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
