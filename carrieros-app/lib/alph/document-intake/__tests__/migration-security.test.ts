@@ -36,6 +36,7 @@ test("only reviewed document and load-operation migrations are present", () => {
     "20260822210000_verified_operating_expenses.sql",
     "20260822230000_verified_truck_profitability.sql",
     "20260823010000_verified_company_compliance_vault.sql",
+    "20260823030000_verified_incident_claims_tracker.sql",
   ]);
 });
 

@@ -45,6 +45,8 @@ export type Database = {
       operating_expense_events: Table<Row>;
       company_compliance_records: Table<Row>;
       company_compliance_events: Table<Row>;
+      incident_claim_records: Table<Row>;
+      incident_claim_events: Table<Row>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -163,6 +165,10 @@ export type Database = {
       list_verified_company_compliance:{Args:Record<PropertyKey,never>;Returns:Row[]};
       save_verified_company_compliance:{Args:{p_record_id:string|null;p_document_id:string|null;p_category:string;p_title:string;p_reference_number:string|null;p_effective_on:string|null;p_expires_on:string|null;p_note:string;p_request_id:string};Returns:string};
       void_verified_company_compliance:{Args:{p_record_id:string;p_reason:string;p_request_id:string};Returns:string};
+      list_verified_incident_claims:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      list_incident_claim_context:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      save_verified_incident_claim:{Args:{p_incident_id:string|null;p_load_id:string|null;p_asset_id:string|null;p_document_id:string|null;p_incident_type:string;p_claim_status:string;p_occurred_at:string;p_location:string|null;p_summary:string;p_counterparty:string|null;p_claim_reference:string|null;p_estimated_loss_cents:number|null;p_note:string;p_request_id:string};Returns:string};
+      void_verified_incident_claim:{Args:{p_incident_id:string;p_reason:string;p_request_id:string};Returns:string};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
