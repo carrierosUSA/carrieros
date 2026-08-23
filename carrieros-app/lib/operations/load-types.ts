@@ -30,6 +30,7 @@ export type LoadDetail = DispatchBoardLoad & {
 };
 export type AssignableDriver = { userId: string; displayName: string };
 export type LinkableBroker = { id:string; legalName:string; mcNumber:string; relationshipStatus:"active"|"review_required"|"do_not_use" };
+export type DetentionStop={stopId:string;stopSequence:number;stopType:string;facilityName?:string;appointmentAt?:string;arrivalAt?:string;departureAt?:string;freeTimeMinutes:number;waitMinutes?:number;potentialDetentionMinutes?:number;claimStatus:string;requestedAmountCents?:number;approvedAmountCents?:number;factualNote?:string};
 export type ClosureDocumentCandidate = {
   id: string;
   title: string;

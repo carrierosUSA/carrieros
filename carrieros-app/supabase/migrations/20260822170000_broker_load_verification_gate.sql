@@ -1,5 +1,7 @@
 -- Human-confirmed broker-to-load link and dispatch release gate. Review before applying.
 begin;
+alter table public.load_events drop constraint load_events_event_type_check;
+alter table public.load_events add constraint load_events_event_type_check check(event_type in('status_changed','location_reported','eta_reported','check_in','check_out','exception_reported','instruction_sent','document_received','approval_recorded','broker_verified'));
 alter table public.loads add column broker_profile_id uuid;
 alter table public.loads add constraint loads_broker_company_fk foreign key(company_id,broker_profile_id)references public.broker_profiles(company_id,id);
 revoke insert,update on table public.loads from authenticated;grant select on table public.loads to authenticated;

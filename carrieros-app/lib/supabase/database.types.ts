@@ -149,6 +149,8 @@ export type Database = {
       save_verified_broker_profile:{Args:{p_broker_id:string|null;p_legal_name:string;p_mc_number:string;p_contact_name:string|null;p_contact_email:string|null;p_contact_phone:string|null;p_payment_terms_days:number;p_relationship_status:string;p_note:string;p_request_id:string};Returns:string};
       list_linkable_verified_brokers:{Args:Record<PropertyKey,never>;Returns:Row[]};
       link_verified_broker_to_load:{Args:{p_load_id:string;p_broker_profile_id:string;p_note:string;p_request_id:string};Returns:string};
+      get_verified_detention_workspace:{Args:{p_load_id:string};Returns:Row[]};
+      save_verified_detention_record:{Args:{p_load_id:string;p_stop_id:string;p_arrival_at:string;p_departure_at:string;p_free_time_minutes:number;p_claim_status:string;p_requested_amount_cents:number|null;p_approved_amount_cents:number|null;p_note:string;p_request_id:string};Returns:string};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
