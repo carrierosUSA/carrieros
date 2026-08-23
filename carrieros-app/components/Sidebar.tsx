@@ -25,7 +25,8 @@ const groups = [
     { name: "Service Providers", href: "/providers" },
   ] },
   { label: "Intelligence", items: [
-    { name: "Analytics", href: "/analytics" }, { name: "Nova AI", href: "/nova" },
+    { name: "Analytics", href: "/analytics" }, { name: "Lane Performance", href: "/lanes" },
+    { name: "Nova AI", href: "/nova" },
     { name: "Settings", href: "/settings" },
   ] },
 ] as const;

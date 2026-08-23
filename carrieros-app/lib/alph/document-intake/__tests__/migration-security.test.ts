@@ -40,6 +40,7 @@ test("only reviewed document and load-operation migrations are present", () => {
     "20260823050000_verified_service_provider_directory.sql",
     "20260823070000_verified_parts_inventory.sql",
     "20260823090000_verified_facility_directory.sql",
+    "20260823110000_verified_lane_performance.sql",
   ]);
 });
 
