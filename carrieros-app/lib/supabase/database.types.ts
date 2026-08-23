@@ -47,6 +47,8 @@ export type Database = {
       company_compliance_events: Table<Row>;
       incident_claim_records: Table<Row>;
       incident_claim_events: Table<Row>;
+      service_provider_profiles: Table<Row>;
+      service_provider_events: Table<Row>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -169,6 +171,8 @@ export type Database = {
       list_incident_claim_context:{Args:Record<PropertyKey,never>;Returns:Row[]};
       save_verified_incident_claim:{Args:{p_incident_id:string|null;p_load_id:string|null;p_asset_id:string|null;p_document_id:string|null;p_incident_type:string;p_claim_status:string;p_occurred_at:string;p_location:string|null;p_summary:string;p_counterparty:string|null;p_claim_reference:string|null;p_estimated_loss_cents:number|null;p_note:string;p_request_id:string};Returns:string};
       void_verified_incident_claim:{Args:{p_incident_id:string;p_reason:string;p_request_id:string};Returns:string};
+      list_verified_service_providers:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      save_verified_service_provider:{Args:{p_provider_id:string|null;p_provider_name:string;p_category:string;p_phone:string|null;p_email:string|null;p_website:string|null;p_address_line:string|null;p_city:string|null;p_state:string|null;p_postal_code:string|null;p_service_area:string|null;p_availability_note:string|null;p_status:string;p_note:string;p_request_id:string};Returns:string};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

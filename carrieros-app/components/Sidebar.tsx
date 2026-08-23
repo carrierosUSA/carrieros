@@ -10,6 +10,7 @@ const navItems = [
   { name: "Maintenance", href: "/maintenance" },
   { name: "Compliance", href: "/compliance" },
   { name: "Incidents & Claims", href: "/claims" },
+  { name: "Service Providers", href: "/providers" },
   { name: "Finance", href: "/finance" },
   { name: "Expenses", href: "/expenses" },
   { name: "Truck P&L", href: "/profitability" },
