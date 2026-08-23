@@ -9,6 +9,7 @@ const navItems = [
   { name: "Fleet", href: "/fleet" },
   { name: "Maintenance", href: "/maintenance" },
   { name: "Finance", href: "/finance" },
+  { name: "Expenses", href: "/expenses" },
   { name: "Payroll", href: "/payroll" },
   { name: "Fuel & IFTA", href: "/ifta" },
   { name: "Documents", href: "/documents" },

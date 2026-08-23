@@ -33,6 +33,7 @@ test("only reviewed document and load-operation migrations are present", () => {
     "20260822150000_verified_broker_directory.sql",
     "20260822170000_broker_load_verification_gate.sql",
     "20260822190000_verified_detention_tracker.sql",
+    "20260822210000_verified_operating_expenses.sql",
   ]);
 });
 

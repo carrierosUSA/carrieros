@@ -41,6 +41,8 @@ export type Database = {
       team_access_request_events: Table<Row>;
       broker_profiles: Table<Row>;
       broker_profile_events: Table<Row>;
+      operating_expenses: Table<Row>;
+      operating_expense_events: Table<Row>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -151,6 +153,9 @@ export type Database = {
       link_verified_broker_to_load:{Args:{p_load_id:string;p_broker_profile_id:string;p_note:string;p_request_id:string};Returns:string};
       get_verified_detention_workspace:{Args:{p_load_id:string};Returns:Row[]};
       save_verified_detention_record:{Args:{p_load_id:string;p_stop_id:string;p_arrival_at:string;p_departure_at:string;p_free_time_minutes:number;p_claim_status:string;p_requested_amount_cents:number|null;p_approved_amount_cents:number|null;p_note:string;p_request_id:string};Returns:string};
+      list_verified_operating_expenses:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      record_verified_operating_expense:{Args:{p_asset_id:string|null;p_category:string;p_incurred_on:string;p_amount_cents:number;p_vendor:string|null;p_source_reference:string|null;p_note:string;p_request_id:string};Returns:string};
+      void_verified_operating_expense:{Args:{p_expense_id:string;p_reason:string;p_request_id:string};Returns:string};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
