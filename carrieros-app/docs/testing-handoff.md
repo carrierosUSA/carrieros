@@ -71,4 +71,4 @@ Copy `docs/development-acceptance-record.example.json` into the ignored `testing
 npm run acceptance:verify -- testing-records/development-acceptance.json
 ```
 
-The verifier requires every role, critical flow, viewport and stop-condition boundary to pass. It rejects production records, incomplete checkpoints and sensitive field names; it prints counts only. Keep the record local unless a separately approved secure evidence location is provided.
+The verifier requires every role, critical flow, viewport and stop-condition boundary to pass. It binds the record to the exact currently checked-out 40-character Git commit, so stale or different-build signoff fails closed. It rejects production records, incomplete checkpoints and sensitive field names; it prints counts only. Keep the record local unless a separately approved secure evidence location is provided.

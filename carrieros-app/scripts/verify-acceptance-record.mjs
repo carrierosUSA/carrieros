@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 
 const requiredRoles=["owner","dispatcher","accounting","safety","maintenance","driver","read_only"];
 const requiredFlows=["documentToPendingLoad","verifiedAssignmentAndDispatchGate","driverIsolationAndStopUpdates","podInvoiceAndClosure","invoiceAndPaymentBoundaries","novaReadOnlyBoundary"];
@@ -10,7 +11,7 @@ function object(value){return value!==null&&typeof value==="object"&&!Array.isAr
 function passedGroup(value,names,label,failures){if(!object(value)){failures.push(`${label} is missing`);return}for(const name of names)if(value[name]!=="passed")failures.push(`${label}.${name} must equal passed`)}
 function inspectKeys(value,path,failures){if(!object(value))return;for(const[key,child]of Object.entries(value)){const next=path?`${path}.${key}`:key;if(forbiddenKey.test(key))failures.push(`${next} is a forbidden sensitive field`);inspectKeys(child,next,failures)}}
 
-export function validateAcceptanceRecord(record){
+export function validateAcceptanceRecord(record,expectedCommit){
   const failures=[];
   if(!object(record))return["Acceptance record must be a JSON object"];
   inspectKeys(record,"",failures);
@@ -20,6 +21,7 @@ export function validateAcceptanceRecord(record){
   const testedAt=typeof record.testedAt==="string"?Date.parse(record.testedAt):NaN;
   if(!Number.isFinite(testedAt)||testedAt>Date.now()+300000)failures.push("testedAt must be a valid non-future ISO timestamp");
   if(typeof record.commit!=="string"||!/^[0-9a-f]{40}$/i.test(record.commit))failures.push("commit must be a full 40-character Git hash");
+  else if(expectedCommit&&record.commit.toLowerCase()!==expectedCommit.toLowerCase())failures.push("commit must match the currently checked-out Git commit");
   if(record.automatedCheckpoint!=="passed")failures.push("automatedCheckpoint must equal passed");
   passedGroup(record.roles,requiredRoles,"roles",failures);
   passedGroup(record.criticalFlows,requiredFlows,"criticalFlows",failures);
@@ -32,6 +34,8 @@ export function validateAcceptanceRecord(record){
 const path=process.argv[2];
 if(!path){console.error("Usage: npm run acceptance:verify -- <local-record.json>");process.exit(2)}
 let record;try{record=JSON.parse(readFileSync(path,"utf8"))}catch{console.error("Acceptance verification failed: record is missing or invalid JSON. No external action was performed.");process.exit(1)}
-const failures=validateAcceptanceRecord(record);
+let currentCommit;try{currentCommit=execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8",stdio:["ignore","pipe","ignore"]}).trim()}catch{console.error("Acceptance verification failed: current Git commit could not be verified. No external action was performed.");process.exit(1)}
+if(!/^[0-9a-f]{40}$/i.test(currentCommit)){console.error("Acceptance verification failed: current Git commit could not be verified. No external action was performed.");process.exit(1)}
+const failures=validateAcceptanceRecord(record,currentCommit);
 if(failures.length){console.error("Acceptance verification failed:");for(const failure of failures)console.error(`- ${failure}`);console.error("No merge, deployment, migration, user, or production action was performed.");process.exit(1)}
 console.log(`Development acceptance record passed: ${requiredRoles.length} roles, ${requiredFlows.length} critical flows, ${requiredViewports.length} viewports, and ${requiredStops.length} stop-condition boundaries verified. No record values printed and no external action performed.`);
