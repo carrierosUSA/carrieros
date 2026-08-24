@@ -184,6 +184,7 @@ export type Database = {
       save_verified_facility:{Args:{p_facility_id:string|null;p_facility_name:string;p_facility_type:string;p_address_line:string;p_city:string;p_state:string;p_postal_code:string|null;p_contact_name:string|null;p_phone:string|null;p_email:string|null;p_appointment_note:string|null;p_check_in_note:string|null;p_parking_note:string|null;p_lumper_note:string|null;p_temperature_note:string|null;p_status:string;p_note:string;p_request_id:string};Returns:string};
       list_verified_lane_performance:{Args:{p_start:string;p_end:string};Returns:Row[]};
       list_verified_year_end_records:{Args:{p_year:number};Returns:Row[]};
+      list_verified_broker_performance:{Args:{p_start:string;p_end:string};Returns:Row[]};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

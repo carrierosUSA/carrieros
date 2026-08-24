@@ -22,7 +22,8 @@ const groups = [
     { name: "Year-End Records", href: "/year-end" },
   ] },
   { label: "Network", items: [
-    { name: "Brokers", href: "/brokers" }, { name: "Shippers & Facilities", href: "/facilities" },
+    { name: "Brokers", href: "/brokers" }, { name: "Broker Performance", href: "/broker-performance" },
+    { name: "Shippers & Facilities", href: "/facilities" },
     { name: "Service Providers", href: "/providers" },
   ] },
   { label: "Intelligence", items: [
