@@ -4,6 +4,7 @@ import test from "node:test";
 
 const route = readFileSync("app/api/readiness/route.ts", "utf8");
 const readiness = readFileSync("lib/system/readiness.ts", "utf8");
+const configuration = readFileSync("lib/system/config-validation.ts", "utf8");
 const smoke = readFileSync("scripts/unauthenticated-smoke.mjs", "utf8");
 
 test("readiness is distinct from liveness and fails closed", () => {
@@ -23,7 +24,8 @@ test("readiness returns no configuration names values or dependency details", ()
 test("readiness source requires every configuration group and secret hygiene", () => {
   assert.match(readiness, /checks\.every/);
   assert.match(readiness, /!publicSecretLeak/);
-  for (const name of ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "OPENAI_API_KEY", "ALPH_DOCUMENT_BUCKET"]) assert.ok(readiness.includes(name));
+  assert.match(readiness, /evaluateCoreConfiguration/);
+  for (const name of ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "OPENAI_API_KEY", "ALPH_DOCUMENT_BUCKET"]) assert.ok(configuration.includes(name));
 });
 
 test("credential-free production smoke expects readiness 503 with an empty body for HEAD", () => {

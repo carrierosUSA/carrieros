@@ -32,7 +32,7 @@ For a credential-free testing checkpoint, run `npm run verify:testing`. Before a
 
 GitHub pull requests to `main` and pushes to `codex/live-dispatch-data` run the same credential-free checkpoint automatically on the declared Node 22 runtime. CI has read-only repository permission and performs no migration, deployment, merge, or production action.
 
-The development preflight requires an explicit `TRANSPO_ENVIRONMENT=development` marker and exact `TRANSPO_EXPECTED_SUPABASE_PROJECT_REF` match. It validates configuration without printing credentials or contacting the database.
+The development preflight requires an explicit `TRANSPO_ENVIRONMENT=development` marker and exact `TRANSPO_EXPECTED_SUPABASE_PROJECT_REF` match. Runtime readiness also rejects malformed project URLs, placeholders, unsafe bucket names, public secret aliases, and identical anonymous/service credentials. Validation never prints credentials or contacts the database.
 
 After a separately approved deployment, infrastructure may probe `GET` or `HEAD /api/health` for process liveness and `/api/readiness` for value-free configuration readiness. Health always returns only `{ "status": "ok" }`; readiness returns `{ "status": "ready" }` with 200 or `{ "status": "not_ready" }` with 503. Both are non-cacheable and non-indexable, disclose no configuration details, and do not inspect users or database state.
 
