@@ -44,6 +44,7 @@ test("only reviewed document and load-operation migrations are present", () => {
     "20260823130000_verified_year_end_records.sql",
     "20260823150000_verified_broker_performance.sql",
     "20260823170000_verified_dispatch_schedule.sql",
+    "20260823190000_verified_reefer_temperature_logs.sql",
   ]);
 });
 

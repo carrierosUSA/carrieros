@@ -186,6 +186,9 @@ export type Database = {
       list_verified_year_end_records:{Args:{p_year:number};Returns:Row[]};
       list_verified_broker_performance:{Args:{p_start:string;p_end:string};Returns:Row[]};
       list_verified_dispatch_schedule:{Args:{p_start:string;p_end:string};Returns:Row[]};
+      list_verified_reefer_assignments:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      list_verified_reefer_temperature_logs:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      record_verified_reefer_temperature:{Args:{p_load_id:string;p_asset_id:string;p_recorded_at:string;p_setpoint_f:number;p_supply_air_f:number|null;p_return_air_f:number|null;p_source:string;p_note:string;p_request_id:string};Returns:string};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
