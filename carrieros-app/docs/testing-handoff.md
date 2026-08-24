@@ -44,7 +44,7 @@ Confirm that missing company metadata, unknown roles and cross-company records f
 Record the tester, role, timestamp and result for every step.
 
 1. Sign in and confirm company/role isolation.
-2. Confirm `GET` and `HEAD /api/health` return 200 without exposing configuration or dependency details.
+2. Confirm `GET` and `HEAD /api/health` return 200, while `/api/readiness` returns 200 only when the value-free configuration gate is satisfied. Neither endpoint may expose configuration or dependency details.
 3. Upload a sanitized rate confirmation; review extracted fields and explicitly approve corrections.
 4. Create a pending load from the approved current document.
 5. Link a verified broker and assign a verified current driver, truck and trailer.

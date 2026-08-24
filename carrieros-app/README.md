@@ -32,7 +32,7 @@ For a credential-free testing checkpoint, run `npm run verify:testing`. Before a
 
 The development preflight requires an explicit `TRANSPO_ENVIRONMENT=development` marker and exact `TRANSPO_EXPECTED_SUPABASE_PROJECT_REF` match. It validates configuration without printing credentials or contacting the database.
 
-After a separately approved deployment, infrastructure may probe `GET` or `HEAD /api/health`. It returns only `{ "status": "ok" }`, is non-cacheable and non-indexable, and does not inspect credentials, users, or database state.
+After a separately approved deployment, infrastructure may probe `GET` or `HEAD /api/health` for process liveness and `/api/readiness` for value-free configuration readiness. Health always returns only `{ "status": "ok" }`; readiness returns `{ "status": "ready" }` with 200 or `{ "status": "not_ready" }` with 503. Both are non-cacheable and non-indexable, disclose no configuration details, and do not inspect users or database state.
 
 That command validates required configuration without printing credentials, rejects known public-secret aliases and non-production OCR, then runs the security suite, TypeScript, ESLint, the production build, and a production-dependency vulnerability audit.
 

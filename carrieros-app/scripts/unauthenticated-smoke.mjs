@@ -35,6 +35,7 @@ delete env.NEXT_PUBLIC_SUPABASE_URL;
 delete env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 delete env.SUPABASE_SERVICE_ROLE_KEY;
 delete env.OPENAI_API_KEY;
+delete env.ALPH_DOCUMENT_BUCKET;
 
 const app = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-H", "127.0.0.1", "-p", String(port)], {
   env,
@@ -77,6 +78,15 @@ try {
   assert.equal(healthHead.status, 200);
   assert.equal(await healthHead.text(), "");
 
+  const readiness = await fetch(`${base}/api/readiness`, { redirect: "manual" });
+  assert.equal(readiness.status, 503);
+  assert.deepEqual(await readiness.json(), { status: "not_ready" });
+  assert.match(readiness.headers.get("cache-control") ?? "", /no-store/);
+
+  const readinessHead = await fetch(`${base}/api/readiness`, { method: "HEAD", redirect: "manual" });
+  assert.equal(readinessHead.status, 503);
+  assert.equal(await readinessHead.text(), "");
+
   for (const route of protectedRoutes) {
     const response = await fetch(`${base}${route}`, { redirect: "manual" });
     assert.ok([307, 308].includes(response.status), `${route} must redirect while authentication is unconfigured`);
@@ -88,7 +98,7 @@ try {
 
   const missing = await fetch(`${base}/definitely-not-a-transpo-route`, { redirect: "manual" });
   assert.equal(missing.status, 404);
-  console.log(`Unauthenticated production smoke passed: health endpoint, login, security headers, ${protectedRoutes.length} protected routes, and 404 behavior verified. No external service, database, user, or production action was performed.`);
+  console.log(`Unauthenticated production smoke passed: liveness, fail-closed readiness, login, security headers, ${protectedRoutes.length} protected routes, and 404 behavior verified. No external service, database, user, or production action was performed.`);
 } finally {
   app.kill("SIGTERM");
   await Promise.race([
