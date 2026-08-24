@@ -1,0 +1,39 @@
+name: Verified application checkpoint
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [codex/live-dispatch-data]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: "true"
+      NEXT_TELEMETRY_DISABLED: "1"
+    defaults:
+      run:
+        working-directory: carrieros-app
+    steps:
+      - name: Check out reviewed source
+        uses: actions/checkout@v4
+      - name: Use locked Node runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: carrieros-app/.nvmrc
+          cache: npm
+          cache-dependency-path: carrieros-app/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Run complete credential-free verification
+        run: npm run verify:testing
