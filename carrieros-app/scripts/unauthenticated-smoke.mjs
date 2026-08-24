@@ -30,6 +30,7 @@ async function availablePort() {
 
 const port = await availablePort();
 const base = `http://127.0.0.1:${port}`;
+const robotsPolicy = "noindex, nofollow, noarchive, nosnippet, noimageindex";
 const env = { ...process.env, NODE_ENV: "production" };
 delete env.NEXT_PUBLIC_SUPABASE_URL;
 delete env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -68,6 +69,7 @@ try {
   assert.equal(login.headers.get("x-dns-prefetch-control"), "off");
   assert.equal(login.headers.get("cross-origin-opener-policy"), "same-origin");
   assert.equal(login.headers.get("referrer-policy"), "strict-origin-when-cross-origin");
+  assert.equal(login.headers.get("x-robots-tag"), robotsPolicy);
   assert.equal(login.headers.get("permissions-policy"), "camera=(), microphone=(), geolocation=()");
   const contentSecurityPolicy = login.headers.get("content-security-policy") ?? "";
   for (const directive of ["base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'", "object-src 'none'"]) assert.ok(contentSecurityPolicy.includes(directive));
@@ -76,7 +78,7 @@ try {
   assert.equal(health.status, 200);
   assert.deepEqual(await health.json(), { status: "ok" });
   assert.match(health.headers.get("cache-control") ?? "", /no-store/);
-  assert.equal(health.headers.get("x-robots-tag"), "noindex, nofollow");
+  assert.equal(health.headers.get("x-robots-tag"), robotsPolicy);
 
   const healthHead = await fetch(`${base}/api/health`, { method: "HEAD", redirect: "manual" });
   assert.equal(healthHead.status, 200);

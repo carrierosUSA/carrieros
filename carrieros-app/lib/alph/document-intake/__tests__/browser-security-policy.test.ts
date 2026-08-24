@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const config = readFileSync("next.config.ts", "utf8");
+const layout = readFileSync("app/layout.tsx", "utf8");
 const smoke = readFileSync("scripts/unauthenticated-smoke.mjs", "utf8");
 
 test("browser policy blocks framing unsafe base URLs external forms and objects", () => {
@@ -30,4 +31,19 @@ test("cross-origin window isolation and DNS prefetch disabling are smoke verifie
 test("security policy stays global and value-free", () => {
   assert.match(config, /source: "\/:path\*"/);
   assert.doesNotMatch(config, /process\.env|SUPABASE|OPENAI|secret/i);
+});
+
+test("private operations are globally excluded from search indexing and previews", () => {
+  assert.match(config, /X-Robots-Tag/);
+  for (const directive of ["noindex", "nofollow", "noarchive", "nosnippet", "noimageindex"]) {
+    assert.ok(config.includes(directive));
+    assert.ok(smoke.includes(directive));
+  }
+
+  assert.match(layout, /robots:/);
+  assert.match(layout, /index: false/);
+  assert.match(layout, /follow: false/);
+  assert.match(layout, /noarchive: true/);
+  assert.match(layout, /noimageindex: true/);
+  assert.match(layout, /"max-image-preview": "none"/);
 });

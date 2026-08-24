@@ -19,6 +19,10 @@ const nextConfig: NextConfig = {
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
+            key: "X-Robots-Tag",
+            value: "noindex, nofollow, noarchive, nosnippet, noimageindex",
+          },
+          {
             key: "Content-Security-Policy",
             value: "base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'",
           },

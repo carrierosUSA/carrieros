@@ -42,6 +42,8 @@ After a separately approved deployment, infrastructure may probe `GET` or `HEAD 
 
 Global response policy denies framing, embedded objects, external form targets and unsafe base URLs; it also disables DNS prefetch and isolates top-level browser windows without restricting the reviewed application resource pipeline.
 
+The private operations workspace globally emits no-index/no-follow/no-archive/no-preview policy through both response headers and page metadata. Search engines must not index login, authenticated operations, health states, or application content.
+
 The automated security inventory fails whenever a new page or API route is neither protected by the centralized application prefixes nor included in the exact minimal proxy-bypass list.
 
 That command validates required configuration without printing credentials, rejects known public-secret aliases and non-production OCR, then runs the security suite, TypeScript, ESLint, the production build, and a production-dependency vulnerability audit.
