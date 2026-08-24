@@ -27,6 +27,27 @@ test("workflow is least privilege bounded and cancellable", () => {
   assert.doesNotMatch(workflow, /secrets\.|contents: write|pull-requests: write|deploy|supabase|migration/i);
 });
 
+test("third-party workflow actions are pinned to reviewed immutable revisions", () => {
+  assert.match(
+    workflow,
+    /actions\/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4\.4\.0/,
+  );
+  assert.match(
+    workflow,
+    /actions\/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4\.4\.0/,
+  );
+
+  const actionReferences = [...workflow.matchAll(/uses:\s+([^\s#]+)/g)].map(
+    ([, reference]) => reference,
+  );
+
+  assert.deepEqual(actionReferences, [
+    "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+    "actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+  ]);
+  assert.ok(actionReferences.every((reference) => /@[0-9a-f]{40}$/.test(reference)));
+});
+
 test("local readiness requires the version and CI checkpoint files", () => {
   assert.match(readiness, /\.nvmrc/);
   assert.match(readiness, /\.github\/workflows\/verify\.yml/);
