@@ -27,7 +27,9 @@ Before a release, load the intended deployment environment and run:
 npm run verify:release
 ```
 
-For a credential-free testing checkpoint, run `npm run verify:testing`. Follow [docs/testing-handoff.md](docs/testing-handoff.md) before connecting a development environment.
+For a credential-free testing checkpoint, run `npm run verify:testing`. Before any separately approved development-database action, run `npm run preflight:development` and `npm run migration:manifest`; `npm run verify:development-target` combines those guards with the full testing checkpoint. Follow [docs/testing-handoff.md](docs/testing-handoff.md) for the controlled activation sequence.
+
+The development preflight requires an explicit `TRANSPO_ENVIRONMENT=development` marker and exact `TRANSPO_EXPECTED_SUPABASE_PROJECT_REF` match. It validates configuration without printing credentials or contacting the database.
 
 That command validates required configuration without printing credentials, rejects known public-secret aliases and non-production OCR, then runs the security suite, TypeScript, ESLint, the production build, and a production-dependency vulnerability audit.
 

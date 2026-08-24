@@ -10,9 +10,12 @@
     "typecheck": "tsc --noEmit",
     "test:document-intake": "node --import tsx --test lib/alph/document-intake/__tests__/*.test.ts",
     "preflight:testing": "node scripts/testing-readiness.mjs",
+    "preflight:development": "node --env-file-if-exists=.env.local scripts/development-target-preflight.mjs",
+    "migration:manifest": "node scripts/migration-manifest.mjs",
     "preflight:release": "node scripts/release-preflight.mjs",
     "verify:testing": "npm run preflight:testing && npm run test:document-intake && npm run typecheck && npm run lint && npm run build && npm audit --omit=dev --audit-level=high",
-    "verify:release": "npm run preflight:release && npm run test:document-intake && npm run typecheck && npm run lint && npm run build && npm audit --omit=dev --audit-level=high"
+    "verify:release": "npm run preflight:release && npm run test:document-intake && npm run typecheck && npm run lint && npm run build && npm audit --omit=dev --audit-level=high",
+    "verify:development-target": "npm run preflight:development && npm run migration:manifest && npm run verify:testing"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",

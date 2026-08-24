@@ -18,8 +18,10 @@ The command checks the locked dependency install, reviewed migration/rollback se
 1. Use the **Transpo.ai Development** Supabase project—not production.
 2. Back up the development database and confirm its project reference before any SQL review.
 3. Copy `.env.example` to `.env.local`; enter development values locally. Never paste credentials into chat, Git, screenshots, tickets, or test notes.
-4. Review migrations in timestamp order. Applying any migration remains a separate human-approved database action.
-5. Stop if a migration fails, the project identity is uncertain, or existing development data conflicts. Do not skip ahead or apply rollback SQL automatically.
+4. Set `TRANSPO_ENVIRONMENT=development` and `TRANSPO_EXPECTED_SUPABASE_PROJECT_REF` to the exact development project reference, then run `npm run preflight:development`.
+5. Run `npm run migration:manifest` and retain the reviewed filename/checksum output with the test record.
+6. Review migrations in timestamp order. Applying any migration remains a separate human-approved database action.
+7. Stop if target preflight fails, a migration fails, the project identity is uncertain, or existing development data conflicts. Do not skip ahead or apply rollback SQL automatically.
 
 ## 3. Create isolated test identities
 
