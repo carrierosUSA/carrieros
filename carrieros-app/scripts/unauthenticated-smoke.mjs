@@ -31,6 +31,13 @@ async function availablePort() {
 const port = await availablePort();
 const base = `http://127.0.0.1:${port}`;
 const robotsPolicy = "noindex, nofollow, noarchive, nosnippet, noimageindex";
+const assertPrivateNoStore = (response, label) => {
+  const cacheControl = response.headers.get("cache-control") ?? "";
+  assert.match(cacheControl, /private/iu, `${label} must be private`);
+  assert.match(cacheControl, /no-store/iu, `${label} must not be stored`);
+  assert.equal(response.headers.get("pragma"), "no-cache");
+  assert.equal(response.headers.get("expires"), "0");
+};
 const env = { ...process.env, NODE_ENV: "production" };
 delete env.NEXT_PUBLIC_SUPABASE_URL;
 delete env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -73,6 +80,7 @@ try {
   assert.equal(login.headers.get("x-permitted-cross-domain-policies"), "none");
   assert.equal(login.headers.get("referrer-policy"), "strict-origin-when-cross-origin");
   assert.equal(login.headers.get("x-robots-tag"), robotsPolicy);
+  assertPrivateNoStore(login, "login");
   assert.equal(
     login.headers.get("permissions-policy"),
     "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=()",
@@ -101,12 +109,19 @@ try {
 
   for (const route of protectedRoutes) {
     const response = await fetch(`${base}${route}`, { redirect: "manual" });
+    assertPrivateNoStore(response, route);
     assert.ok([307, 308].includes(response.status), `${route} must redirect while authentication is unconfigured`);
     const location = response.headers.get("location") ?? "";
     const destination = new URL(location, base);
     assert.equal(destination.pathname, "/login", `${route} must redirect to login`);
     assert.equal(destination.searchParams.get("error"), "configuration", `${route} must fail closed to the configuration login state`);
   }
+
+  const staticAssetPath = loginBody.match(/src="([^"?]*\/_next\/static\/[^"?]+\.js)/)?.[1];
+  assert.ok(staticAssetPath, "login must reference a built static JavaScript asset");
+  const staticAsset = await fetch(`${base}${staticAssetPath}`, { redirect: "manual" });
+  assert.equal(staticAsset.status, 200);
+  assert.doesNotMatch(staticAsset.headers.get("cache-control") ?? "", /no-store/iu);
 
   const missing = await fetch(`${base}/definitely-not-a-transpo-route`, { redirect: "manual" });
   assert.equal(missing.status, 404);

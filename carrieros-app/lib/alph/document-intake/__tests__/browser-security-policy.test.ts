@@ -4,6 +4,7 @@ import test from "node:test";
 
 const config = readFileSync("next.config.ts", "utf8");
 const layout = readFileSync("app/layout.tsx", "utf8");
+const proxy = readFileSync("proxy.ts", "utf8");
 const smoke = readFileSync("scripts/unauthenticated-smoke.mjs", "utf8");
 
 test("browser policy blocks framing unsafe base URLs external forms and objects", () => {
@@ -64,4 +65,17 @@ test("private operations are globally excluded from search indexing and previews
   assert.match(layout, /noarchive: true/);
   assert.match(layout, /noimageindex: true/);
   assert.match(layout, /"max-image-preview": "none"/);
+});
+
+test("application responses are private no-store while built assets stay cacheable", () => {
+  assert.match(proxy, /private, no-store, max-age=0, must-revalidate/);
+  assert.match(proxy, /Pragma/);
+  assert.match(proxy, /no-cache/);
+  assert.match(proxy, /Expires/);
+  assert.match(proxy, /return applyPrivateCachePolicy\(response\)/);
+  assert.match(proxy, /_next\/static\|_next\/image/);
+  assert.match(smoke, /assertPrivateNoStore\(login/);
+  assert.match(smoke, /assertPrivateNoStore\(response/);
+  assert.match(smoke, /staticAsset/);
+  assert.match(smoke, /doesNotMatch/);
 });

@@ -21,6 +21,16 @@ function copyCookies(source: NextResponse, target: NextResponse): void {
   source.cookies.getAll().forEach((cookie) => target.cookies.set(cookie));
 }
 
+function applyPrivateCachePolicy(response: NextResponse): NextResponse {
+  response.headers.set(
+    "Cache-Control",
+    "private, no-store, max-age=0, must-revalidate",
+  );
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  return response;
+}
+
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -82,7 +92,7 @@ export async function proxy(request: NextRequest) {
     response = NextResponse.redirect(destination);
   }
 
-  return response;
+  return applyPrivateCachePolicy(response);
 }
 
 export const config = {

@@ -46,6 +46,8 @@ Production responses require year-long HTTPS transport, same-origin resource use
 
 The private operations workspace globally emits no-index/no-follow/no-archive/no-preview policy through both response headers and page metadata. Search engines must not index login, authenticated operations, health states, or application content.
 
+Every matched application response and authentication redirect is private, no-store, immediately expired, and must revalidate. Versioned Next.js static assets remain outside that policy so secure browser caching does not degrade the application bundle.
+
 The automated security inventory fails whenever a new page or API route is neither protected by the centralized application prefixes nor included in the exact minimal proxy-bypass list.
 
 That command validates required configuration without printing credentials, rejects known public-secret aliases and non-production OCR, then runs the security suite, TypeScript, ESLint, the production build, and a production-dependency vulnerability audit.
