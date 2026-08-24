@@ -36,6 +36,8 @@ The development preflight requires an explicit `TRANSPO_ENVIRONMENT=development`
 
 After a separately approved deployment, infrastructure may probe `GET` or `HEAD /api/health` for process liveness and `/api/readiness` for value-free configuration readiness. Health always returns only `{ "status": "ok" }`; readiness returns `{ "status": "ready" }` with 200 or `{ "status": "not_ready" }` with 503. Both are non-cacheable and non-indexable, disclose no configuration details, and do not inspect users or database state.
 
+Global response policy denies framing, embedded objects, external form targets and unsafe base URLs; it also disables DNS prefetch and isolates top-level browser windows without restricting the reviewed application resource pipeline.
+
 That command validates required configuration without printing credentials, rejects known public-secret aliases and non-production OCR, then runs the security suite, TypeScript, ESLint, the production build, and a production-dependency vulnerability audit.
 
 ## Database safety

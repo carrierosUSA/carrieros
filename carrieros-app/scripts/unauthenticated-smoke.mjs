@@ -65,8 +65,12 @@ try {
   assert.match(loginBody, /Sign in securely/);
   assert.equal(login.headers.get("x-content-type-options"), "nosniff");
   assert.equal(login.headers.get("x-frame-options"), "DENY");
+  assert.equal(login.headers.get("x-dns-prefetch-control"), "off");
+  assert.equal(login.headers.get("cross-origin-opener-policy"), "same-origin");
   assert.equal(login.headers.get("referrer-policy"), "strict-origin-when-cross-origin");
   assert.equal(login.headers.get("permissions-policy"), "camera=(), microphone=(), geolocation=()");
+  const contentSecurityPolicy = login.headers.get("content-security-policy") ?? "";
+  for (const directive of ["base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'", "object-src 'none'"]) assert.ok(contentSecurityPolicy.includes(directive));
 
   const health = await fetch(`${base}/api/health`, { redirect: "manual" });
   assert.equal(health.status, 200);
