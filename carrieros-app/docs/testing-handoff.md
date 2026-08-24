@@ -44,17 +44,18 @@ Confirm that missing company metadata, unknown roles and cross-company records f
 Record the tester, role, timestamp and result for every step.
 
 1. Sign in and confirm company/role isolation.
-2. Upload a sanitized rate confirmation; review extracted fields and explicitly approve corrections.
-3. Create a pending load from the approved current document.
-4. Link a verified broker and assign a verified current driver, truck and trailer.
-5. Confirm dispatch release stays blocked until all human and safety gates are satisfied.
-6. Record stop updates from the correct role; confirm other drivers cannot access the load.
-7. Link current approved POD and invoice evidence before closure.
-8. Record an invoice, partial payment and final payment; confirm overpayment and unauthorized roles are blocked.
-9. Test fleet, driver compliance, maintenance, expenses, payroll, IFTA, claims, inventory, facilities and reefer evidence with sanitized facts.
-10. Confirm Schedule, Alerts, Analytics, P&L, Lane Performance, Broker Performance and Year-End Records preserve missing data instead of inventing zero.
-11. Confirm Nova is read-only and never performs a mutation, outreach, payment, dispatch, liability or safety decision.
-12. Repeat essential views at phone, tablet and desktop widths.
+2. Confirm `GET` and `HEAD /api/health` return 200 without exposing configuration or dependency details.
+3. Upload a sanitized rate confirmation; review extracted fields and explicitly approve corrections.
+4. Create a pending load from the approved current document.
+5. Link a verified broker and assign a verified current driver, truck and trailer.
+6. Confirm dispatch release stays blocked until all human and safety gates are satisfied.
+7. Record stop updates from the correct role; confirm other drivers cannot access the load.
+8. Link current approved POD and invoice evidence before closure.
+9. Record an invoice, partial payment and final payment; confirm overpayment and unauthorized roles are blocked.
+10. Test fleet, driver compliance, maintenance, expenses, payroll, IFTA, claims, inventory, facilities and reefer evidence with sanitized facts.
+11. Confirm Schedule, Alerts, Analytics, P&L, Lane Performance, Broker Performance and Year-End Records preserve missing data instead of inventing zero.
+12. Confirm Nova is read-only and never performs a mutation, outreach, payment, dispatch, liability or safety decision.
+13. Repeat essential views at phone, tablet and desktop widths.
 
 ## 5. Stop conditions
 

@@ -67,6 +67,16 @@ try {
   assert.equal(login.headers.get("referrer-policy"), "strict-origin-when-cross-origin");
   assert.equal(login.headers.get("permissions-policy"), "camera=(), microphone=(), geolocation=()");
 
+  const health = await fetch(`${base}/api/health`, { redirect: "manual" });
+  assert.equal(health.status, 200);
+  assert.deepEqual(await health.json(), { status: "ok" });
+  assert.match(health.headers.get("cache-control") ?? "", /no-store/);
+  assert.equal(health.headers.get("x-robots-tag"), "noindex, nofollow");
+
+  const healthHead = await fetch(`${base}/api/health`, { method: "HEAD", redirect: "manual" });
+  assert.equal(healthHead.status, 200);
+  assert.equal(await healthHead.text(), "");
+
   for (const route of protectedRoutes) {
     const response = await fetch(`${base}${route}`, { redirect: "manual" });
     assert.ok([307, 308].includes(response.status), `${route} must redirect while authentication is unconfigured`);
@@ -78,7 +88,7 @@ try {
 
   const missing = await fetch(`${base}/definitely-not-a-transpo-route`, { redirect: "manual" });
   assert.equal(missing.status, 404);
-  console.log(`Unauthenticated production smoke passed: login, security headers, ${protectedRoutes.length} protected routes, and 404 behavior verified. No external service, database, user, or production action was performed.`);
+  console.log(`Unauthenticated production smoke passed: health endpoint, login, security headers, ${protectedRoutes.length} protected routes, and 404 behavior verified. No external service, database, user, or production action was performed.`);
 } finally {
   app.kill("SIGTERM");
   await Promise.race([
