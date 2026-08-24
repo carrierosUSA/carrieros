@@ -8,7 +8,8 @@ import Brand from "@/components/Brand";
 const groups = [
   { label: "Operations", items: [
     { name: "Command Center", href: "/" }, { name: "Alert Center", href: "/alerts" },
-    { name: "Dispatch", href: "/dispatch" }, { name: "Documents", href: "/documents" },
+    { name: "Dispatch", href: "/dispatch" }, { name: "Schedule", href: "/schedule" },
+    { name: "Documents", href: "/documents" },
   ] },
   { label: "Fleet & Safety", items: [
     { name: "Drivers", href: "/drivers" }, { name: "Fleet", href: "/fleet" },

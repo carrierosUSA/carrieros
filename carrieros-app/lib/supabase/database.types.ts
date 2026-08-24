@@ -185,6 +185,7 @@ export type Database = {
       list_verified_lane_performance:{Args:{p_start:string;p_end:string};Returns:Row[]};
       list_verified_year_end_records:{Args:{p_year:number};Returns:Row[]};
       list_verified_broker_performance:{Args:{p_start:string;p_end:string};Returns:Row[]};
+      list_verified_dispatch_schedule:{Args:{p_start:string;p_end:string};Returns:Row[]};
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
