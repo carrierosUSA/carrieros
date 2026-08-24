@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "smoke:unauthenticated": "node scripts/unauthenticated-smoke.mjs",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
@@ -13,8 +14,8 @@
     "preflight:development": "node --env-file-if-exists=.env.local scripts/development-target-preflight.mjs",
     "migration:manifest": "node scripts/migration-manifest.mjs",
     "preflight:release": "node scripts/release-preflight.mjs",
-    "verify:testing": "npm run preflight:testing && npm run test:document-intake && npm run typecheck && npm run lint && npm run build && npm audit --omit=dev --audit-level=high",
-    "verify:release": "npm run preflight:release && npm run test:document-intake && npm run typecheck && npm run lint && npm run build && npm audit --omit=dev --audit-level=high",
+    "verify:testing": "npm run preflight:testing && npm run test:document-intake && npm run typecheck && npm run lint && npm run build && npm run smoke:unauthenticated && npm audit --omit=dev --audit-level=high",
+    "verify:release": "npm run preflight:release && npm run test:document-intake && npm run typecheck && npm run lint && npm run build && npm run smoke:unauthenticated && npm audit --omit=dev --audit-level=high",
     "verify:development-target": "npm run preflight:development && npm run migration:manifest && npm run verify:testing"
   },
   "dependencies": {

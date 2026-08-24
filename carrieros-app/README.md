@@ -19,6 +19,7 @@ npm run test:document-intake
 npm run typecheck
 npm run lint
 npm run build
+npm run smoke:unauthenticated
 ```
 
 Before a release, load the intended deployment environment and run:
