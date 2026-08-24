@@ -4,6 +4,10 @@ import test from "node:test";
 
 const workflow = readFileSync("../.github/workflows/verify.yml", "utf8");
 const dependabot = readFileSync("../.github/dependabot.yml", "utf8");
+const pullRequestTemplate = readFileSync(
+  "../.github/pull_request_template.md",
+  "utf8",
+);
 const runtime = readFileSync(".nvmrc", "utf8").trim();
 const readiness = readFileSync("scripts/testing-readiness.mjs", "utf8");
 
@@ -72,4 +76,28 @@ test("dependency maintenance cannot merge deploy or access secrets", () => {
     dependabot,
     /auto-merge|workflow_dispatch|secrets:|registries:|deploy|supabase|migration|target-branch/i,
   );
+});
+
+test("pull request review requires the complete verified checkpoint", () => {
+  assert.match(pullRequestTemplate, /npm ci/);
+  assert.match(pullRequestTemplate, /npm run verify:testing/);
+  assert.match(pullRequestTemplate, /regression coverage/);
+  assert.match(pullRequestTemplate, /credentials, customer data, driver data, documents/);
+  assert.match(pullRequestTemplate, /Company isolation and role boundaries/);
+});
+
+test("pull request review preserves explicit human-controlled release boundaries", () => {
+  for (const boundary of [
+    "No database migration was applied",
+    "No deployment or production configuration was changed",
+    "No pull request was merged and no real user or role was changed",
+    "separate human approval",
+    "Rollback or disable path",
+    "Sanitized validation evidence",
+  ]) {
+    assert.ok(pullRequestTemplate.includes(boundary), `Missing review boundary: ${boundary}`);
+  }
+
+  assert.match(pullRequestTemplate, /Nova remains assistive and read-only/);
+  assert.match(pullRequestTemplate, /Dispatch release, money movement, user access/);
 });
