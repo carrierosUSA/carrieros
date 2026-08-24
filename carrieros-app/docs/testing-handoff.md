@@ -62,3 +62,13 @@ Record the tester, role, timestamp and result for every step.
 Stop testing and preserve evidence if company isolation fails, a driver sees another driver’s work, a financial role boundary fails, a mutation happens without explicit confirmation, a secret appears in browser/log output, a migration differs from the reviewed file, or any test/build/audit command fails.
 
 Production remains blocked until controlled development testing is signed off and merge, migration and deployment are each separately approved.
+
+## 6. Verify the local acceptance record
+
+Copy `docs/development-acceptance-record.example.json` into the ignored `testing-records/` directory, fill it with sanitized results only, and run:
+
+```bash
+npm run acceptance:verify -- testing-records/development-acceptance.json
+```
+
+The verifier requires every role, critical flow, viewport and stop-condition boundary to pass. It rejects production records, incomplete checkpoints and sensitive field names; it prints counts only. Keep the record local unless a separately approved secure evidence location is provided.

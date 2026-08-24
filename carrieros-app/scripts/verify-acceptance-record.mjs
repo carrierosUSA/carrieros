@@ -1,0 +1,37 @@
+import { readFileSync } from "node:fs";
+
+const requiredRoles=["owner","dispatcher","accounting","safety","maintenance","driver","read_only"];
+const requiredFlows=["documentToPendingLoad","verifiedAssignmentAndDispatchGate","driverIsolationAndStopUpdates","podInvoiceAndClosure","invoiceAndPaymentBoundaries","novaReadOnlyBoundary"];
+const requiredViewports=["phone","tablet","desktop"];
+const requiredStops=["companyIsolation","driverIsolation","financialRoleBoundary","explicitMutationConfirmation","noPrivateValueExposure","reviewedMigrationIdentity"];
+const forbiddenKey=/password|secret|token|credential|api.?key|service.?role.?key/i;
+
+function object(value){return value!==null&&typeof value==="object"&&!Array.isArray(value)}
+function passedGroup(value,names,label,failures){if(!object(value)){failures.push(`${label} is missing`);return}for(const name of names)if(value[name]!=="passed")failures.push(`${label}.${name} must equal passed`)}
+function inspectKeys(value,path,failures){if(!object(value))return;for(const[key,child]of Object.entries(value)){const next=path?`${path}.${key}`:key;if(forbiddenKey.test(key))failures.push(`${next} is a forbidden sensitive field`);inspectKeys(child,next,failures)}}
+
+export function validateAcceptanceRecord(record){
+  const failures=[];
+  if(!object(record))return["Acceptance record must be a JSON object"];
+  inspectKeys(record,"",failures);
+  if(record.environment!=="development")failures.push("environment must equal development");
+  if(record.projectReferenceConfirmed!==true)failures.push("projectReferenceConfirmed must equal true");
+  if(typeof record.tester!=="string"||record.tester.trim().length<2||record.tester.length>100||/REPLACE_|placeholder/i.test(record.tester))failures.push("tester must identify the development tester");
+  const testedAt=typeof record.testedAt==="string"?Date.parse(record.testedAt):NaN;
+  if(!Number.isFinite(testedAt)||testedAt>Date.now()+300000)failures.push("testedAt must be a valid non-future ISO timestamp");
+  if(typeof record.commit!=="string"||!/^[0-9a-f]{40}$/i.test(record.commit))failures.push("commit must be a full 40-character Git hash");
+  if(record.automatedCheckpoint!=="passed")failures.push("automatedCheckpoint must equal passed");
+  passedGroup(record.roles,requiredRoles,"roles",failures);
+  passedGroup(record.criticalFlows,requiredFlows,"criticalFlows",failures);
+  passedGroup(record.viewports,requiredViewports,"viewports",failures);
+  passedGroup(record.stopConditions,requiredStops,"stopConditions",failures);
+  if(typeof record.notes!=="string"||record.notes.length>1000)failures.push("notes must be a string no longer than 1000 characters");
+  return failures;
+}
+
+const path=process.argv[2];
+if(!path){console.error("Usage: npm run acceptance:verify -- <local-record.json>");process.exit(2)}
+let record;try{record=JSON.parse(readFileSync(path,"utf8"))}catch{console.error("Acceptance verification failed: record is missing or invalid JSON. No external action was performed.");process.exit(1)}
+const failures=validateAcceptanceRecord(record);
+if(failures.length){console.error("Acceptance verification failed:");for(const failure of failures)console.error(`- ${failure}`);console.error("No merge, deployment, migration, user, or production action was performed.");process.exit(1)}
+console.log(`Development acceptance record passed: ${requiredRoles.length} roles, ${requiredFlows.length} critical flows, ${requiredViewports.length} viewports, and ${requiredStops.length} stop-condition boundaries verified. No record values printed and no external action performed.`);

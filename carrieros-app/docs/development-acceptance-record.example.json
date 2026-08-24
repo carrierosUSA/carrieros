@@ -1,0 +1,39 @@
+{
+  "environment": "development",
+  "projectReferenceConfirmed": false,
+  "tester": "REPLACE_WITH_TESTER_NAME",
+  "testedAt": "REPLACE_WITH_ISO_TIMESTAMP",
+  "commit": "REPLACE_WITH_40_CHARACTER_COMMIT",
+  "automatedCheckpoint": "pending",
+  "roles": {
+    "owner": "pending",
+    "dispatcher": "pending",
+    "accounting": "pending",
+    "safety": "pending",
+    "maintenance": "pending",
+    "driver": "pending",
+    "read_only": "pending"
+  },
+  "criticalFlows": {
+    "documentToPendingLoad": "pending",
+    "verifiedAssignmentAndDispatchGate": "pending",
+    "driverIsolationAndStopUpdates": "pending",
+    "podInvoiceAndClosure": "pending",
+    "invoiceAndPaymentBoundaries": "pending",
+    "novaReadOnlyBoundary": "pending"
+  },
+  "viewports": {
+    "phone": "pending",
+    "tablet": "pending",
+    "desktop": "pending"
+  },
+  "stopConditions": {
+    "companyIsolation": "pending",
+    "driverIsolation": "pending",
+    "financialRoleBoundary": "pending",
+    "explicitMutationConfirmation": "pending",
+    "noPrivateValueExposure": "pending",
+    "reviewedMigrationIdentity": "pending"
+  },
+  "notes": "Use sanitized facts only. Do not include private configuration values, personal data, cargo decisions, or production information."
+}

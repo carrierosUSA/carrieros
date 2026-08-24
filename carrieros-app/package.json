@@ -13,6 +13,7 @@
     "preflight:testing": "node scripts/testing-readiness.mjs",
     "preflight:development": "node --env-file-if-exists=.env.local scripts/development-target-preflight.mjs",
     "migration:manifest": "node scripts/migration-manifest.mjs",
+    "acceptance:verify": "node scripts/verify-acceptance-record.mjs",
     "preflight:release": "node scripts/release-preflight.mjs",
     "verify:testing": "npm run preflight:testing && npm run test:document-intake && npm run typecheck && npm run lint && npm run build && npm run smoke:unauthenticated && npm audit --omit=dev --audit-level=high",
     "verify:release": "npm run preflight:release && npm run test:document-intake && npm run typecheck && npm run lint && npm run build && npm run smoke:unauthenticated && npm audit --omit=dev --audit-level=high",
