@@ -31,7 +31,13 @@ function applyPrivateCachePolicy(response: NextResponse): NextResponse {
   return response;
 }
 
+function applyRequestId(response: NextResponse, requestId: string): NextResponse {
+  response.headers.set("X-Request-ID", requestId);
+  return response;
+}
+
 export async function proxy(request: NextRequest) {
+  const requestId = crypto.randomUUID();
   let response = NextResponse.next();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -92,7 +98,7 @@ export async function proxy(request: NextRequest) {
     response = NextResponse.redirect(destination);
   }
 
-  return applyPrivateCachePolicy(response);
+  return applyRequestId(applyPrivateCachePolicy(response), requestId);
 }
 
 export const config = {

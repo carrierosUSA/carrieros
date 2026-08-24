@@ -72,10 +72,20 @@ test("application responses are private no-store while built assets stay cacheab
   assert.match(proxy, /Pragma/);
   assert.match(proxy, /no-cache/);
   assert.match(proxy, /Expires/);
-  assert.match(proxy, /return applyPrivateCachePolicy\(response\)/);
+  assert.match(proxy, /applyPrivateCachePolicy\(response\)/);
   assert.match(proxy, /_next\/static\|_next\/image/);
   assert.match(smoke, /assertPrivateNoStore\(login/);
   assert.match(smoke, /assertPrivateNoStore\(response/);
   assert.match(smoke, /staticAsset/);
   assert.match(smoke, /doesNotMatch/);
+});
+
+test("application requests receive server-generated non-reflected correlation IDs", () => {
+  assert.match(proxy, /const requestId = crypto\.randomUUID\(\)/);
+  assert.match(proxy, /response\.headers\.set\("X-Request-ID", requestId\)/);
+  assert.match(proxy, /applyRequestId\(applyPrivateCachePolicy\(response\), requestId\)/);
+  assert.doesNotMatch(proxy, /request\.headers\.get\(["']x-request-id/i);
+  assert.match(smoke, /client request IDs must not be trusted/);
+  assert.match(smoke, /each request must receive a unique ID/);
+  assert.match(smoke, /staticAsset\.headers\.get\("x-request-id"\), null/);
 });

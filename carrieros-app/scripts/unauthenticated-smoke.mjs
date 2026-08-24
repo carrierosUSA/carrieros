@@ -38,6 +38,12 @@ const assertPrivateNoStore = (response, label) => {
   assert.equal(response.headers.get("pragma"), "no-cache");
   assert.equal(response.headers.get("expires"), "0");
 };
+const requestIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+const assertRequestId = (response, label) => {
+  const requestId = response.headers.get("x-request-id") ?? "";
+  assert.match(requestId, requestIdPattern, `${label} must receive a generated request ID`);
+  return requestId;
+};
 const env = { ...process.env, NODE_ENV: "production" };
 delete env.NEXT_PUBLIC_SUPABASE_URL;
 delete env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -67,7 +73,11 @@ async function waitUntilReady() {
 
 try {
   await waitUntilReady();
-  const login = await fetch(`${base}/login`, { redirect: "manual" });
+  const suppliedRequestId = "00000000-0000-4000-8000-000000000000";
+  const login = await fetch(`${base}/login`, {
+    redirect: "manual",
+    headers: { "X-Request-ID": suppliedRequestId },
+  });
   const loginBody = await login.text();
   assert.equal(login.status, 200);
   assert.match(loginBody, /Sign in securely/);
@@ -81,6 +91,8 @@ try {
   assert.equal(login.headers.get("referrer-policy"), "strict-origin-when-cross-origin");
   assert.equal(login.headers.get("x-robots-tag"), robotsPolicy);
   assertPrivateNoStore(login, "login");
+  const loginRequestId = assertRequestId(login, "login");
+  assert.notEqual(loginRequestId, suppliedRequestId, "client request IDs must not be trusted");
   assert.equal(
     login.headers.get("permissions-policy"),
     "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=()",
@@ -93,6 +105,8 @@ try {
   assert.deepEqual(await health.json(), { status: "ok" });
   assert.match(health.headers.get("cache-control") ?? "", /no-store/);
   assert.equal(health.headers.get("x-robots-tag"), robotsPolicy);
+  const healthRequestId = assertRequestId(health, "health");
+  assert.notEqual(healthRequestId, loginRequestId, "each request must receive a unique ID");
 
   const healthHead = await fetch(`${base}/api/health`, { method: "HEAD", redirect: "manual" });
   assert.equal(healthHead.status, 200);
@@ -122,6 +136,7 @@ try {
   const staticAsset = await fetch(`${base}${staticAssetPath}`, { redirect: "manual" });
   assert.equal(staticAsset.status, 200);
   assert.doesNotMatch(staticAsset.headers.get("cache-control") ?? "", /no-store/iu);
+  assert.equal(staticAsset.headers.get("x-request-id"), null);
 
   const missing = await fetch(`${base}/definitely-not-a-transpo-route`, { redirect: "manual" });
   assert.equal(missing.status, 404);

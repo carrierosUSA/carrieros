@@ -50,6 +50,8 @@ The private operations workspace globally emits no-index/no-follow/no-archive/no
 
 Every matched application response and authentication redirect is private, no-store, immediately expired, and must revalidate. Versioned Next.js static assets remain outside that policy so secure browser caching does not degrade the application bundle.
 
+Each application request receives a fresh server-generated UUID response identifier for privacy-safe incident correlation. Client-supplied request IDs are never trusted or reflected, no request values are logged, and static assets remain outside the identifier path.
+
 The automated security inventory fails whenever a new page or API route is neither protected by the centralized application prefixes nor included in the exact minimal proxy-bypass list.
 
 That command validates required configuration without printing credentials, rejects known public-secret aliases and non-production OCR, then runs the security suite, TypeScript, ESLint, the production build, and a production-dependency vulnerability audit.
