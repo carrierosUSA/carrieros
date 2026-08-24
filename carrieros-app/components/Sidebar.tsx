@@ -26,6 +26,7 @@ const groups = [
   ] },
   { label: "Network", items: [
     { name: "Brokers", href: "/brokers" }, { name: "Broker Performance", href: "/broker-performance" },
+    { name: "Customers & Shippers", href: "/customers" },
     { name: "Shippers & Facilities", href: "/facilities" },
     { name: "Service Providers", href: "/providers" },
   ] },

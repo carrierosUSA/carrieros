@@ -1,0 +1,2 @@
+-- Disable future directory access without deleting customer, shipper, or audit history.
+begin;revoke execute on function public.list_verified_customer_shipper_profiles(),public.save_verified_customer_shipper_profile(uuid,text,text,text,text,text,text,integer,text,text,text)from authenticated;drop function if exists public.list_verified_customer_shipper_profiles();drop function if exists public.save_verified_customer_shipper_profile(uuid,text,text,text,text,text,text,integer,text,text,text);commit;

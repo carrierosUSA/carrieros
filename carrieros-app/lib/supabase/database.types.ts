@@ -57,6 +57,8 @@ export type Database = {
       telematics_connection_events: Table<Row>;
       driver_operational_requests: Table<Row>;
       driver_operational_request_events: Table<Row>;
+      customer_shipper_profiles: Table<Row>;
+      customer_shipper_profile_events: Table<Row>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -187,6 +189,8 @@ export type Database = {
       submit_verified_driver_operational_request:{Args:{p_request_type:string;p_start_on:string|null;p_end_on:string|null;p_preferred_region:string|null;p_note:string;p_request_id:string};Returns:string};
       decide_verified_driver_operational_request:{Args:{p_operational_request_id:string;p_decision:string;p_note:string;p_request_id:string};Returns:string};
       cancel_verified_driver_operational_request:{Args:{p_operational_request_id:string;p_note:string;p_request_id:string};Returns:string};
+      list_verified_customer_shipper_profiles:{Args:Record<PropertyKey,never>;Returns:Row[]};
+      save_verified_customer_shipper_profile:{Args:{p_profile_id:string|null;p_legal_name:string;p_relationship_type:string;p_contact_name:string|null;p_contact_email:string|null;p_contact_phone:string|null;p_billing_email:string|null;p_payment_terms_days:number;p_relationship_status:string;p_note:string;p_request_id:string};Returns:string};
       list_verified_inventory_items:{Args:Record<PropertyKey,never>;Returns:Row[]};
       save_verified_inventory_item:{Args:{p_item_id:string|null;p_item_name:string;p_sku:string|null;p_category:string;p_unit_of_measure:string;p_initial_quantity:number;p_reorder_level:number;p_storage_location:string|null;p_status:string;p_note:string;p_request_id:string};Returns:string};
       adjust_verified_inventory_stock:{Args:{p_item_id:string;p_quantity_change:number;p_note:string;p_request_id:string};Returns:string};
