@@ -42,6 +42,8 @@ After a separately approved deployment, infrastructure may probe `GET` or `HEAD 
 
 Global response policy denies framing, embedded objects, external form targets and unsafe base URLs; it also disables DNS prefetch and isolates top-level browser windows without restricting the reviewed application resource pipeline.
 
+Production responses require year-long HTTPS transport, same-origin resource use, and deny unused camera, microphone, geolocation, payment, USB, and serial browser capabilities. HSTS deliberately excludes unverified subdomain and preload claims.
+
 The private operations workspace globally emits no-index/no-follow/no-archive/no-preview policy through both response headers and page metadata. Search engines must not index login, authenticated operations, health states, or application content.
 
 The automated security inventory fails whenever a new page or API route is neither protected by the centralized application prefixes nor included in the exact minimal proxy-bypass list.

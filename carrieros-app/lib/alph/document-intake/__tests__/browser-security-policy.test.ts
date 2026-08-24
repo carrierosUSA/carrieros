@@ -28,6 +28,24 @@ test("cross-origin window isolation and DNS prefetch disabling are smoke verifie
   assert.match(smoke, /x-dns-prefetch-control/);
 });
 
+test("transport and cross-origin resource policy fail closed", () => {
+  assert.match(config, /Strict-Transport-Security/);
+  assert.match(config, /max-age=31536000/);
+  assert.match(config, /Cross-Origin-Resource-Policy/);
+  assert.match(config, /X-Permitted-Cross-Domain-Policies/);
+  assert.match(smoke, /strict-transport-security/);
+  assert.match(smoke, /cross-origin-resource-policy/);
+  assert.match(smoke, /x-permitted-cross-domain-policies/);
+  assert.doesNotMatch(config, /includeSubDomains|preload/);
+});
+
+test("unused sensitive browser capabilities are globally denied", () => {
+  for (const capability of ["camera", "microphone", "geolocation", "payment", "usb", "serial"]) {
+    assert.ok(config.includes(`${capability}=()`));
+    assert.ok(smoke.includes(`${capability}=()`));
+  }
+});
+
 test("security policy stays global and value-free", () => {
   assert.match(config, /source: "\/:path\*"/);
   assert.doesNotMatch(config, /process\.env|SUPABASE|OPENAI|secret/i);
