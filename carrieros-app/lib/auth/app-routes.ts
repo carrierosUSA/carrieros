@@ -34,6 +34,15 @@ export const PROTECTED_APP_PREFIXES = [
   "/api/documents",
 ] as const;
 
+export const PROXY_BYPASS_PATHS = [
+  "/login",
+  "/logout",
+  "/auth/missing-company",
+  "/auth/unauthorized",
+  "/api/health",
+  "/api/readiness",
+] as const;
+
 export function isProtectedAppPath(pathname: string): boolean {
   if (pathname === "/") return true;
   return PROTECTED_APP_PREFIXES.some(

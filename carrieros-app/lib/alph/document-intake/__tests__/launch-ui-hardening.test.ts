@@ -24,6 +24,7 @@ test("authenticated layouts use explicit mobile-safe sidebar offsets", () => {
 });
 
 test("every authenticated top-level workspace is middleware protected", () => {
+  assert.match(proxy, /isProtectedRoute/);
   for (const route of ["alerts","analytics","broker-performance","brokers","claims","compliance","dispatch","documents","drivers","expenses","facilities","finance","fleet","ifta","inventory","lanes","maintenance","nova","payroll","profitability","providers","reefer","schedule","settings","year-end"]) assert.match(proxy, new RegExp(`\\"/${route}\\"`));
 });
 
