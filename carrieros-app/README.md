@@ -30,7 +30,7 @@ npm run verify:release
 
 For a credential-free testing checkpoint, run `npm run verify:testing`. Before any separately approved development-database action, run `npm run preflight:development` and `npm run migration:manifest`; `npm run verify:development-target` combines those guards with the full testing checkpoint. Follow [docs/testing-handoff.md](docs/testing-handoff.md) for the controlled activation sequence.
 
-Development acceptance signoff is accepted only for the exact currently checked-out full Git commit. A record from an earlier or different build fails closed without printing the recorded commit or any evidence values.
+Development acceptance signoff is accepted only for the exact currently checked-out full Git commit and a canonical UTC test timestamp no more than seven days old. A stale, future, malformed, or different-build record fails closed without printing the recorded commit, timestamp, or evidence values.
 
 GitHub pull requests to `main` and pushes to `codex/live-dispatch-data` run the same credential-free checkpoint automatically on the declared Node 22 runtime. CI has read-only repository permission, pins its third-party actions to reviewed immutable commit revisions, and performs no migration, deployment, merge, or production action.
 

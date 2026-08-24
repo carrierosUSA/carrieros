@@ -6,6 +6,8 @@ const requiredFlows=["documentToPendingLoad","verifiedAssignmentAndDispatchGate"
 const requiredViewports=["phone","tablet","desktop"];
 const requiredStops=["companyIsolation","driverIsolation","financialRoleBoundary","explicitMutationConfirmation","noPrivateValueExposure","reviewedMigrationIdentity"];
 const forbiddenKey=/password|secret|token|credential|api.?key|service.?role.?key/i;
+const maximumAcceptanceAgeMs=7*24*60*60*1000;
+const futureClockToleranceMs=5*60*1000;
 
 function object(value){return value!==null&&typeof value==="object"&&!Array.isArray(value)}
 function passedGroup(value,names,label,failures){if(!object(value)){failures.push(`${label} is missing`);return}for(const name of names)if(value[name]!=="passed")failures.push(`${label}.${name} must equal passed`)}
@@ -18,8 +20,10 @@ export function validateAcceptanceRecord(record,expectedCommit){
   if(record.environment!=="development")failures.push("environment must equal development");
   if(record.projectReferenceConfirmed!==true)failures.push("projectReferenceConfirmed must equal true");
   if(typeof record.tester!=="string"||record.tester.trim().length<2||record.tester.length>100||/REPLACE_|placeholder/i.test(record.tester))failures.push("tester must identify the development tester");
-  const testedAt=typeof record.testedAt==="string"?Date.parse(record.testedAt):NaN;
-  if(!Number.isFinite(testedAt)||testedAt>Date.now()+300000)failures.push("testedAt must be a valid non-future ISO timestamp");
+  const testedAt=typeof record.testedAt==="string"?Date.parse(record.testedAt):NaN,now=Date.now();
+  if(!Number.isFinite(testedAt)||new Date(testedAt).toISOString()!==record.testedAt)failures.push("testedAt must be an exact UTC ISO timestamp");
+  else if(testedAt>now+futureClockToleranceMs)failures.push("testedAt must not be in the future");
+  else if(testedAt<now-maximumAcceptanceAgeMs)failures.push("testedAt must be no more than seven days old");
   if(typeof record.commit!=="string"||!/^[0-9a-f]{40}$/i.test(record.commit))failures.push("commit must be a full 40-character Git hash");
   else if(expectedCommit&&record.commit.toLowerCase()!==expectedCommit.toLowerCase())failures.push("commit must match the currently checked-out Git commit");
   if(record.automatedCheckpoint!=="passed")failures.push("automatedCheckpoint must equal passed");

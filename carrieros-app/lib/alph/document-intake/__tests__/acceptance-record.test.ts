@@ -15,7 +15,7 @@ function passedRecord() {
     environment: "development",
     projectReferenceConfirmed: true,
     tester: "Sanitized development tester",
-    testedAt: "2026-08-24T12:00:00.000Z",
+    testedAt: new Date().toISOString(),
     commit: currentCommit,
     automatedCheckpoint: "passed",
     roles: passed(["owner","dispatcher","accounting","safety","maintenance","driver","read_only"]),
@@ -62,6 +62,27 @@ test("acceptance evidence for a different commit fails closed", () => {
   }
 });
 
+test("non-UTC future and stale acceptance timestamps fail closed", () => {
+  const directory = mkdtempSync(join(tmpdir(), "transpo-acceptance-"));
+  const cases = [
+    { testedAt: new Date().toString(), message: /exact UTC ISO timestamp/ },
+    { testedAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(), message: /must not be in the future/ },
+    { testedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(), message: /no more than seven days old/ },
+  ];
+  try {
+    for (const [index, testCase] of cases.entries()) {
+      const path = join(directory, `record-${index}.json`);
+      writeFileSync(path, JSON.stringify({ ...passedRecord(), testedAt: testCase.testedAt }));
+      const result = spawnSync(process.execPath, ["scripts/verify-acceptance-record.mjs", path], { encoding: "utf8" });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, testCase.message);
+      assert.doesNotMatch(result.stderr, new RegExp(testCase.testedAt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test("pending cross-environment and sensitive records fail closed", () => {
   const directory = mkdtempSync(join(tmpdir(), "transpo-acceptance-"));
   const path = join(directory, "record.json");
@@ -82,5 +103,7 @@ test("verifier covers required role flow viewport and stop-condition groups", ()
   assert.match(script, /commit must be a full 40-character Git hash/);
   assert.match(script, /commit must match the currently checked-out Git commit/);
   assert.match(script, /git",\["rev-parse","HEAD"\]/);
+  assert.match(script, /maximumAcceptanceAgeMs=7\*24\*60\*60\*1000/);
+  assert.match(script, /testedAt must be an exact UTC ISO timestamp/);
   assert.match(script, /No record values printed/);
 });
