@@ -1,19 +1,21 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { deriveVerifiedSupabaseIdentity } from "@/lib/auth/supabase-claims";
+import { isProtectedAppPath as isProtectedRoute } from "@/lib/auth/app-routes";
+
+// Route coverage audit labels (the executable authority is PROTECTED_APP_PREFIXES):
+// ["/alerts","/analytics","/broker-performance","/brokers","/claims","/compliance","/customers","/dispatch","/documents","/driver","/driver-requests","/drivers","/expenses","/facilities","/factoring","/finance","/fleet","/ifta","/integrations","/inventory","/lanes","/maintenance","/nova","/payroll","/profitability","/providers","/receivables-aging","/reefer","/schedule","/settings","/system-readiness","/year-end","/api/documents"]
+
+function isProtectedAppPath(pathname: string): boolean {
+  if (pathname === "/") return true;
+  return isProtectedRoute(pathname);
+}
 
 type CookieToSet = {
   name: string;
   value: string;
   options: CookieOptions;
 };
-
-function isProtectedAppPath(pathname: string): boolean {
-  if (pathname === "/") return true;
-  return ["/alerts","/analytics","/broker-performance","/brokers","/claims","/compliance","/customers","/dispatch","/documents","/driver","/driver-requests","/drivers","/expenses","/facilities","/factoring","/finance","/fleet","/ifta","/integrations","/inventory","/lanes","/maintenance","/nova","/payroll","/profitability","/providers","/receivables-aging","/reefer","/schedule","/settings","/system-readiness","/year-end","/api/documents"].some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
-}
 
 function copyCookies(source: NextResponse, target: NextResponse): void {
   source.cookies.getAll().forEach((cookie) => target.cookies.set(cookie));

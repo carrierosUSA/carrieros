@@ -2,46 +2,45 @@
 
 import { redirect } from "next/navigation";
 import { deriveVerifiedSupabaseIdentity } from "@/lib/auth/supabase-claims";
+import { safeAppReturnPath } from "@/lib/auth/app-routes";
 import { getSupabaseCookieClient } from "@/lib/supabase/ssr";
-
-function safeNextPath(value: FormDataEntryValue | null): string {
-  if (typeof value !== "string") {
-    return "/documents";
-  }
-
-  try {
-    const base = new URL("https://transpo.local");
-    const destination = new URL(value, base);
-    const isDocumentPath =
-      destination.pathname === "/documents" ||
-      destination.pathname.startsWith("/documents/") ||
-      destination.pathname === "/dispatch" ||
-      destination.pathname.startsWith("/dispatch/");
-    if (destination.origin !== base.origin || !isDocumentPath) {
-      return "/documents";
-    }
-    return `${destination.pathname}${destination.search}${destination.hash}`;
-  } catch {
-    return "/documents";
-  }
-}
 
 export async function loginAction(formData: FormData) {
   const email = formData.get("email");
   const password = formData.get("password");
-  const next = safeNextPath(formData.get("next"));
-  if (typeof email !== "string" || typeof password !== "string") {
+  const next = safeAppReturnPath(formData.get("next"));
+  if (
+    typeof email !== "string" ||
+    typeof password !== "string" ||
+    email.length > 320 ||
+    password.length > 1024
+  ) {
     redirect("/login?error=invalid_credentials");
   }
 
-  const supabase = await getSupabaseCookieClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) redirect("/login?error=invalid_credentials");
+  let supabase: Awaited<ReturnType<typeof getSupabaseCookieClient>>;
+  try {
+    supabase = await getSupabaseCookieClient();
+  } catch {
+    redirect("/login?error=configuration");
+  }
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  let signInFailed = false;
+  try {
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    signInFailed = Boolean(error);
+  } catch {
+    redirect("/login?error=service_unavailable");
+  }
+  if (signInFailed) redirect("/login?error=invalid_credentials");
+
+  let userResult: Awaited<ReturnType<typeof supabase.auth.getUser>>;
+  try {
+    userResult = await supabase.auth.getUser();
+  } catch {
+    redirect("/login?error=service_unavailable");
+  }
+  const { data: { user }, error: userError } = userResult;
   if (userError || !user) redirect("/login?error=invalid_session");
 
   const identityResult = deriveVerifiedSupabaseIdentity(user);

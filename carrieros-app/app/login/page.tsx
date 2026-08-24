@@ -9,6 +9,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   configuration: "Authentication is not configured for this environment.",
   invalid_credentials: "The email or password was not accepted.",
   invalid_session: "Your session could not be verified. Please sign in again.",
+  service_unavailable: "Secure sign-in is temporarily unavailable. No session was created. Please try again.",
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
