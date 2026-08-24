@@ -1,6 +1,6 @@
 # Transpo.ai CarrierOS
 
-Authenticated carrier operations workspace built with Next.js 16 and Supabase. The current verified modules cover dispatch, a mobile-first Driver Portal, a human-verified Broker Directory, documents, fleet, drivers, maintenance, finance with printable invoices, payroll, analytics, an in-app Alert Center, Fuel & IFTA evidence, company settings, Nova read-only guidance, and an owner-controlled team access queue.
+Authenticated carrier operations workspace built with Next.js 16 and Supabase. The current verified modules cover command center, dispatch, schedule, mobile Driver Portal, documents/OCR review, brokers and broker performance, facilities, service providers, fleet, drivers, maintenance, compliance, incidents, reefer evidence, inventory, finance and printable invoices, expenses, payroll, Fuel & IFTA, truck P&L, lane performance, year-end records, analytics, alerts, company settings, owner-controlled team access, and Nova read-only guidance.
 
 ## Local development
 
@@ -26,6 +26,8 @@ Before a release, load the intended deployment environment and run:
 ```bash
 npm run verify:release
 ```
+
+For a credential-free testing checkpoint, run `npm run verify:testing`. Follow [docs/testing-handoff.md](docs/testing-handoff.md) before connecting a development environment.
 
 That command validates required configuration without printing credentials, rejects known public-secret aliases and non-production OCR, then runs the security suite, TypeScript, ESLint, the production build, and a production-dependency vulnerability audit.
 
