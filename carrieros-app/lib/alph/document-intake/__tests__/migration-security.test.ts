@@ -46,6 +46,7 @@ test("only reviewed document and load-operation migrations are present", () => {
     "20260823170000_verified_dispatch_schedule.sql",
     "20260823190000_verified_reefer_temperature_logs.sql",
     "20260824010000_verified_telematics_registry.sql",
+    "20260824030000_verified_driver_operational_requests.sql",
   ]);
 });
 

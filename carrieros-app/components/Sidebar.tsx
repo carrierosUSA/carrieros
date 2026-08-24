@@ -13,6 +13,7 @@ const groups = [
   ] },
   { label: "Fleet & Safety", items: [
     { name: "Drivers", href: "/drivers" }, { name: "Fleet", href: "/fleet" },
+    { name: "Driver Requests", href: "/driver-requests" },
     { name: "Maintenance", href: "/maintenance" }, { name: "Compliance", href: "/compliance" },
     { name: "Reefer Logs", href: "/reefer" },
     { name: "Incidents & Claims", href: "/claims" }, { name: "Inventory", href: "/inventory" },
