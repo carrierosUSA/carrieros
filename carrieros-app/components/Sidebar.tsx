@@ -20,6 +20,7 @@ const groups = [
   ] },
   { label: "Finance", items: [
     { name: "Finance", href: "/finance" }, { name: "Expenses", href: "/expenses" },
+    { name: "Receivables Aging", href: "/receivables-aging" },
     { name: "Truck P&L", href: "/profitability" }, { name: "Payroll", href: "/payroll" },
     { name: "Fuel & IFTA", href: "/ifta" },
     { name: "Year-End Records", href: "/year-end" },

@@ -1,0 +1,8 @@
+import type { Receivable } from "@/lib/finance/receivables";
+
+export type AgingBucket = "current" | "days_1_30" | "days_31_60" | "days_61_90" | "days_91_plus";
+export type AgedReceivable = Receivable & { balanceCents:number;daysPastDue:number;bucket:AgingBucket };
+export type AgingSummary = { rows:AgedReceivable[];uninvoicedCount:number;missingDueDateCount:number;totals:Record<AgingBucket,number>;totalOutstandingCents:number };
+const DAY=86_400_000;
+export function agingBucket(daysPastDue:number):AgingBucket{return daysPastDue<=0?"current":daysPastDue<=30?"days_1_30":daysPastDue<=60?"days_31_60":daysPastDue<=90?"days_61_90":"days_91_plus"}
+export function buildReceivablesAging(rows:Receivable[],asOf:Date):AgingSummary{const asOfMs=asOf.getTime(),totals:Record<AgingBucket,number>={current:0,days_1_30:0,days_31_60:0,days_61_90:0,days_91_plus:0};let uninvoicedCount=0,missingDueDateCount=0;const aged:AgedReceivable[]=[];for(const row of rows){const balanceCents=Math.max(0,row.rateCents-row.paidCents);if(!row.invoiceNumber){uninvoicedCount++;continue}if(balanceCents===0)continue;if(!row.expectedPaymentAt){missingDueDateCount++;continue}const dueMs=new Date(row.expectedPaymentAt).getTime();if(!Number.isFinite(dueMs)){missingDueDateCount++;continue}const daysPastDue=Math.max(0,Math.floor((asOfMs-dueMs)/DAY)),bucket=agingBucket(daysPastDue);totals[bucket]+=balanceCents;aged.push({...row,balanceCents,daysPastDue,bucket})}aged.sort((a,b)=>b.daysPastDue-a.daysPastDue||b.balanceCents-a.balanceCents);return{rows:aged,uninvoicedCount,missingDueDateCount,totals,totalOutstandingCents:Object.values(totals).reduce((sum,value)=>sum+value,0)}}
