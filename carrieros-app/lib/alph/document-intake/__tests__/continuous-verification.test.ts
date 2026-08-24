@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const workflow = readFileSync("../.github/workflows/verify.yml", "utf8");
+const dependabot = readFileSync("../.github/dependabot.yml", "utf8");
 const runtime = readFileSync(".nvmrc", "utf8").trim();
 const readiness = readFileSync("scripts/testing-readiness.mjs", "utf8");
 
@@ -52,4 +53,23 @@ test("local readiness requires the version and CI checkpoint files", () => {
   assert.match(readiness, /\.nvmrc/);
   assert.match(readiness, /\.github\/workflows\/verify\.yml/);
   assert.match(readiness, /least-privilege CI checkpoint/);
+});
+
+test("dependency maintenance is weekly grouped and bounded", () => {
+  assert.match(dependabot, /^version: 2$/m);
+  assert.match(dependabot, /package-ecosystem: npm\s+directory: \/carrieros-app/);
+  assert.match(dependabot, /package-ecosystem: github-actions\s+directory: \//);
+  assert.equal((dependabot.match(/interval: weekly/g) ?? []).length, 2);
+  assert.match(dependabot, /open-pull-requests-limit: 5/);
+  assert.match(dependabot, /open-pull-requests-limit: 3/);
+  assert.match(dependabot, /production-dependencies:/);
+  assert.match(dependabot, /development-dependencies:/);
+  assert.match(dependabot, /github-actions:/);
+});
+
+test("dependency maintenance cannot merge deploy or access secrets", () => {
+  assert.doesNotMatch(
+    dependabot,
+    /auto-merge|workflow_dispatch|secrets:|registries:|deploy|supabase|migration|target-branch/i,
+  );
 });
