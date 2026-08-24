@@ -62,7 +62,7 @@ export default function LoadDetailWorkspace({ loadId }: { loadId: string }) {
   return (
     <main className="min-h-screen bg-[#F5F7FB] text-[#0B1220]">
       <Sidebar />
-      <section className="ml-72 min-h-screen px-8 py-7 xl:px-10">
+      <section className="min-h-screen px-4 pb-8 pt-20 lg:ml-72 lg:px-8 lg:py-7 xl:px-10">
         <div className="mx-auto max-w-[1400px]">
           <Link href="/dispatch" className="text-xs font-semibold text-[#2563EB]">
             ← Dispatch board

@@ -101,7 +101,7 @@ export default function DocumentCenterWorkspace({
   }
 
   return (
-    <section className="ml-72 min-h-screen px-8 py-7 xl:px-10">
+    <section className="min-h-screen px-4 pb-8 pt-20 lg:ml-72 lg:px-8 lg:py-7 xl:px-10">
       <div className="mx-auto max-w-[1400px]">
         <header className="flex flex-wrap items-start justify-between gap-5">
           <div>

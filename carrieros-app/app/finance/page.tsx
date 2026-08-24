@@ -20,7 +20,7 @@ export default function FinancePage() {
   }, []);
 
   return <main className="min-h-screen bg-[#F5F7FB] text-[#0B1220]">
-    <Sidebar /><section className="ml-72 min-h-screen px-8 py-7 xl:px-10"><div className="mx-auto max-w-[1450px]">
+    <Sidebar /><section className="min-h-screen px-4 pb-8 pt-20 lg:ml-72 lg:px-8 lg:py-7 xl:px-10"><div className="mx-auto max-w-[1450px]">
       <header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[.18em] text-[#2563EB]">Verified finance</p><h1 className="mt-2 text-[34px] font-semibold">Accounts receivable</h1><p className="mt-2 text-sm text-[#64748B]">Human-recorded invoices and confirmed payments only.</p></div><Link href="/documents" className="rounded-xl border border-[#CBD5E1] bg-white px-4 py-2.5 text-xs font-semibold">Open Document Center</Link></header>
       {state === "denied" ? <Empty text="Finance is restricted to authenticated owners and accounting users." /> : state === "loading" ? <Empty text="Loading authorized financial records…" /> : <>
         <section className="mt-6 grid gap-4 md:grid-cols-3"><Metric label="Verified invoiced" value={money(totals.billed)} /><Metric label="Confirmed paid" value={money(totals.paid)} /><Metric label="Verified overdue" value={money(totals.overdue)} alert={totals.overdue > 0} /></section>

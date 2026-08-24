@@ -31,7 +31,7 @@ export default function Page() {
 
   return <main className="min-h-screen bg-[#F5F7FB]">
     <Sidebar />
-    <section className="ml-72 p-8"><div className="mx-auto max-w-[1300px]">
+    <section className="px-4 pb-8 pt-20 lg:ml-72 lg:p-8"><div className="mx-auto max-w-[1300px]">
       <header className="flex justify-between">
         <div><p className="text-xs font-semibold uppercase tracking-[.18em] text-[#2563EB]">Verified finance</p><h1 className="mt-2 text-3xl font-semibold">Operating Expenses</h1><p className="mt-2 text-sm text-[#64748B]">Human-recorded costs only. No tax treatment inferred.</p></div>
         <button onClick={() => setEditorOpen(true)} className="h-fit rounded-xl bg-[#0F172A] px-4 py-3 text-xs font-semibold text-white">Record expense</button>
