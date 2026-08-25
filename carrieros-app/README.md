@@ -6,6 +6,8 @@ Assigned-load detail can hand a validated phone number from an active same-compa
 
 The authenticated dispatch board supports manual refresh and bounded 30-second visible-tab refreshes, with overlap protection and a local last-updated indicator. Refreshing only reads authorized company data and never changes a load or initiates dispatch.
 
+Dispatch operators can combine workflow tabs with priority filters and local search across recorded load, pickup, broker, lane, equipment, exception, and status fields. Filtering never sends a query externally or mutates operational data.
+
 ## Local development
 
 1. Copy `.env.example` to `.env.local` and replace every placeholder.
