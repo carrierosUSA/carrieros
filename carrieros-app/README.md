@@ -16,6 +16,7 @@ Run individual checks during development:
 
 ```bash
 npm run test:document-intake
+npm run security:scan
 npm run typecheck
 npm run lint
 npm run build
@@ -29,6 +30,8 @@ npm run verify:release
 ```
 
 For a credential-free testing checkpoint, run `npm run verify:testing`. Before any separately approved development-database action, run `npm run preflight:development` and `npm run migration:manifest`; `npm run verify:development-target` combines those guards with the full testing checkpoint. Follow [docs/testing-handoff.md](docs/testing-handoff.md) for the controlled activation sequence.
+
+Both testing and release checkpoints scan Git-tracked text for high-risk private-key and provider-credential patterns. Findings fail closed with only the path and credential class printed; matched values are never emitted. Any real finding must be removed from history as appropriate and rotated before work continues.
 
 Development acceptance signoff is accepted only for the exact currently checked-out full Git commit and a canonical UTC test timestamp no more than seven days old. A stale, future, malformed, or different-build record fails closed without printing the recorded commit, timestamp, or evidence values.
 

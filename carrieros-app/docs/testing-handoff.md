@@ -11,7 +11,7 @@ npm ci
 npm run verify:testing
 ```
 
-The command checks the locked dependency install, reviewed migration/rollback set, automated security tests, TypeScript, ESLint, production build, unauthenticated fail-closed route and security-header smoke checks, and high-severity production dependency audit. The smoke server binds only to `127.0.0.1` and removes external credentials. It does not connect to Supabase or apply SQL.
+The command checks the locked dependency install, reviewed migration/rollback set, Git-tracked source for high-risk credential patterns, automated security tests, TypeScript, ESLint, production build, unauthenticated fail-closed route and security-header smoke checks, and high-severity production dependency audit. The source scan never prints matched values. The smoke server binds only to `127.0.0.1` and removes external credentials. It does not connect to Supabase or apply SQL.
 
 ## 2. Prepare a development-only environment
 
