@@ -10,6 +10,8 @@ Dispatch operators can combine workflow tabs with priority filters and local sea
 
 The board defaults to urgent-first ordering, placing actionable overdue appointments before recorded red, amber, and green priorities. Operators can switch to appointment-first or newest-load ordering; these are copied client-side views and never rewrite priority, appointment, or status facts.
 
+For an all-in-one source recovery, development acceptance, and controlled release sequence, follow `docs/release-candidate-handoff.md`. It keeps source import, development SQL, human acceptance, merge, production migration, and deployment as separately approved steps.
+
 ## Local development
 
 1. Copy `.env.example` to `.env.local` and replace every placeholder.
