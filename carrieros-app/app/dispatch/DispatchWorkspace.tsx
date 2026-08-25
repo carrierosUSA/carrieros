@@ -1,0 +1,83 @@
+"use client";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getDispatchBoardAction } from "@/app/actions/dispatch";
+import Sidebar from "@/components/Sidebar";
+import type { DispatchBoardLoad } from "@/lib/operations/load-types";
+
+const tabs = ["Board", "Active", "Upcoming", "Completed", "Exceptions"] as const;
+type Tab = typeof tabs[number];
+type PriorityFilter = "all" | DispatchBoardLoad["priority"];
+type SortMode = "urgent" | "appointment" | "newest";
+
+export default function DispatchWorkspace() {
+  const [tab, setTab] = useState<Tab>("Board");
+  const [query, setQuery] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("all");
+  const [sortMode, setSortMode] = useState<SortMode>("urgent");
+  const [loads, setLoads] = useState<DispatchBoardLoad[]>([]);
+  const [state, setState] = useState<"loading" | "ready" | "unavailable">("loading");
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date>();
+  const mounted = useRef(false);
+  const inFlight = useRef(false);
+  const refresh = useCallback(async (initial = false) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    if (!initial) setRefreshing(true);
+    try {
+      const result = await getDispatchBoardAction();
+      if (!mounted.current) return;
+      if (result.ok) {
+        setLoads(result.loads);
+        setState("ready");
+        setLastUpdatedAt(new Date());
+      } else if (initial) setState("unavailable");
+    } catch {
+      if (mounted.current && initial) setState("unavailable");
+    } finally {
+      inFlight.current = false;
+      if (mounted.current) setRefreshing(false);
+    }
+  }, []);
+  useEffect(() => {
+    mounted.current = true;
+    const initialRefresh = window.setTimeout(() => void refresh(true), 0);
+    const refreshVisible = () => { if (document.visibilityState === "visible") void refresh(); };
+    const interval = window.setInterval(refreshVisible, 30_000);
+    document.addEventListener("visibilitychange", refreshVisible);
+    return () => {
+      mounted.current = false;
+      window.clearTimeout(initialRefresh);
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshVisible);
+    };
+  }, [refresh]);
+  const filtered = useMemo(() => loads.filter((load) => matches(load, tab) && (priorityFilter === "all" || load.priority === priorityFilter) && searchMatches(load, query)), [loads, tab, priorityFilter, query]);
+  const visibleLoads = useMemo(() => sortLoads(filtered, sortMode), [filtered, sortMode]);
+  const filtersActive = Boolean(query.trim()) || priorityFilter !== "all";
+  const metric = (n: number) => state === "ready" ? String(n) : "—";
+  return <main className="min-h-screen bg-[#F5F7FB] text-[#0B1220]"><Sidebar /><section className="min-h-screen px-4 pb-8 pt-20 lg:ml-72 lg:px-8 lg:py-7 xl:px-10"><div className="mx-auto max-w-[1450px]">
+    <header className="flex flex-wrap items-start justify-between gap-5"><div><p className="text-xs font-semibold uppercase tracking-[.18em] text-[#2563EB]">Operations workspace</p><h1 className="mt-2 text-[34px] font-semibold tracking-[-.04em]">Dispatch</h1><p className="mt-2 text-sm text-[#64748B]">One factual timeline for every load, appointment, instruction, document, approval, and exception.</p></div><Link href="/documents" className="rounded-xl bg-[#0F172A] px-4 py-2.5 text-sm font-semibold text-white">Import rate confirmation</Link></header>
+    <section className="mt-6 overflow-hidden rounded-[24px] border border-[#DDE5F0] bg-white shadow-[0_18px_55px_rgba(15,23,42,.05)]">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E8EEF6] px-5 py-4"><div className="flex gap-1 rounded-xl bg-[#F1F5F9] p-1">{tabs.map((item) => <button key={item} aria-pressed={tab === item} onClick={() => setTab(item)} className={`rounded-lg px-3.5 py-2 text-xs font-semibold ${tab === item ? "bg-white shadow-sm" : "text-[#64748B]"}`}>{item}</button>)}</div><div className="flex items-center gap-3"><p aria-live="polite" className="flex items-center gap-2 text-xs text-[#64748B]"><span className={`h-2 w-2 rounded-full ${state === "ready" ? "bg-[#10B981]" : state === "loading" ? "bg-[#2563EB]" : "bg-[#F59E0B]"}`} />{state === "ready" ? `Live authorized data${lastUpdatedAt ? ` · updated ${timeOnly(lastUpdatedAt)}` : ""}` : state === "loading" ? "Loading authorized data" : "Operational database not configured"}</p><button disabled={refreshing || state === "loading"} onClick={() => void refresh()} className="rounded-lg border border-[#CBD5E1] px-3 py-2 text-[11px] font-semibold text-[#334155] disabled:opacity-50">{refreshing ? "Refreshing…" : "Refresh"}</button></div></div>
+      <div className="p-6"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Metric label="Active loads" value={metric(loads.filter((l) => matches(l,"Active")).length)} /><Metric label="Pickup today" value={metric(loads.filter((l) => l.nextStopType === "pickup" && isToday(l.nextAppointmentAt)).length)} /><Metric label="Delivery today" value={metric(loads.filter((l) => l.nextStopType === "delivery" && isToday(l.nextAppointmentAt)).length)} /><Metric label="Exceptions" value={metric(loads.filter((l) => matches(l,"Exceptions")).length)} /></div>
+        <div className="mt-5 flex flex-wrap items-center gap-3 rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] p-3"><label className="min-w-[240px] flex-1"><span className="sr-only">Search dispatch loads</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search load, pickup #, broker, lane or equipment" className="w-full rounded-xl border border-[#CBD5E1] bg-white px-4 py-2.5 text-xs outline-none focus:border-[#2563EB]" /></label><label><span className="sr-only">Filter by priority</span><select value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value as PriorityFilter)} className="rounded-xl border border-[#CBD5E1] bg-white px-3 py-2.5 text-xs font-semibold text-[#334155]"><option value="all">All priorities</option><option value="red">Red priority</option><option value="amber">Amber priority</option><option value="green">Green priority</option></select></label><label><span className="sr-only">Sort dispatch loads</span><select value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)} className="rounded-xl border border-[#CBD5E1] bg-white px-3 py-2.5 text-xs font-semibold text-[#334155]"><option value="urgent">Urgent first</option><option value="appointment">Appointment first</option><option value="newest">Newest load first</option></select></label>{filtersActive && <button onClick={() => { setQuery(""); setPriorityFilter("all"); }} className="rounded-xl border border-[#CBD5E1] bg-white px-3 py-2.5 text-xs font-semibold text-[#334155]">Clear filters</button>}<p aria-live="polite" className="ml-auto text-xs font-semibold text-[#64748B]">{state === "ready" ? `${visibleLoads.length} matching load${visibleLoads.length === 1 ? "" : "s"}` : "—"}</p></div>
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-[#E2E8F0]"><div className="min-w-[1050px]"><div className="grid grid-cols-[.7fr_1.1fr_.9fr_1.2fr_.85fr_1fr_.85fr] gap-3 bg-[#F8FAFC] px-4 py-3 text-[10px] font-semibold uppercase tracking-[.14em] text-[#64748B]"><span>Date / Unit</span><span>Load / Pickup #</span><span>Broker</span><span>Pickup → Delivery</span><span>Rate / Miles</span><span>Appointment</span><span>Status</span></div>
+          {visibleLoads.length ? <div className="divide-y divide-[#E8EEF6]">{visibleLoads.map((load) => <Link key={load.id} href={`/dispatch/${load.id}`} className="grid grid-cols-[.7fr_1.1fr_.9fr_1.2fr_.85fr_1fr_.85fr] gap-3 px-4 py-4 text-xs hover:bg-[#F8FAFC]"><Cell main={dateOnly(load.createdAt)} sub={load.truckUnit || "Unassigned"} /><span><strong className="block text-sm">{load.loadNumber || "Pending"}</strong><span className="mt-1 block font-semibold text-[#2563EB]">Pickup # {load.pickupNumber || "Not recorded"}</span></span><Cell main={load.brokerName || "Not recorded"} sub={load.driverUserId ? "Driver assigned" : "No driver"} /><Cell main={load.origin || "Not recorded"} sub={`to ${load.destination || "Not recorded"}`} /><Cell main={load.rateCents === undefined ? "Restricted / —" : money(load.rateCents, load.currency)} sub={load.miles === undefined ? "Miles not recorded" : `${load.miles.toLocaleString()} mi`} /><span><strong className="block">{dateTime(load.nextAppointmentAt)}</strong><span className={`mt-1 block ${isAppointmentOverdue(load) ? "font-semibold text-[#B91C1C]" : "text-[#64748B]"}`}>{isAppointmentOverdue(load) ? "Overdue recorded appointment" : load.nextAppointmentTimezone || "Time zone not recorded"}</span></span><span><b className={`inline-flex rounded-full px-2.5 py-1 capitalize ${load.priority === "red" ? "bg-red-50 text-red-600" : load.priority === "amber" ? "bg-orange-50 text-orange-600" : "bg-emerald-50 text-emerald-600"}`}>{load.priority}</b><span className="mt-1 block capitalize text-[#64748B]">{load.status.replaceAll("_"," ")}</span></span></Link>)}</div> : <div className="grid min-h-64 place-items-center p-10 text-center"><div><h2 className="text-lg font-semibold">{state === "loading" ? "Loading verified loads" : state === "unavailable" ? "Load operations are not configured" : filtersActive ? "No loads match these filters" : `No verified ${tab.toLowerCase()} loads`}</h2><p className="mt-2 max-w-md text-sm leading-6 text-[#64748B]">{state === "unavailable" ? "Apply the reviewed load-operations migration before live data can appear." : filtersActive ? "Clear or change the search and priority filters to see other authorized loads." : "Upload and human-review a real rate confirmation to create a verified load."}</p></div></div>}</div></div>
+      </div>
+    </section>
+    <p className="mt-4 rounded-2xl bg-[#0F172A] p-4 text-xs leading-5 text-[#CBD5E1]">Transpo.ai may organize facts and suggest next steps. Driver and carrier retain every safety, movement, and equipment decision. No automatic dispatch.</p>
+  </div></section></main>;
+}
+function matches(load: DispatchBoardLoad, tab: Tab) { if (tab === "Board") return load.status !== "cancelled"; if (tab === "Active") return ["dispatched","en_route_to_pickup","arrived_pickup","picked_up","in_transit","arrived_delivery"].includes(load.status); if (tab === "Upcoming") return load.status === "pending"; if (tab === "Completed") return load.status === "delivered" || load.status === "closed"; return load.priority === "red" || Boolean(load.exceptionSummary); }
+function searchMatches(load:DispatchBoardLoad,query:string){const normalized=query.trim().toLowerCase();if(!normalized)return true;return [load.loadNumber,load.pickupNumber,load.brokerName,load.origin,load.destination,load.truckUnit,load.trailerUnit,load.exceptionSummary,load.status].filter(Boolean).join(" ").toLowerCase().includes(normalized);}
+function sortLoads(loads:DispatchBoardLoad[],mode:SortMode){const priority={red:0,amber:1,green:2};const time=(value?:string,fallback=Number.POSITIVE_INFINITY)=>{const parsed=value?new Date(value).getTime():Number.NaN;return Number.isNaN(parsed)?fallback:parsed};return [...loads].sort((a,b)=>{if(mode==="newest")return time(b.createdAt,0)-time(a.createdAt,0);if(mode==="appointment")return time(a.nextAppointmentAt)-time(b.nextAppointmentAt)||priority[a.priority]-priority[b.priority];const overdue=Number(isAppointmentOverdue(b))-Number(isAppointmentOverdue(a));return overdue||priority[a.priority]-priority[b.priority]||time(a.nextAppointmentAt)-time(b.nextAppointmentAt)||time(b.createdAt,0)-time(a.createdAt,0)});}
+function isAppointmentOverdue(load:DispatchBoardLoad){if(!load.nextAppointmentAt||["delivered","closed","cancelled"].includes(load.status))return false;const parsed=new Date(load.nextAppointmentAt).getTime();return !Number.isNaN(parsed)&&parsed<Date.now();}
+function Metric({label,value}:{label:string;value:string}) { return <div className="rounded-2xl border border-[#E2E8F0] p-4"><p className="text-xs text-[#64748B]">{label}</p><p className="mt-3 text-2xl font-semibold">{value}</p></div>; }
+function Cell({main,sub}:{main:string;sub:string}) { return <span><strong className="block">{main}</strong><span className="mt-1 block text-[#64748B]">{sub}</span></span>; }
+function isToday(value?:string){if(!value)return false;const d=new Date(value),n=new Date();return !Number.isNaN(d.getTime())&&d.toDateString()===n.toDateString();}
+function dateOnly(value?:string){if(!value)return "Not recorded";const d=new Date(value);return Number.isNaN(d.getTime())?"Not recorded":new Intl.DateTimeFormat("en-US",{month:"short",day:"numeric"}).format(d);}
+function dateTime(value?:string){if(!value)return "Not recorded";const d=new Date(value);return Number.isNaN(d.getTime())?"Not recorded":new Intl.DateTimeFormat("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}).format(d);}
+function timeOnly(value:Date){return new Intl.DateTimeFormat("en-US",{hour:"numeric",minute:"2-digit",second:"2-digit"}).format(value);}
+function money(cents:number,currency="USD"){return new Intl.NumberFormat("en-US",{style:"currency",currency,maximumFractionDigits:0}).format(cents/100);}

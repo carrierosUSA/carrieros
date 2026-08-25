@@ -1,0 +1,1 @@
+import InvoicePrintWorkspace from"./InvoicePrintWorkspace";export default async function Page({params}:{params:Promise<{loadId:string}>}){const{loadId}=await params;return <InvoicePrintWorkspace loadId={loadId}/>}

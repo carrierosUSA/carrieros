@@ -1,0 +1,5 @@
+import assert from"node:assert/strict";import{readFileSync}from"node:fs";import test from"node:test";
+const script=readFileSync("scripts/release-preflight.mjs","utf8"),pkg=JSON.parse(readFileSync("package.json","utf8"))as{scripts:Record<string,string>};
+test("release preflight requires core services without printing values",()=>{for(const name of["NEXT_PUBLIC_SUPABASE_URL","NEXT_PUBLIC_SUPABASE_ANON_KEY","SUPABASE_SERVICE_ROLE_KEY","OPENAI_API_KEY"])assert.match(script,new RegExp(name));assert.doesNotMatch(script,/console\.(?:log|error)\([^)]*process\.env/)});
+test("release preflight rejects public secrets mock OCR and oversized documents",()=>{assert.match(script,/NEXT_PUBLIC_\$\{name\}/);assert.match(script,/ALPH_OCR_PROVIDER/);assert.match(script,/!=="openai"/);assert.match(script,/max>15728640/)});
+test("one release command covers preflight tests types lint build and production audit",()=>{const command=pkg.scripts["verify:release"];for(const part of["preflight:release","test:document-intake","typecheck","lint","build","npm audit --omit=dev --audit-level=high"])assert.match(command,new RegExp(part.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")))});

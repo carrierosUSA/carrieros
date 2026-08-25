@@ -1,0 +1,387 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { requireDocumentAuth } from "@/lib/auth/supabase-server";
+import { LoadOperationsRepository } from "@/lib/operations/load-repository";
+import type {
+  AssignableDriver,
+  ClosureDocumentCandidate,
+  DispatchBoardLoad,
+  LoadDetail,
+  LoadClosureReadiness,
+  LoadUpdateCapabilities,
+  LinkableBroker,
+  DetentionStop,
+} from "@/lib/operations/load-types";
+import {
+  allowedNextLoadStatuses,
+  canAssignLoads,
+  canManageLoadClosure,
+  canRecordLoadFacts,
+  isLoadStatus,
+} from "@/lib/operations/load-workflow";
+import { getSupabaseAuthenticatedUserClient } from "@/lib/supabase/server";
+import type { LoadStatus } from "@/lib/types/load";
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+type LoadDetailResult =
+  | {
+      ok: true;
+      load: LoadDetail | null;
+      capabilities: LoadUpdateCapabilities | null;
+      drivers: AssignableDriver[];
+      brokers: LinkableBroker[];
+    }
+  | { ok: false; error: string };
+
+export type VerifiedLoadUpdateInput = {
+  loadId: string;
+  expectedStatus: LoadStatus;
+  nextStatus?: LoadStatus | null;
+  location?: string | null;
+  eta?: string | null;
+  exceptionSummary?: string | null;
+  note?: string | null;
+  requestId: string;
+};
+
+export type VerifiedLoadUpdateResult =
+  | {
+      ok: true;
+      load: LoadDetail;
+      capabilities: LoadUpdateCapabilities;
+    }
+  | { ok: false; error: string };
+
+export type VerifiedLoadAssignmentInput = {
+  loadId: string;
+  driverUserId: string;
+  truckUnit: string;
+  trailerUnit?: string | null;
+  equipmentFitVerified: boolean;
+  hosVerified: boolean;
+  safetyVerified: boolean;
+  note?: string | null;
+  requestId: string;
+};
+
+export type VerifiedLoadAssignmentResult =
+  | {
+      ok: true;
+      load: LoadDetail;
+      capabilities: LoadUpdateCapabilities;
+      drivers: AssignableDriver[];
+    }
+  | { ok: false; error: string };
+
+function capabilities(
+  role: Parameters<typeof canRecordLoadFacts>[0],
+  status: LoadStatus,
+  hasActiveAssignment = false,
+): LoadUpdateCapabilities {
+  const nextStatuses = allowedNextLoadStatuses(role, status).filter(
+    (nextStatus) => nextStatus !== "dispatched" || hasActiveAssignment,
+  );
+  return {
+    canRecordFacts: canRecordLoadFacts(role),
+    canAssignLoad: canAssignLoads(role) && status === "pending" && !hasActiveAssignment,
+    allowedNextStatuses: nextStatuses,
+    closureRequiresDocuments: status === "delivered",
+    canManageClosure: canManageLoadClosure(role) && (status === "arrived_delivery" || status === "delivered"),
+  };
+}
+
+export type ClosureWorkspaceResult =
+  | { ok: true; documents: ClosureDocumentCandidate[]; readiness: LoadClosureReadiness }
+  | { ok: false; error: string };
+
+export async function getClosureWorkspaceAction(loadId: string): Promise<ClosureWorkspaceResult> {
+  if (!UUID_PATTERN.test(loadId)) return { ok: false, error: "The load reference is invalid." };
+  try {
+    const auth = await requireDocumentAuth();
+    if (!canManageLoadClosure(auth.businessRole)) return { ok: false, error: "Your authenticated role cannot manage closure." };
+    const workspace = await new LoadOperationsRepository().getClosureWorkspace({ accessToken: auth.accessToken, loadId });
+    return { ok: true, ...workspace };
+  } catch {
+    return { ok: false, error: "Verified closure documents are not available." };
+  }
+}
+
+export async function linkVerifiedClosureDocumentAction(input: {
+  loadId: string;
+  documentId: string;
+  requestId: string;
+}): Promise<ClosureWorkspaceResult> {
+  if (!UUID_PATTERN.test(input.loadId) || !UUID_PATTERN.test(input.documentId) || !UUID_PATTERN.test(input.requestId)) {
+    return { ok: false, error: "The document-link request is invalid." };
+  }
+  try {
+    const auth = await requireDocumentAuth();
+    if (!canManageLoadClosure(auth.businessRole)) return { ok: false, error: "Your authenticated role cannot link closure documents." };
+    const db = getSupabaseAuthenticatedUserClient(auth.accessToken);
+    const result = await db.rpc("link_verified_closure_document", {
+      p_load_id: input.loadId,
+      p_document_id: input.documentId,
+      p_request_id: input.requestId,
+    });
+    if (result.error) return { ok: false, error: "Only a current human-approved POD or invoice can be linked at delivery." };
+    revalidatePath(`/dispatch/${input.loadId}`);
+    const workspace = await new LoadOperationsRepository().getClosureWorkspace({ accessToken: auth.accessToken, loadId: input.loadId });
+    return { ok: true, ...workspace };
+  } catch {
+    return { ok: false, error: "The verified document could not be linked. No load status changed." };
+  }
+}
+
+export async function closeVerifiedLoadAction(input: {
+  loadId: string;
+  expectedStatus: LoadStatus;
+  exceptionsResolved: boolean;
+  note?: string | null;
+  requestId: string;
+}): Promise<VerifiedLoadUpdateResult> {
+  if (!UUID_PATTERN.test(input.loadId) || !UUID_PATTERN.test(input.requestId) || !isLoadStatus(input.expectedStatus)) {
+    return { ok: false, error: "The closure request is invalid." };
+  }
+  const note = optionalText(input.note, 2_000);
+  if (!input.exceptionsResolved) return { ok: false, error: "Confirm that all exceptions are factually resolved." };
+  try {
+    const auth = await requireDocumentAuth();
+    if (!canManageLoadClosure(auth.businessRole)) return { ok: false, error: "Your authenticated role cannot close loads." };
+    const db = getSupabaseAuthenticatedUserClient(auth.accessToken);
+    const result = await db.rpc("close_verified_load", {
+      p_load_id: input.loadId,
+      p_expected_status: input.expectedStatus,
+      p_exceptions_resolved: input.exceptionsResolved,
+      p_note: note,
+      p_request_id: input.requestId,
+    });
+    if (result.error) {
+      if (result.error.message.includes("POD and invoice")) return { ok: false, error: "Link a current approved POD and invoice before closing." };
+      if (result.error.message.includes("resolution note")) return { ok: false, error: "Add a factual note explaining how the recorded exception was resolved." };
+      return { ok: false, error: "The load could not be closed. Verified requirements may have changed." };
+    }
+    revalidatePath("/dispatch");
+    revalidatePath(`/dispatch/${input.loadId}`);
+    const load = await new LoadOperationsRepository().getDetail({ companyId: auth.companyId, accessToken: auth.accessToken, loadId: input.loadId });
+    if (!load) return { ok: false, error: "The load closed, but its authorized detail could not be reloaded." };
+    return { ok: true, load, capabilities: capabilities(auth.businessRole, load.status, Boolean(load.driverUserId)) };
+  } catch {
+    return { ok: false, error: "The load could not be closed. No unverified change was made." };
+  }
+}
+
+function optionalText(value: unknown, maxLength: number): string | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim();
+  if (!normalized) return null;
+  return normalized.slice(0, maxLength);
+}
+
+function safeUpdateError(message: string): string {
+  if (message.includes("status changed")) {
+    return "This load changed in another session. Reload the verified load before saving.";
+  }
+  if (message.includes("status transition")) {
+    return "That lifecycle transition is not allowed from the current verified status.";
+  }
+  if (message.includes("Cancellation requires")) {
+    return "A factual cancellation reason is required.";
+  }
+  if (message.includes("Closure requires")) {
+    return "Closing requires verified POD, invoice, and resolved exceptions.";
+  }
+  if (message.includes("not authorized") || message.includes("not actively assigned")) {
+    return "Your authenticated role or assignment cannot make this update.";
+  }
+  return "The verified update could not be saved. No load state changed.";
+}
+
+export async function getDispatchBoardAction(): Promise<
+  | { ok: true; loads: DispatchBoardLoad[] }
+  | { ok: false; error: string }
+> {
+  try {
+    const auth = await requireDocumentAuth();
+    const loads = await new LoadOperationsRepository().listBoard({
+      companyId: auth.companyId,
+      accessToken: auth.accessToken,
+    });
+    return { ok: true, loads };
+  } catch {
+    return { ok: false, error: "Live load data is not configured yet." };
+  }
+}
+
+export async function getLoadDetailAction(loadId: string): Promise<LoadDetailResult> {
+  if (!UUID_PATTERN.test(loadId)) {
+    return { ok: false, error: "The load reference is invalid." };
+  }
+  try {
+    const auth = await requireDocumentAuth();
+    const load = await new LoadOperationsRepository().getDetail({
+      companyId: auth.companyId,
+      accessToken: auth.accessToken,
+      loadId,
+    });
+    const drivers = load && canAssignLoads(auth.businessRole)?await new LoadOperationsRepository().listCompanyDrivers({ accessToken: auth.accessToken }):[];const db=getSupabaseAuthenticatedUserClient(auth.accessToken),brokerResult=canAssignLoads(auth.businessRole)?await db.rpc("list_linkable_verified_brokers"):({data:[],error:null}),brokers:LinkableBroker[]=brokerResult.error?[]:(Array.isArray(brokerResult.data)?brokerResult.data:[]).flatMap(v=>{if(!v||typeof v!=="object")return[];const r=v as Record<string,unknown>,id=typeof r.id==="string"?r.id:"",status=r.relationship_status;return id&&(status==="active"||status==="review_required"||status==="do_not_use")?[{id,legalName:typeof r.legal_name==="string"?r.legal_name:"Verified broker",mcNumber:typeof r.mc_number==="string"?r.mc_number:"",relationshipStatus:status}]:[]});
+    return {
+      ok: true,
+      load,
+      drivers,
+      brokers,
+      capabilities: load
+        ? capabilities(auth.businessRole, load.status, Boolean(load.driverUserId))
+        : null,
+    };
+  } catch {
+    return { ok: false, error: "Authorized load detail is not available." };
+  }
+}
+
+export async function linkVerifiedBrokerToLoadAction(input:{loadId:string;brokerProfileId:string;note:string;requestId:string}):Promise<{ok:true;load:LoadDetail}|{ok:false;error:string}>{if(!UUID_PATTERN.test(input.loadId)||!UUID_PATTERN.test(input.brokerProfileId)||!UUID_PATTERN.test(input.requestId)||input.note.trim().length<3)return{ok:false,error:"Select a verified broker and enter the factual confirmation note."};try{const auth=await requireDocumentAuth();if(!canAssignLoads(auth.businessRole))return{ok:false,error:"Your authenticated role cannot verify load brokers."};const db=getSupabaseAuthenticatedUserClient(auth.accessToken),result=await db.rpc("link_verified_broker_to_load",{p_load_id:input.loadId,p_broker_profile_id:input.brokerProfileId,p_note:input.note.trim().slice(0,2000),p_request_id:input.requestId});if(result.error)return{ok:false,error:"Only a pending load and same-company broker record can be linked."};revalidatePath(`/dispatch/${input.loadId}`);const load=await new LoadOperationsRepository().getDetail({companyId:auth.companyId,accessToken:auth.accessToken,loadId:input.loadId});return load?{ok:true,load}:{ok:false,error:"Broker linked but authorized load reload failed."}}catch{return{ok:false,error:"Broker was not linked. No dispatch status changed."}}}
+
+const num=(v:unknown)=>Number.isFinite(Number(v))?Number(v):undefined,str=(v:unknown)=>typeof v==="string"?v:"";export async function getDetentionWorkspaceAction(loadId:string):Promise<{ok:true;stops:DetentionStop[]}|{ok:false;error:string}>{if(!UUID_PATTERN.test(loadId))return{ok:false,error:"Invalid load reference."};try{const auth=await requireDocumentAuth(),db=getSupabaseAuthenticatedUserClient(auth.accessToken),r=await db.rpc("get_verified_detention_workspace",{p_load_id:loadId});if(r.error)return{ok:false,error:"Verified detention workspace is unavailable."};const stops:DetentionStop[]=(Array.isArray(r.data)?r.data:[]).flatMap(v=>{if(!v||typeof v!=="object")return[];const x=v as Record<string,unknown>,id=str(x.stop_id);return id?[{stopId:id,stopSequence:num(x.stop_sequence)??0,stopType:str(x.stop_type),facilityName:str(x.facility_name)||undefined,appointmentAt:str(x.appointment_at)||undefined,arrivalAt:str(x.arrival_at)||undefined,departureAt:str(x.departure_at)||undefined,freeTimeMinutes:num(x.free_time_minutes)??120,waitMinutes:num(x.wait_minutes),potentialDetentionMinutes:num(x.potential_detention_minutes),claimStatus:str(x.claim_status),requestedAmountCents:num(x.requested_amount_cents),approvedAmountCents:num(x.approved_amount_cents),factualNote:str(x.factual_note)||undefined}]:[]});return{ok:true,stops}}catch{return{ok:false,error:"Verified detention workspace is unavailable."}}}
+export async function saveVerifiedDetentionAction(input:{loadId:string;stopId:string;arrivalAt:string;departureAt:string;freeTimeMinutes:number;claimStatus:string;requestedAmountCents?:number;approvedAmountCents?:number;note:string;requestId:string}):Promise<{ok:true;stops:DetentionStop[]}|{ok:false;error:string}>{const a=new Date(input.arrivalAt),d=new Date(input.departureAt),statuses=new Set(["evidence_only","draft","recorded_submitted","recorded_approved","recorded_denied","recorded_paid"]);if(!UUID_PATTERN.test(input.loadId)||!UUID_PATTERN.test(input.stopId)||!UUID_PATTERN.test(input.requestId)||Number.isNaN(a.getTime())||Number.isNaN(d.getTime())||d<a||!Number.isInteger(input.freeTimeMinutes)||input.freeTimeMinutes<0||input.freeTimeMinutes>1440||!statuses.has(input.claimStatus)||input.note.trim().length<3)return{ok:false,error:"Enter verified arrival, departure, free time, status, and factual note."};try{const auth=await requireDocumentAuth(),db=getSupabaseAuthenticatedUserClient(auth.accessToken),r=await db.rpc("save_verified_detention_record",{p_load_id:input.loadId,p_stop_id:input.stopId,p_arrival_at:a.toISOString(),p_departure_at:d.toISOString(),p_free_time_minutes:input.freeTimeMinutes,p_claim_status:input.claimStatus,p_requested_amount_cents:input.requestedAmountCents??null,p_approved_amount_cents:input.approvedAmountCents??null,p_note:input.note.trim().slice(0,2000),p_request_id:input.requestId});if(r.error)return{ok:false,error:"Detention record was not saved. Verify same-company stop facts."};return getDetentionWorkspaceAction(input.loadId)}catch{return{ok:false,error:"Detention record was not saved. No claim was sent."}}}
+
+function safeAssignmentError(message: string): string {
+  if (message.includes("already has an active assignment")) {
+    return "This load already has an active verified assignment.";
+  }
+  if (message.includes("Verified same-company driver")) {
+    return "Select a verified driver account from your company.";
+  }
+  if (message.includes("three safety confirmations")) {
+    return "Confirm equipment fit, available HOS, and the safety review.";
+  }
+  if (message.includes("pending loads")) {
+    return "Only an unassigned pending load can receive its initial assignment.";
+  }
+  if (message.includes("not authorized")) {
+    return "Your authenticated role cannot assign loads.";
+  }
+  return "The verified assignment could not be saved. No load state changed.";
+}
+
+export async function assignVerifiedLoadAction(
+  input: VerifiedLoadAssignmentInput,
+): Promise<VerifiedLoadAssignmentResult> {
+  if (
+    !UUID_PATTERN.test(input.loadId) ||
+    !UUID_PATTERN.test(input.driverUserId) ||
+    !UUID_PATTERN.test(input.requestId)
+  ) {
+    return { ok: false, error: "The verified assignment request is invalid." };
+  }
+  const truckUnit = optionalText(input.truckUnit, 80);
+  const trailerUnit = optionalText(input.trailerUnit, 80);
+  const note = optionalText(input.note, 2_000);
+  if (!truckUnit) return { ok: false, error: "Enter the actual verified truck unit." };
+  if (!input.equipmentFitVerified || !input.hosVerified || !input.safetyVerified) {
+    return { ok: false, error: "Confirm equipment fit, available HOS, and the safety review." };
+  }
+
+  try {
+    const auth = await requireDocumentAuth();
+    if (!canAssignLoads(auth.businessRole)) {
+      return { ok: false, error: "Your authenticated role cannot assign loads." };
+    }
+    const db = getSupabaseAuthenticatedUserClient(auth.accessToken);
+    const result = await db.rpc("assign_verified_load", {
+      p_load_id: input.loadId,
+      p_driver_user_id: input.driverUserId,
+      p_truck_unit: truckUnit,
+      p_trailer_unit: trailerUnit,
+      p_equipment_fit_verified: input.equipmentFitVerified,
+      p_hos_verified: input.hosVerified,
+      p_safety_verified: input.safetyVerified,
+      p_note: note,
+      p_request_id: input.requestId,
+    });
+    if (result.error) return { ok: false, error: safeAssignmentError(result.error.message) };
+
+    revalidatePath("/dispatch");
+    revalidatePath(`/dispatch/${input.loadId}`);
+    const repository = new LoadOperationsRepository();
+    const [load, drivers] = await Promise.all([
+      repository.getDetail({ companyId: auth.companyId, accessToken: auth.accessToken, loadId: input.loadId }),
+      repository.listCompanyDrivers({ accessToken: auth.accessToken }),
+    ]);
+    if (!load) return { ok: false, error: "The assignment was saved, but the authorized load could not be reloaded." };
+    return { ok: true, load, drivers, capabilities: capabilities(auth.businessRole, load.status, Boolean(load.driverUserId)) };
+  } catch {
+    return { ok: false, error: "The verified assignment could not be saved. No load state changed." };
+  }
+}
+
+export async function updateVerifiedLoadAction(
+  input: VerifiedLoadUpdateInput,
+): Promise<VerifiedLoadUpdateResult> {
+  if (
+    !UUID_PATTERN.test(input.loadId) ||
+    !UUID_PATTERN.test(input.requestId) ||
+    !isLoadStatus(input.expectedStatus) ||
+    (input.nextStatus != null && !isLoadStatus(input.nextStatus))
+  ) {
+    return { ok: false, error: "The verified update request is invalid." };
+  }
+
+  const location = optionalText(input.location, 300);
+  const exceptionSummary = optionalText(input.exceptionSummary, 1_000);
+  const note = optionalText(input.note, 4_000);
+  let eta: string | null = null;
+  if (input.eta) {
+    const parsed = new Date(input.eta);
+    if (Number.isNaN(parsed.getTime())) {
+      return { ok: false, error: "Enter a valid verified ETA." };
+    }
+    eta = parsed.toISOString();
+  }
+  if (!input.nextStatus && !location && !eta && !exceptionSummary && !note) {
+    return { ok: false, error: "Enter at least one verified operational fact." };
+  }
+
+  try {
+    const auth = await requireDocumentAuth();
+    if (!canRecordLoadFacts(auth.businessRole)) {
+      return { ok: false, error: "Your authenticated role cannot update loads." };
+    }
+    const db = getSupabaseAuthenticatedUserClient(auth.accessToken);
+    const result = await db.rpc("record_verified_load_update", {
+      p_load_id: input.loadId,
+      p_expected_status: input.expectedStatus,
+      p_next_status: input.nextStatus ?? null,
+      p_location: location,
+      p_eta: eta,
+      p_exception_summary: exceptionSummary,
+      p_note: note,
+      p_request_id: input.requestId,
+    });
+    if (result.error) {
+      return { ok: false, error: safeUpdateError(result.error.message) };
+    }
+
+    revalidatePath("/dispatch");
+    revalidatePath(`/dispatch/${input.loadId}`);
+    const load = await new LoadOperationsRepository().getDetail({
+      companyId: auth.companyId,
+      accessToken: auth.accessToken,
+      loadId: input.loadId,
+    });
+    if (!load) {
+      return {
+        ok: false,
+        error: "The update was recorded, but the authorized load could not be reloaded.",
+      };
+    }
+    return {
+      ok: true,
+      load,
+      capabilities: capabilities(auth.businessRole, load.status, Boolean(load.driverUserId)),
+    };
+  } catch {
+    return { ok: false, error: "The verified update could not be saved. No load state changed." };
+  }
+}

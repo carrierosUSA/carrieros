@@ -1,0 +1,12 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import test from "node:test";
+const migration=readFileSync(resolve(process.cwd(),"supabase/migrations/20260814120000_load_operations_foundation.sql"),"utf8");
+const rollback=readFileSync(resolve(process.cwd(),"supabase/rollback/20260814120000_load_operations_foundation_rollback.sql"),"utf8");
+test("load operations are company-isolated and role-scoped",()=>{assert.match(migration,/public\.document_intake_company_id\(\)/);assert.match(migration,/create policy loads_authorized_select/);assert.match(migration,/public\.can_read_load\(id\)/);});
+test("only owners and dispatchers receive broad operational writes",()=>{assert.match(migration,/'super_admin','owner','dispatcher'/);assert.doesNotMatch(migration,/grant .*delete/i);});
+test("driver events require assignment, identity, and driver source",()=>{assert.match(migration,/driver_user_id = auth\.uid\(\)/);assert.match(migration,/source = 'driver'[\s\S]*current_business_role\(\) = 'driver'/);});
+test("assignment and detention evidence are guarded",()=>{assert.match(migration,/equipment_fit_verified boolean not null/);assert.match(migration,/hos_verified boolean not null/);assert.match(migration,/safety_verified boolean not null/);assert.match(migration,/detention_stop_company_fk/);});
+test("financial fields are isolated from driver and safety load rows",()=>{const loads=migration.slice(migration.indexOf("create table public.loads"),migration.indexOf("create table public.load_stops"));const policy=migration.slice(migration.indexOf("create policy load_financials_authorized_select"),migration.indexOf("create policy load_events_human_insert"));assert.doesNotMatch(loads,/rate_cents/);assert.match(policy,/'super_admin','owner','dispatcher','accounting'/);assert.doesNotMatch(policy,/driver|safety/);});
+test("rollback refuses to remove operational records",()=>{assert.match(rollback,/Rollback refused: public\.loads contains operational records/);});

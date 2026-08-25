@@ -1,0 +1,108 @@
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
+import { deriveVerifiedSupabaseIdentity } from "@/lib/auth/supabase-claims";
+import { isProtectedAppPath as isProtectedRoute } from "@/lib/auth/app-routes";
+
+// Route coverage audit labels (the executable authority is PROTECTED_APP_PREFIXES):
+// ["/alerts","/analytics","/broker-performance","/brokers","/claims","/compliance","/customers","/dispatch","/documents","/driver","/driver-requests","/drivers","/expenses","/facilities","/factoring","/finance","/fleet","/ifta","/integrations","/inventory","/lanes","/maintenance","/nova","/payroll","/profitability","/providers","/receivables-aging","/reefer","/schedule","/settings","/system-readiness","/year-end","/api/documents"]
+
+function isProtectedAppPath(pathname: string): boolean {
+  if (pathname === "/") return true;
+  return isProtectedRoute(pathname);
+}
+
+type CookieToSet = {
+  name: string;
+  value: string;
+  options: CookieOptions;
+};
+
+function copyCookies(source: NextResponse, target: NextResponse): void {
+  source.cookies.getAll().forEach((cookie) => target.cookies.set(cookie));
+}
+
+function applyPrivateCachePolicy(response: NextResponse): NextResponse {
+  response.headers.set(
+    "Cache-Control",
+    "private, no-store, max-age=0, must-revalidate",
+  );
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  return response;
+}
+
+function applyRequestId(response: NextResponse, requestId: string): NextResponse {
+  response.headers.set("X-Request-ID", requestId);
+  return response;
+}
+
+export async function proxy(request: NextRequest) {
+  const requestId = crypto.randomUUID();
+  let response = NextResponse.next();
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (url && anonKey) {
+    const supabase = createServerClient(url, anonKey, {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll: (cookiesToSet: CookieToSet[]) => {
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value);
+          });
+          response = NextResponse.next();
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    });
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (isProtectedAppPath(request.nextUrl.pathname)) {
+      const identity = deriveVerifiedSupabaseIdentity(user);
+      if (!identity.ok) {
+        const destination = request.nextUrl.clone();
+        if (
+          identity.reason === "missing_company" ||
+          identity.reason === "invalid_company"
+        ) {
+          destination.pathname = "/auth/missing-company";
+          destination.search = "";
+        } else if (
+          identity.reason === "missing_role" ||
+          identity.reason === "unauthorized_role"
+        ) {
+          destination.pathname = "/auth/unauthorized";
+          destination.search = "";
+        } else {
+          destination.pathname = "/login";
+          destination.search = "";
+          destination.searchParams.set(
+            "next",
+            `${request.nextUrl.pathname}${request.nextUrl.search}`,
+          );
+        }
+        const redirectResponse = NextResponse.redirect(destination);
+        copyCookies(response, redirectResponse);
+        response = redirectResponse;
+      }
+    }
+  } else if (isProtectedAppPath(request.nextUrl.pathname)) {
+    const destination = request.nextUrl.clone();
+    destination.pathname = "/login";
+    destination.search = "";
+    destination.searchParams.set("error", "configuration");
+    response = NextResponse.redirect(destination);
+  }
+
+  return applyRequestId(applyPrivateCachePolicy(response), requestId);
+}
+
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map)$).*)",
+  ],
+};

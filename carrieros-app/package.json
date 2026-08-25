@@ -5,11 +5,29 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "smoke:unauthenticated": "node scripts/unauthenticated-smoke.mjs",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test:document-intake": "node --import tsx --test lib/alph/document-intake/__tests__/*.test.ts",
+    "preflight:testing": "node scripts/testing-readiness.mjs",
+    "preflight:development": "node --env-file-if-exists=.env.local scripts/development-target-preflight.mjs",
+    "migration:manifest": "node scripts/migration-manifest.mjs",
+    "acceptance:verify": "node scripts/verify-acceptance-record.mjs",
+    "security:scan": "node scripts/scan-tracked-secrets.mjs",
+    "provenance:inspect": "node scripts/release-provenance.mjs inspect",
+    "provenance:create": "node scripts/release-provenance.mjs create",
+    "provenance:verify": "node scripts/release-provenance.mjs verify",
+    "signoff:verify": "node scripts/verify-controlled-signoff.mjs",
+    "preflight:release": "node scripts/release-preflight.mjs",
+    "verify:testing": "npm run preflight:testing && npm run security:scan && npm run test:document-intake && npm run typecheck && npm run lint && npm run build && npm run smoke:unauthenticated && npm audit --omit=dev --audit-level=high",
+    "verify:release": "npm run preflight:release && npm run security:scan && npm run test:document-intake && npm run typecheck && npm run lint && npm run build && npm run smoke:unauthenticated && npm audit --omit=dev --audit-level=high",
+    "verify:development-target": "npm run preflight:development && npm run migration:manifest && npm run verify:testing"
   },
   "dependencies": {
-    "next": "16.2.9",
+    "@supabase/ssr": "^0.12.3",
+    "@supabase/supabase-js": "^2.110.7",
+    "next": "16.3.1",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -19,8 +37,9 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.9",
+    "eslint-config-next": "16.3.1",
     "tailwindcss": "^4",
+    "tsx": "4.20.6",
     "typescript": "^5"
   }
 }

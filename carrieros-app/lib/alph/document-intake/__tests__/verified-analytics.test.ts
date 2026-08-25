@@ -1,0 +1,7 @@
+import assert from"node:assert/strict";import{readFileSync}from"node:fs";import{resolve}from"node:path";import test from"node:test";
+const repository=readFileSync(resolve(process.cwd(),"lib/analytics/verified-analytics.ts"),"utf8"),action=readFileSync(resolve(process.cwd(),"app/actions/analytics.ts"),"utf8");
+test("analytics re-authenticates and scopes every operational query to company",()=>{assert.match(action,/requireDocumentAuth\(\)/);assert.ok((repository.match(/\.eq\("company_id",input\.companyId\)/g)||[]).length>=4)});
+test("financial analytics are queried only for authorized financial roles",()=>{assert.match(action,/\["super_admin","owner","accounting"\]/);assert.match(repository,/input\.financialAccess\?db\.from\("load_financials"\)/);assert.match(repository,/if\(input\.financialAccess\)/)});
+test("on-time denominator excludes missing or invalid verified pairs",()=>{assert.match(repository,/if\(!appointment\|\|!deliveredAt\)continue/);assert.match(repository,/if\(Number\.isNaN\(appointmentTime\)\|\|Number\.isNaN\(deliveredTime\)\)continue/);assert.match(repository,/timed\+=1/)});
+test("analytics use verified delivery events and do not invent records",()=>{assert.match(repository,/\.eq\("event_type","status_changed"\)/);assert.match(repository,/text\(e\.status\)==="delivered"/);assert.doesNotMatch(repository,/Math\.random|faker|mock|console\./i)});
+test("analytics repository performs no writes",()=>{assert.doesNotMatch(repository,/\.insert\(|\.update\(|\.delete\(|\.upsert\(|\.rpc\(/)});

@@ -1,0 +1,37 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /carrieros-app
+    schedule:
+      interval: weekly
+      day: monday
+      time: "12:00"
+      timezone: America/Chicago
+    open-pull-requests-limit: 5
+    groups:
+      production-dependencies:
+        dependency-type: production
+        patterns:
+          - "*"
+      development-dependencies:
+        dependency-type: development
+        patterns:
+          - "*"
+    commit-message:
+      prefix: deps
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "12:30"
+      timezone: America/Chicago
+    open-pull-requests-limit: 3
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: ci
