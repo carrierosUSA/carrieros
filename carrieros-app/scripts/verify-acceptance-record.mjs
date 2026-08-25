@@ -5,18 +5,21 @@ const requiredRoles=["owner","dispatcher","accounting","safety","maintenance","d
 const requiredFlows=["documentToPendingLoad","verifiedAssignmentAndDispatchGate","driverIsolationAndStopUpdates","podInvoiceAndClosure","invoiceAndPaymentBoundaries","novaReadOnlyBoundary"];
 const requiredViewports=["phone","tablet","desktop"];
 const requiredStops=["companyIsolation","driverIsolation","financialRoleBoundary","explicitMutationConfirmation","noPrivateValueExposure","reviewedMigrationIdentity"];
+const allowedTopLevel=["environment","projectReferenceConfirmed","tester","testedAt","commit","automatedCheckpoint","roles","criticalFlows","viewports","stopConditions","notes"];
 const forbiddenKey=/password|secret|token|credential|api.?key|service.?role.?key/i;
 const maximumAcceptanceAgeMs=7*24*60*60*1000;
 const futureClockToleranceMs=5*60*1000;
 
 function object(value){return value!==null&&typeof value==="object"&&!Array.isArray(value)}
 function passedGroup(value,names,label,failures){if(!object(value)){failures.push(`${label} is missing`);return}for(const name of names)if(value[name]!=="passed")failures.push(`${label}.${name} must equal passed`)}
+function rejectUnknownKeys(value,names,label,failures){if(!object(value))return;const allowed=new Set(names);for(const key of Object.keys(value))if(!allowed.has(key))failures.push(`${label}.${key} is not allowed`)}
 function inspectKeys(value,path,failures){if(!object(value))return;for(const[key,child]of Object.entries(value)){const next=path?`${path}.${key}`:key;if(forbiddenKey.test(key))failures.push(`${next} is a forbidden sensitive field`);inspectKeys(child,next,failures)}}
 
 export function validateAcceptanceRecord(record,expectedCommit){
   const failures=[];
   if(!object(record))return["Acceptance record must be a JSON object"];
   inspectKeys(record,"",failures);
+  rejectUnknownKeys(record,allowedTopLevel,"record",failures);
   if(record.environment!=="development")failures.push("environment must equal development");
   if(record.projectReferenceConfirmed!==true)failures.push("projectReferenceConfirmed must equal true");
   if(typeof record.tester!=="string"||record.tester.trim().length<2||record.tester.length>100||/REPLACE_|placeholder/i.test(record.tester))failures.push("tester must identify the development tester");
@@ -31,6 +34,10 @@ export function validateAcceptanceRecord(record,expectedCommit){
   passedGroup(record.criticalFlows,requiredFlows,"criticalFlows",failures);
   passedGroup(record.viewports,requiredViewports,"viewports",failures);
   passedGroup(record.stopConditions,requiredStops,"stopConditions",failures);
+  rejectUnknownKeys(record.roles,requiredRoles,"roles",failures);
+  rejectUnknownKeys(record.criticalFlows,requiredFlows,"criticalFlows",failures);
+  rejectUnknownKeys(record.viewports,requiredViewports,"viewports",failures);
+  rejectUnknownKeys(record.stopConditions,requiredStops,"stopConditions",failures);
   if(typeof record.notes!=="string"||record.notes.length>1000)failures.push("notes must be a string no longer than 1000 characters");
   return failures;
 }

@@ -83,6 +83,26 @@ test("non-UTC future and stale acceptance timestamps fail closed", () => {
   }
 });
 
+test("unknown root and group fields fail the exact acceptance schema", () => {
+  const directory = mkdtempSync(join(tmpdir(), "transpo-acceptance-"));
+  const path = join(directory, "record.json");
+  const record = passedRecord();
+  try {
+    writeFileSync(path, JSON.stringify({
+      ...record,
+      privateNotes: "must-not-be-printed",
+      roles: { ...record.roles, auditor: "passed" },
+    }));
+    const result = spawnSync(process.execPath, ["scripts/verify-acceptance-record.mjs", path], { encoding: "utf8" });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /record\.privateNotes is not allowed/);
+    assert.match(result.stderr, /roles\.auditor is not allowed/);
+    assert.doesNotMatch(result.stderr, /must-not-be-printed/);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test("pending cross-environment and sensitive records fail closed", () => {
   const directory = mkdtempSync(join(tmpdir(), "transpo-acceptance-"));
   const path = join(directory, "record.json");
@@ -105,5 +125,7 @@ test("verifier covers required role flow viewport and stop-condition groups", ()
   assert.match(script, /git",\["rev-parse","HEAD"\]/);
   assert.match(script, /maximumAcceptanceAgeMs=7\*24\*60\*60\*1000/);
   assert.match(script, /testedAt must be an exact UTC ISO timestamp/);
+  assert.match(script, /rejectUnknownKeys/);
+  assert.match(script, /allowedTopLevel/);
   assert.match(script, /No record values printed/);
 });

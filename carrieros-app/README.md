@@ -32,6 +32,8 @@ For a credential-free testing checkpoint, run `npm run verify:testing`. Before a
 
 Development acceptance signoff is accepted only for the exact currently checked-out full Git commit and a canonical UTC test timestamp no more than seven days old. A stale, future, malformed, or different-build record fails closed without printing the recorded commit, timestamp, or evidence values.
 
+Acceptance evidence uses an exact allowlisted schema at the record and result-group levels. Unexpected root fields, roles, flows, viewports, or stop-condition keys fail closed instead of being silently retained.
+
 GitHub pull requests to `main` and pushes to `codex/live-dispatch-data` run the same credential-free checkpoint automatically on the declared Node 22 runtime. CI has read-only repository permission, pins its third-party actions to reviewed immutable commit revisions, and performs no migration, deployment, merge, or production action.
 
 Dependabot checks npm and GitHub Actions weekly. Updates are grouped with strict open-PR limits and still require the normal human review and verified checkpoint; no automatic merge or deployment is configured.
