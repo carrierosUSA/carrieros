@@ -39,6 +39,8 @@ Acceptance evidence uses an exact allowlisted schema at the record and result-gr
 
 `npm run provenance:create` produces an ignored, value-free release provenance record only from a clean tracked worktree. `npm run provenance:verify -- testing-records/release-provenance.json` binds the exact commit to the Node runtime, dependency lockfile, ordered migration and rollback sets, and pinned CI workflow; any mismatch fails closed. It does not merge, deploy, apply SQL or claim human acceptance.
 
+After controlled development testing, `npm run signoff:verify -- <acceptance.json> <provenance.json>` independently verifies both evidence files against the exact current commit. It is intentionally excluded from unattended CI because human acceptance evidence must be fresh and locally controlled; passing it grants no release authority.
+
 GitHub pull requests to `main` and pushes to `codex/live-dispatch-data` run the same credential-free checkpoint automatically on the declared Node 22 runtime. CI has read-only repository permission, pins its third-party actions to reviewed immutable commit revisions, and performs no migration, deployment, merge, or production action.
 
 After the complete checkpoint succeeds, CI creates and immediately verifies the same value-free provenance record against its clean checkout. The ignored evidence remains job-local and is not uploaded, published or treated as deployment approval.

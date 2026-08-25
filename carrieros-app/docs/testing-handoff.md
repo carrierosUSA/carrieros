@@ -85,3 +85,15 @@ npm run provenance:verify -- testing-records/release-provenance.json
 The ignored record binds the exact commit to the Node runtime, lockfile, ordered migration and rollback sets, and pinned CI workflow using SHA-256. Creation fails if tracked files are dirty, refuses to overwrite an existing record and cannot write outside `testing-records/`. Verification fails if any bound input changes. The record contains hashes and value-free metadata only; it does not claim that human acceptance, deployment or database work occurred.
 
 The read-only GitHub checkpoint performs this create-and-verify pair only after all credential-free checks pass. Its ignored record is ephemeral job evidence: no artifact upload, publication, deployment or production approval is implied.
+
+## 8. Verify the controlled signoff pair
+
+After the human acceptance record passes and the clean provenance record exists, verify that both independently match the exact current commit:
+
+```bash
+npm run signoff:verify -- \
+  testing-records/development-acceptance.json \
+  testing-records/release-provenance.json
+```
+
+This command runs the strict acceptance verifier first and the clean-worktree provenance verifier second. It prints no evidence values and performs no external action. A successful result proves only that the development evidence pair matches the reviewed local commit; it does not authorize a merge, migration, deployment or production change. Those remain separate human-approved actions.
