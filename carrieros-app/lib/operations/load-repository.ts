@@ -8,6 +8,10 @@ const row = (value: unknown): Row | null => value && typeof value === "object" ?
 const rows = (value: unknown): Row[] => Array.isArray(value) ? value.flatMap((entry) => row(entry) ? [entry as Row] : []) : [];
 const text = (value: unknown): string => typeof value === "string" ? value : "";
 const optionalText = (value: unknown): string | undefined => text(value) || undefined;
+const contactPhone = (value: unknown): string | undefined => {
+  const candidate = text(value).trim();
+  return /^\+[1-9]\d{7,14}$/.test(candidate) ? candidate : undefined;
+};
 function numberValue(value: unknown): number | undefined { const result = typeof value === "number" ? value : Number(value); return Number.isFinite(result) ? result : undefined; }
 function loadStatus(value: unknown): LoadStatus { const candidate = text(value) as LoadStatus; const statuses: LoadStatus[] = ["pending","dispatched","en_route_to_pickup","arrived_pickup","picked_up","in_transit","arrived_delivery","delivered","closed","cancelled"]; return statuses.includes(candidate) ? candidate : "pending"; }
 const priority = (value: unknown): DispatchPriority => value === "red" || value === "amber" ? value : "green";
@@ -45,7 +49,7 @@ export class LoadOperationsRepository {
     return rows(result.data).flatMap((entry) => {
       const userId = text(entry.user_id);
       const displayName = text(entry.display_name);
-      return userId && displayName ? [{ userId, displayName }] : [];
+      return userId && displayName ? [{ userId, displayName, contactPhone: contactPhone(entry.contact_phone) }] : [];
     });
   }
 
@@ -112,12 +116,15 @@ export class LoadOperationsRepository {
     const financial = financialResult.error ? null : row(financialResult.data);
     const board = (await this.listBoard(input)).find((entry) => entry.id === input.loadId); if (!board) return null;
     let driverDisplayName: string | undefined;
+    let driverContactPhone: string | undefined;
     const driverUserId = optionalText(assignment?.driver_user_id);
     if (driverUserId) {
       const drivers = await this.listCompanyDrivers({ accessToken: input.accessToken }).catch(() => []);
-      driverDisplayName = drivers.find((driver) => driver.userId === driverUserId)?.displayName;
+      const driver = drivers.find((candidate) => candidate.userId === driverUserId);
+      driverDisplayName = driver?.displayName;
+      driverContactPhone = driver?.contactPhone;
     }
     const brokerProfileId=optionalText(load.broker_profile_id);let brokerRelationshipStatus:LoadDetail["brokerRelationshipStatus"];if(brokerProfileId){const result=await db.from("broker_profiles").select("relationship_status").eq("company_id",input.companyId).eq("id",brokerProfileId).maybeSingle();const status=text(row(result.data)?.relationship_status);if(status==="active"||status==="review_required"||status==="do_not_use")brokerRelationshipStatus=status}
-    return { ...board, brokerProfileId, brokerRelationshipStatus, brokerContact: optionalText(load.broker_contact), commodity: optionalText(load.commodity), weightLbs: numberValue(load.weight_lbs), equipmentType: optionalText(load.equipment_type), temperatureRequirement: optionalText(load.temperature_requirement), sealNumber: optionalText(load.seal_number), deliveryNumber: optionalText(load.delivery_number), specialInstructions: optionalText(load.special_instructions), emergencyRequirements: optionalText(load.emergency_requirements), rateCents: numberValue(financial?.rate_cents), currency: optionalText(financial?.currency), stops: stops.map((entry): LoadStopDetail => ({ id: text(entry.id), sequence: numberValue(entry.stop_sequence) ?? 0, type: text(entry.stop_type) as LoadStopDetail["type"], facilityName: optionalText(entry.facility_name), address: text(entry.address), city: text(entry.city), state: text(entry.state), appointmentAt: optionalText(entry.appointment_at), appointmentTimezone: optionalText(entry.appointment_timezone), referenceNumber: optionalText(entry.reference_number), arrivedAt: optionalText(entry.arrived_at), checkedInAt: optionalText(entry.checked_in_at), departedAt: optionalText(entry.departed_at) })), timeline: rows(eventsResult.data).map((entry): LoadTimelineEvent => ({ id: text(entry.id), type: text(entry.event_type), status: optionalText(entry.status), location: optionalText(entry.location), eta: optionalText(entry.eta), note: optionalText(entry.factual_note), source: text(entry.source), eventAt: text(entry.event_at) })), driverUserId, driverDisplayName, truckUnit: optionalText(assignment?.truck_unit), trailerUnit: optionalText(assignment?.trailer_unit) };
+    return { ...board, brokerProfileId, brokerRelationshipStatus, brokerContact: optionalText(load.broker_contact), commodity: optionalText(load.commodity), weightLbs: numberValue(load.weight_lbs), equipmentType: optionalText(load.equipment_type), temperatureRequirement: optionalText(load.temperature_requirement), sealNumber: optionalText(load.seal_number), deliveryNumber: optionalText(load.delivery_number), specialInstructions: optionalText(load.special_instructions), emergencyRequirements: optionalText(load.emergency_requirements), rateCents: numberValue(financial?.rate_cents), currency: optionalText(financial?.currency), stops: stops.map((entry): LoadStopDetail => ({ id: text(entry.id), sequence: numberValue(entry.stop_sequence) ?? 0, type: text(entry.stop_type) as LoadStopDetail["type"], facilityName: optionalText(entry.facility_name), address: text(entry.address), city: text(entry.city), state: text(entry.state), appointmentAt: optionalText(entry.appointment_at), appointmentTimezone: optionalText(entry.appointment_timezone), referenceNumber: optionalText(entry.reference_number), arrivedAt: optionalText(entry.arrived_at), checkedInAt: optionalText(entry.checked_in_at), departedAt: optionalText(entry.departed_at) })), timeline: rows(eventsResult.data).map((entry): LoadTimelineEvent => ({ id: text(entry.id), type: text(entry.event_type), status: optionalText(entry.status), location: optionalText(entry.location), eta: optionalText(entry.eta), note: optionalText(entry.factual_note), source: text(entry.source), eventAt: text(entry.event_at) })), driverUserId, driverDisplayName, driverContactPhone, truckUnit: optionalText(assignment?.truck_unit), trailerUnit: optionalText(assignment?.trailer_unit) };
   }
 }

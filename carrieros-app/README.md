@@ -2,6 +2,8 @@
 
 Authenticated carrier operations workspace built with Next.js 16 and Supabase. The current verified modules cover command center, dispatch, schedule, mobile Driver Portal, documents/OCR review, brokers and broker performance, facilities, service providers, fleet, drivers, maintenance, compliance, incidents, reefer evidence, inventory, finance and printable invoices, expenses, payroll, Fuel & IFTA, truck P&L, lane performance, year-end records, analytics, alerts, company settings, owner-controlled team access, and Nova read-only guidance.
 
+Assigned-load detail can hand a validated phone number from an active same-company driver account to the user's local phone or messaging app. Transpo.ai never places the call or sends the message automatically, and unavailable or ineligible driver contact data fails closed.
+
 ## Local development
 
 1. Copy `.env.example` to `.env.local` and replace every placeholder.

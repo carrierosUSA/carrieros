@@ -22,13 +22,13 @@ export type LoadTimelineEvent = {
 };
 export type LoadDetail = DispatchBoardLoad & {
   brokerProfileId?: string; brokerRelationshipStatus?: "active" | "review_required" | "do_not_use";
-  driverDisplayName?: string;
+  driverDisplayName?: string; driverContactPhone?: string;
   brokerContact?: string; commodity?: string; weightLbs?: number; equipmentType?: string;
   temperatureRequirement?: string; sealNumber?: string; deliveryNumber?: string;
   specialInstructions?: string; emergencyRequirements?: string;
   stops: LoadStopDetail[]; timeline: LoadTimelineEvent[];
 };
-export type AssignableDriver = { userId: string; displayName: string };
+export type AssignableDriver = { userId: string; displayName: string; contactPhone?: string };
 export type LinkableBroker = { id:string; legalName:string; mcNumber:string; relationshipStatus:"active"|"review_required"|"do_not_use" };
 export type DetentionStop={stopId:string;stopSequence:number;stopType:string;facilityName?:string;appointmentAt?:string;arrivalAt?:string;departureAt?:string;freeTimeMinutes:number;waitMinutes?:number;potentialDetentionMinutes?:number;claimStatus:string;requestedAmountCents?:number;approvedAmountCents?:number;factualNote?:string};
 export type ClosureDocumentCandidate = {

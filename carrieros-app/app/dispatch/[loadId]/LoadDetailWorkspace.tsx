@@ -126,10 +126,7 @@ function Detail({
             {detail.destination || "Destination not recorded"}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Disabled label="Call driver" />
-          <Disabled label="Message driver" />
-        </div>
+        <DriverContact phone={detail.driverContactPhone} assigned={Boolean(detail.driverUserId)} />
       </header>
 
       <section className="mt-6 grid gap-4 lg:grid-cols-4">
@@ -775,15 +772,19 @@ function Missing({ text }: { text: string }) {
   return <p className="rounded-xl bg-[#F8FAFC] p-4 text-xs text-[#64748B]">{text}</p>;
 }
 
-function Disabled({ label }: { label: string }) {
+function DriverContact({ phone, assigned }: { phone?: string; assigned: boolean }) {
+  if (!phone) {
+    return (
+      <span className="rounded-xl border border-[#CBD5E1] bg-white px-4 py-2.5 text-xs font-semibold text-[#64748B]">
+        {assigned ? "Driver account phone unavailable" : "Assign a driver to contact"}
+      </span>
+    );
+  }
   return (
-    <button
-      disabled
-      title="Communication provider coming soon"
-      className="cursor-not-allowed rounded-xl border border-[#CBD5E1] bg-white px-4 py-2.5 text-sm font-semibold text-[#94A3B8]"
-    >
-      {label} · Coming soon
-    </button>
+    <div className="flex gap-2">
+      <a href={`tel:${phone}`} aria-label="Open phone app to call assigned driver" className="rounded-xl border border-[#CBD5E1] bg-white px-4 py-2.5 text-sm font-semibold text-[#334155] hover:border-[#93C5FD]">Call driver</a>
+      <a href={`sms:${phone}`} aria-label="Open messages app for assigned driver" className="rounded-xl bg-[#2563EB] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1D4ED8]">Message driver</a>
+    </div>
   );
 }
 

@@ -49,6 +49,7 @@ test("only reviewed document and load-operation migrations are present", () => {
     "20260824030000_verified_driver_operational_requests.sql",
     "20260824050000_verified_customer_shipper_directory.sql",
     "20260824070000_verified_factoring_tracker.sql",
+    "20260825130000_verified_driver_contact_handoff.sql",
   ]);
 });
 
