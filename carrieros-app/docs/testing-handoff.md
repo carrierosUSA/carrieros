@@ -82,6 +82,6 @@ npm run provenance:create
 npm run provenance:verify -- testing-records/release-provenance.json
 ```
 
-The ignored record binds the exact commit to the Node runtime, lockfile, ordered migration set and pinned CI workflow using SHA-256. Creation fails if tracked files are dirty, refuses to overwrite an existing record and cannot write outside `testing-records/`. Verification fails if any bound input changes. The record contains hashes and value-free metadata only; it does not claim that human acceptance, deployment or database work occurred.
+The ignored record binds the exact commit to the Node runtime, lockfile, ordered migration and rollback sets, and pinned CI workflow using SHA-256. Creation fails if tracked files are dirty, refuses to overwrite an existing record and cannot write outside `testing-records/`. Verification fails if any bound input changes. The record contains hashes and value-free metadata only; it does not claim that human acceptance, deployment or database work occurred.
 
 The read-only GitHub checkpoint performs this create-and-verify pair only after all credential-free checks pass. Its ignored record is ephemeral job evidence: no artifact upload, publication, deployment or production approval is implied.

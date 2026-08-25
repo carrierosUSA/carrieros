@@ -6,8 +6,8 @@ import { dirname, join, relative, resolve, sep } from "node:path";
 const root=process.cwd();
 const testingRecords=resolve(root,"testing-records");
 const defaultRecord=join(testingRecords,"release-provenance.json");
-const exactRootKeys=["schemaVersion","commit","nodeVersion","packageLockSha256","migrations","verificationWorkflowSha256"];
-const exactMigrationKeys=["count","sha256"];
+const exactRootKeys=["schemaVersion","commit","nodeVersion","packageLockSha256","migrations","rollbacks","verificationWorkflowSha256"];
+const exactSqlSetKeys=["count","sha256"];
 const hash=value=>createHash("sha256").update(value).digest("hex");
 const object=value=>value!==null&&typeof value==="object"&&!Array.isArray(value);
 const exactKeys=(value,keys)=>object(value)&&Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
@@ -15,19 +15,22 @@ const exactKeys=(value,keys)=>object(value)&&Object.keys(value).length===keys.le
 function git(args){return execFileSync("git",args,{cwd:root,encoding:"utf8",stdio:["ignore","pipe","ignore"]}).trim()}
 function clean(){try{return git(["status","--porcelain","--untracked-files=no"])===""}catch{return false}}
 function fileHash(path){return hash(readFileSync(path))}
+function sqlSet(directory){
+  const entries=readdirSync(directory)
+    .filter(name=>name.endsWith(".sql")&&statSync(join(directory,name)).isFile())
+    .sort()
+    .map(name=>`${name}\0${fileHash(join(directory,name))}\n`);
+  return{count:entries.length,sha256:hash(entries.join(""))};
+}
 
 function currentProvenance(){
-  const migrationDirectory=join(root,"supabase","migrations");
-  const migrations=readdirSync(migrationDirectory)
-    .filter(name=>name.endsWith(".sql")&&statSync(join(migrationDirectory,name)).isFile())
-    .sort()
-    .map(name=>`${name}\0${fileHash(join(migrationDirectory,name))}\n`);
   return {
     schemaVersion:1,
     commit:git(["rev-parse","HEAD"]),
     nodeVersion:process.version,
     packageLockSha256:fileHash(join(root,"package-lock.json")),
-    migrations:{count:migrations.length,sha256:hash(migrations.join(""))},
+    migrations:sqlSet(join(root,"supabase","migrations")),
+    rollbacks:sqlSet(join(root,"supabase","rollback")),
     verificationWorkflowSha256:fileHash(join(root,"..",".github","workflows","verify.yml")),
   };
 }
@@ -39,10 +42,12 @@ function validate(record){
   if(typeof record.commit!=="string"||!/^[0-9a-f]{40}$/i.test(record.commit))failures.push("commit must be a full Git hash");
   if(typeof record.nodeVersion!=="string"||!/^v\d+\.\d+\.\d+$/.test(record.nodeVersion))failures.push("nodeVersion must be an exact Node.js version");
   for(const key of ["packageLockSha256","verificationWorkflowSha256"])if(typeof record[key]!=="string"||!/^[0-9a-f]{64}$/i.test(record[key]))failures.push(`${key} must be a SHA-256 digest`);
-  if(!exactKeys(record.migrations,exactMigrationKeys))failures.push("migrations must use the exact provenance schema");
-  else{
-    if(!Number.isInteger(record.migrations.count)||record.migrations.count<1)failures.push("migrations.count must be a positive integer");
-    if(typeof record.migrations.sha256!=="string"||!/^[0-9a-f]{64}$/i.test(record.migrations.sha256))failures.push("migrations.sha256 must be a SHA-256 digest");
+  for(const key of ["migrations","rollbacks"]){
+    if(!exactKeys(record[key],exactSqlSetKeys))failures.push(`${key} must use the exact provenance schema`);
+    else{
+      if(!Number.isInteger(record[key].count)||record[key].count<1)failures.push(`${key}.count must be a positive integer`);
+      if(typeof record[key].sha256!=="string"||!/^[0-9a-f]{64}$/i.test(record[key].sha256))failures.push(`${key}.sha256 must be a SHA-256 digest`);
+    }
   }
   return failures;
 }
@@ -78,5 +83,5 @@ let record;try{record=JSON.parse(readFileSync(resolve(root,input),"utf8"))}catch
 const failures=validate(record);
 if(failures.length)fail(failures);
 if(!clean())fail(["tracked Git worktree must be clean"]);
-if(JSON.stringify(record)!==JSON.stringify(expected))fail(["record does not match the exact current commit, runtime, lockfile, migrations, and verification workflow"]);
-console.log(`Release provenance verified for commit ${expected.commit.slice(0,12)}: lockfile, ${expected.migrations.count} migrations, and CI workflow match. No source values printed and no external action performed.`);
+if(JSON.stringify(record)!==JSON.stringify(expected))fail(["record does not match the exact current commit, runtime, lockfile, migrations, rollbacks, and verification workflow"]);
+console.log(`Release provenance verified for commit ${expected.commit.slice(0,12)}: lockfile, ${expected.migrations.count} migrations, ${expected.rollbacks.count} rollbacks, and CI workflow match. No source values printed and no external action performed.`);
