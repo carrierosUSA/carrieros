@@ -34,6 +34,8 @@ Development acceptance signoff is accepted only for the exact currently checked-
 
 Acceptance evidence uses an exact allowlisted schema at the record and result-group levels. Unexpected root fields, roles, flows, viewports, or stop-condition keys fail closed instead of being silently retained.
 
+`npm run provenance:create` produces an ignored, value-free release provenance record only from a clean tracked worktree. `npm run provenance:verify -- testing-records/release-provenance.json` binds the exact commit to the Node runtime, dependency lockfile, ordered migration set and pinned CI workflow; any mismatch fails closed. It does not merge, deploy, apply SQL or claim human acceptance.
+
 GitHub pull requests to `main` and pushes to `codex/live-dispatch-data` run the same credential-free checkpoint automatically on the declared Node 22 runtime. CI has read-only repository permission, pins its third-party actions to reviewed immutable commit revisions, and performs no migration, deployment, merge, or production action.
 
 Dependabot checks npm and GitHub Actions weekly. Updates are grouped with strict open-PR limits and still require the normal human review and verified checkpoint; no automatic merge or deployment is configured.

@@ -72,3 +72,14 @@ npm run acceptance:verify -- testing-records/development-acceptance.json
 ```
 
 The verifier requires every role, critical flow, viewport and stop-condition boundary to pass. It binds the record to the exact currently checked-out 40-character Git commit and requires a canonical UTC timestamp no more than seven days old, so stale, future, or different-build signoff fails closed. The record and every result group use an exact allowlisted schema; unexpected fields, production records, incomplete checkpoints and sensitive field names are rejected. It prints counts only. Keep the record local unless a separately approved secure evidence location is provided.
+
+## 7. Bind the reviewed release inputs
+
+After the reviewed commit is checked out with a clean tracked worktree, create and immediately verify a local provenance record:
+
+```bash
+npm run provenance:create
+npm run provenance:verify -- testing-records/release-provenance.json
+```
+
+The ignored record binds the exact commit to the Node runtime, lockfile, ordered migration set and pinned CI workflow using SHA-256. Creation fails if tracked files are dirty, refuses to overwrite an existing record and cannot write outside `testing-records/`. Verification fails if any bound input changes. The record contains hashes and value-free metadata only; it does not claim that human acceptance, deployment or database work occurred.
