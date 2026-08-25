@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getDispatchBoardAction } from "@/app/actions/dispatch";
 import Sidebar from "@/components/Sidebar";
 import type { DispatchBoardLoad } from "@/lib/operations/load-types";
@@ -12,13 +12,48 @@ export default function DispatchWorkspace() {
   const [tab, setTab] = useState<Tab>("Board");
   const [loads, setLoads] = useState<DispatchBoardLoad[]>([]);
   const [state, setState] = useState<"loading" | "ready" | "unavailable">("loading");
-  useEffect(() => { let active = true; getDispatchBoardAction().then((result) => { if (!active) return; if (result.ok) { setLoads(result.loads); setState("ready"); } else setState("unavailable"); }).catch(() => { if (active) setState("unavailable"); }); return () => { active = false; }; }, []);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date>();
+  const mounted = useRef(false);
+  const inFlight = useRef(false);
+  const refresh = useCallback(async (initial = false) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    if (!initial) setRefreshing(true);
+    try {
+      const result = await getDispatchBoardAction();
+      if (!mounted.current) return;
+      if (result.ok) {
+        setLoads(result.loads);
+        setState("ready");
+        setLastUpdatedAt(new Date());
+      } else if (initial) setState("unavailable");
+    } catch {
+      if (mounted.current && initial) setState("unavailable");
+    } finally {
+      inFlight.current = false;
+      if (mounted.current) setRefreshing(false);
+    }
+  }, []);
+  useEffect(() => {
+    mounted.current = true;
+    const initialRefresh = window.setTimeout(() => void refresh(true), 0);
+    const refreshVisible = () => { if (document.visibilityState === "visible") void refresh(); };
+    const interval = window.setInterval(refreshVisible, 30_000);
+    document.addEventListener("visibilitychange", refreshVisible);
+    return () => {
+      mounted.current = false;
+      window.clearTimeout(initialRefresh);
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshVisible);
+    };
+  }, [refresh]);
   const filtered = useMemo(() => loads.filter((load) => matches(load, tab)), [loads, tab]);
   const metric = (n: number) => state === "ready" ? String(n) : "—";
   return <main className="min-h-screen bg-[#F5F7FB] text-[#0B1220]"><Sidebar /><section className="min-h-screen px-4 pb-8 pt-20 lg:ml-72 lg:px-8 lg:py-7 xl:px-10"><div className="mx-auto max-w-[1450px]">
     <header className="flex flex-wrap items-start justify-between gap-5"><div><p className="text-xs font-semibold uppercase tracking-[.18em] text-[#2563EB]">Operations workspace</p><h1 className="mt-2 text-[34px] font-semibold tracking-[-.04em]">Dispatch</h1><p className="mt-2 text-sm text-[#64748B]">One factual timeline for every load, appointment, instruction, document, approval, and exception.</p></div><Link href="/documents" className="rounded-xl bg-[#0F172A] px-4 py-2.5 text-sm font-semibold text-white">Import rate confirmation</Link></header>
     <section className="mt-6 overflow-hidden rounded-[24px] border border-[#DDE5F0] bg-white shadow-[0_18px_55px_rgba(15,23,42,.05)]">
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E8EEF6] px-5 py-4"><div className="flex gap-1 rounded-xl bg-[#F1F5F9] p-1">{tabs.map((item) => <button key={item} onClick={() => setTab(item)} className={`rounded-lg px-3.5 py-2 text-xs font-semibold ${tab === item ? "bg-white shadow-sm" : "text-[#64748B]"}`}>{item}</button>)}</div><p className="flex items-center gap-2 text-xs text-[#64748B]"><span className={`h-2 w-2 rounded-full ${state === "ready" ? "bg-[#10B981]" : state === "loading" ? "bg-[#2563EB]" : "bg-[#F59E0B]"}`} />{state === "ready" ? "Live authorized data" : state === "loading" ? "Loading authorized data" : "Operational database not configured"}</p></div>
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E8EEF6] px-5 py-4"><div className="flex gap-1 rounded-xl bg-[#F1F5F9] p-1">{tabs.map((item) => <button key={item} onClick={() => setTab(item)} className={`rounded-lg px-3.5 py-2 text-xs font-semibold ${tab === item ? "bg-white shadow-sm" : "text-[#64748B]"}`}>{item}</button>)}</div><div className="flex items-center gap-3"><p aria-live="polite" className="flex items-center gap-2 text-xs text-[#64748B]"><span className={`h-2 w-2 rounded-full ${state === "ready" ? "bg-[#10B981]" : state === "loading" ? "bg-[#2563EB]" : "bg-[#F59E0B]"}`} />{state === "ready" ? `Live authorized data${lastUpdatedAt ? ` · updated ${timeOnly(lastUpdatedAt)}` : ""}` : state === "loading" ? "Loading authorized data" : "Operational database not configured"}</p><button disabled={refreshing || state === "loading"} onClick={() => void refresh()} className="rounded-lg border border-[#CBD5E1] px-3 py-2 text-[11px] font-semibold text-[#334155] disabled:opacity-50">{refreshing ? "Refreshing…" : "Refresh"}</button></div></div>
       <div className="p-6"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Metric label="Active loads" value={metric(loads.filter((l) => matches(l,"Active")).length)} /><Metric label="Pickup today" value={metric(loads.filter((l) => l.nextStopType === "pickup" && isToday(l.nextAppointmentAt)).length)} /><Metric label="Delivery today" value={metric(loads.filter((l) => l.nextStopType === "delivery" && isToday(l.nextAppointmentAt)).length)} /><Metric label="Exceptions" value={metric(loads.filter((l) => matches(l,"Exceptions")).length)} /></div>
         <div className="mt-6 overflow-x-auto rounded-2xl border border-[#E2E8F0]"><div className="min-w-[1050px]"><div className="grid grid-cols-[.7fr_1.1fr_.9fr_1.2fr_.85fr_1fr_.85fr] gap-3 bg-[#F8FAFC] px-4 py-3 text-[10px] font-semibold uppercase tracking-[.14em] text-[#64748B]"><span>Date / Unit</span><span>Load / Pickup #</span><span>Broker</span><span>Pickup → Delivery</span><span>Rate / Miles</span><span>Appointment</span><span>Status</span></div>
           {filtered.length ? <div className="divide-y divide-[#E8EEF6]">{filtered.map((load) => <Link key={load.id} href={`/dispatch/${load.id}`} className="grid grid-cols-[.7fr_1.1fr_.9fr_1.2fr_.85fr_1fr_.85fr] gap-3 px-4 py-4 text-xs hover:bg-[#F8FAFC]"><Cell main={dateOnly(load.createdAt)} sub={load.truckUnit || "Unassigned"} /><span><strong className="block text-sm">{load.loadNumber || "Pending"}</strong><span className="mt-1 block font-semibold text-[#2563EB]">Pickup # {load.pickupNumber || "Not recorded"}</span></span><Cell main={load.brokerName || "Not recorded"} sub={load.driverUserId ? "Driver assigned" : "No driver"} /><Cell main={load.origin || "Not recorded"} sub={`to ${load.destination || "Not recorded"}`} /><Cell main={load.rateCents === undefined ? "Restricted / —" : money(load.rateCents, load.currency)} sub={load.miles === undefined ? "Miles not recorded" : `${load.miles.toLocaleString()} mi`} /><Cell main={dateTime(load.nextAppointmentAt)} sub={load.nextAppointmentTimezone || "Time zone not recorded"} /><span><b className={`inline-flex rounded-full px-2.5 py-1 capitalize ${load.priority === "red" ? "bg-red-50 text-red-600" : load.priority === "amber" ? "bg-orange-50 text-orange-600" : "bg-emerald-50 text-emerald-600"}`}>{load.priority}</b><span className="mt-1 block capitalize text-[#64748B]">{load.status.replaceAll("_"," ")}</span></span></Link>)}</div> : <div className="grid min-h-64 place-items-center p-10 text-center"><div><h2 className="text-lg font-semibold">{state === "loading" ? "Loading verified loads" : state === "unavailable" ? "Load operations are not configured" : `No verified ${tab.toLowerCase()} loads`}</h2><p className="mt-2 max-w-md text-sm leading-6 text-[#64748B]">{state === "unavailable" ? "Apply the reviewed load-operations migration before live data can appear." : "Upload and human-review a real rate confirmation to create a verified load."}</p></div></div>}</div></div>
@@ -33,4 +68,5 @@ function Cell({main,sub}:{main:string;sub:string}) { return <span><strong classN
 function isToday(value?:string){if(!value)return false;const d=new Date(value),n=new Date();return !Number.isNaN(d.getTime())&&d.toDateString()===n.toDateString();}
 function dateOnly(value?:string){if(!value)return "Not recorded";const d=new Date(value);return Number.isNaN(d.getTime())?"Not recorded":new Intl.DateTimeFormat("en-US",{month:"short",day:"numeric"}).format(d);}
 function dateTime(value?:string){if(!value)return "Not recorded";const d=new Date(value);return Number.isNaN(d.getTime())?"Not recorded":new Intl.DateTimeFormat("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}).format(d);}
+function timeOnly(value:Date){return new Intl.DateTimeFormat("en-US",{hour:"numeric",minute:"2-digit",second:"2-digit"}).format(value);}
 function money(cents:number,currency="USD"){return new Intl.NumberFormat("en-US",{style:"currency",currency,maximumFractionDigits:0}).format(cents/100);}

@@ -4,6 +4,8 @@ Authenticated carrier operations workspace built with Next.js 16 and Supabase. T
 
 Assigned-load detail can hand a validated phone number from an active same-company driver account to the user's local phone or messaging app. Transpo.ai never places the call or sends the message automatically, and unavailable or ineligible driver contact data fails closed.
 
+The authenticated dispatch board supports manual refresh and bounded 30-second visible-tab refreshes, with overlap protection and a local last-updated indicator. Refreshing only reads authorized company data and never changes a load or initiates dispatch.
+
 ## Local development
 
 1. Copy `.env.example` to `.env.local` and replace every placeholder.
