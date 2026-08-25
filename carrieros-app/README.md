@@ -8,6 +8,8 @@ The authenticated dispatch board supports manual refresh and bounded 30-second v
 
 Dispatch operators can combine workflow tabs with priority filters and local search across recorded load, pickup, broker, lane, equipment, exception, and status fields. Filtering never sends a query externally or mutates operational data.
 
+The board defaults to urgent-first ordering, placing actionable overdue appointments before recorded red, amber, and green priorities. Operators can switch to appointment-first or newest-load ordering; these are copied client-side views and never rewrite priority, appointment, or status facts.
+
 ## Local development
 
 1. Copy `.env.example` to `.env.local` and replace every placeholder.
