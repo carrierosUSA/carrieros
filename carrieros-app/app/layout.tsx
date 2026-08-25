@@ -40,7 +40,10 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <a href="#main-content" className="skip-link">Skip to main content</a>
+        <div id="main-content" tabIndex={-1}>{children}</div>
+      </body>
     </html>
   );
 }

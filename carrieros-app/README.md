@@ -63,6 +63,8 @@ Each application request receives a fresh server-generated UUID response identif
 
 The automated security inventory fails whenever a new page or API route is neither protected by the centralized application prefixes nor included in the exact minimal proxy-bypass list.
 
+The application shell provides a keyboard-visible skip link, semantic primary-navigation groups, current-page state, Escape-to-close mobile navigation with focus restoration, and reduced-motion fallbacks. Closed off-canvas navigation is visibility-hidden so its links cannot trap mobile keyboard focus.
+
 That command validates required configuration without printing credentials, rejects known public-secret aliases and non-production OCR, then runs the security suite, TypeScript, ESLint, the production build, and a production-dependency vulnerability audit.
 
 ## Database safety
