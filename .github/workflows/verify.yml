@@ -37,3 +37,7 @@ jobs:
         run: npm ci
       - name: Run complete credential-free verification
         run: npm run verify:testing
+      - name: Bind and verify reviewed release inputs
+        run: |
+          npm run provenance:create
+          npm run provenance:verify -- testing-records/release-provenance.json

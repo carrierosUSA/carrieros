@@ -38,6 +38,8 @@ Acceptance evidence uses an exact allowlisted schema at the record and result-gr
 
 GitHub pull requests to `main` and pushes to `codex/live-dispatch-data` run the same credential-free checkpoint automatically on the declared Node 22 runtime. CI has read-only repository permission, pins its third-party actions to reviewed immutable commit revisions, and performs no migration, deployment, merge, or production action.
 
+After the complete checkpoint succeeds, CI creates and immediately verifies the same value-free provenance record against its clean checkout. The ignored evidence remains job-local and is not uploaded, published or treated as deployment approval.
+
 Dependabot checks npm and GitHub Actions weekly. Updates are grouped with strict open-PR limits and still require the normal human review and verified checkpoint; no automatic merge or deployment is configured.
 
 Every new pull request receives a controlled review checklist covering locked installation, the full verified checkpoint, regression evidence, data handling, company and role isolation, human authority, rollback, and separately approved database or production actions.

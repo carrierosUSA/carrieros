@@ -25,6 +25,20 @@ test("continuous verification uses locked installation and the declared Node run
   assert.match(workflow, /run: npm ci/);
 });
 
+test("continuous verification binds the successful checkpoint to reviewed inputs", () => {
+  assert.match(workflow, /name: Bind and verify reviewed release inputs/);
+  assert.match(workflow, /npm run provenance:create/);
+  assert.match(
+    workflow,
+    /npm run provenance:verify -- testing-records\/release-provenance\.json/,
+  );
+  assert.ok(
+    workflow.indexOf("npm run verify:testing") <
+      workflow.indexOf("npm run provenance:create"),
+  );
+  assert.doesNotMatch(workflow, /upload-artifact|artifact retention/);
+});
+
 test("workflow is least privilege bounded and cancellable", () => {
   assert.match(workflow, /permissions:\s+contents: read/);
   assert.match(workflow, /timeout-minutes: 25/);
